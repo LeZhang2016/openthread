@@ -37,13 +37,13 @@ set -x
 [ $BUILD_TARGET != pretty-check ] || {
     export PATH=/tmp/astyle/build/gcc/bin:$PATH || die
     ./bootstrap || die
-    ./configure --enable-cli --enable-diag --enable-dhcp6-client --enable-dhcp6-server --enable-commissioner --enable-joiner --with-examples=posix || die
+    ./configure --enable-ftd --enable-cli --enable-diag --enable-dhcp6-client --enable-dhcp6-server --enable-commissioner --enable-joiner --with-examples=posix || die
     make pretty-check || die
 }
 
 [ $BUILD_TARGET != scan-build ] || {
     ./bootstrap || die
-    scan-build ./configure --with-examples=posix --enable-cli --enable-ncp || die
+    scan-build ./configure --with-examples=posix --enable-ftd --enable-cli --enable-ncp || die
     scan-build --status-bugs -analyze-headers -v make || die
 }
 
@@ -55,27 +55,31 @@ set -x
     COMMISSIONER=1 JOINER=1 DHCP6_CLIENT=1 DHCP6_SERVER=1 make -f examples/Makefile-cc2538 || die
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-cli-ftd || die
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-cli-mtd || die
-    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp || die
+    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp-ftd || die
+    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp-mtd || die
 
     git clean -xfd || die
     ./bootstrap || die
     COMMISSIONER=1 JOINER=1 DHCP6_CLIENT=1 DHCP6_SERVER=1 make -f examples/Makefile-da15000 || die
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-cli-ftd || die
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-cli-mtd || die
-    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp || die
+    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp-ftd || die
+    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp-mtd || die
 
     git clean -xfd || die
     ./bootstrap || die
     COMMISSIONER=1 JOINER=1 DHCP6_CLIENT=1 DHCP6_SERVER=1 make -f examples/Makefile-nrf52840 || die
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-cli-ftd || die
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-cli-mtd || die
-    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp || die
+    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp-ftd || die
+    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp-mtd || die
 
     git checkout -- . || die
     git clean -xfd || die
     ./bootstrap || die
     make -f examples/Makefile-cc2650 || die
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-cli-mtd || die
+    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp-mtd || die
 }
 
 [ $BUILD_TARGET != arm-gcc54 ] || {
@@ -86,27 +90,31 @@ set -x
     COMMISSIONER=1 JOINER=1 DHCP6_CLIENT=1 DHCP6_SERVER=1 make -f examples/Makefile-cc2538 || die
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-cli-ftd || die
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-cli-mtd || die
-    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp || die
+    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp-ftd || die
+    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp-mtd || die
 
     git clean -xfd || die
     ./bootstrap || die
     COMMISSIONER=1 JOINER=1 DHCP6_CLIENT=1 DHCP6_SERVER=1 make -f examples/Makefile-da15000 || die
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-cli-ftd || die
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-cli-mtd || die
-    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp || die
+    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp-ftd || die
+    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp-mtd || die
 
     git clean -xfd || die
     ./bootstrap || die
     COMMISSIONER=1 JOINER=1 DHCP6_CLIENT=1 DHCP6_SERVER=1 make -f examples/Makefile-nrf52840 || die
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-cli-ftd || die
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-cli-mtd || die
-    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp || die
+    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp-ftd || die
+    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp-mtd || die
 
     git checkout -- . || die
     git clean -xfd || die
     ./bootstrap || die
     make -f examples/Makefile-cc2650 || die
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-cli-mtd || die
+    arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp-mtd || die
 }
 
 [ $BUILD_TARGET != posix ] || {
@@ -130,7 +138,7 @@ set -x
 
 [ $BUILD_TARGET != posix-ncp-spi ] || {
     ./bootstrap || die
-    BuildJobs=10 make -f examples/Makefile-posix check configure_OPTIONS="--enable-ncp=spi --with-examples=posix --with-platform-info=POSIX" || die
+    BuildJobs=10 make -f examples/Makefile-posix check configure_OPTIONS="--enable-ftd --enable-ncp=spi --with-examples=posix --with-platform-info=POSIX" || die
 }
 
 [ $BUILD_TARGET != posix-ncp ] || {
