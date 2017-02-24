@@ -105,7 +105,8 @@ ThreadError Dtls::Start(bool aClient, ConnectedHandler aConnectedHandler, Receiv
     mbedtls_ssl_conf_max_version(&mConf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
     mbedtls_ssl_conf_ciphersuites(&mConf, ciphersuites);
     mbedtls_ssl_conf_export_keys_cb(&mConf, HandleMbedtlsExportKeys, this);
-    mbedtls_ssl_conf_handshake_timeout(&mConf, 8000, 60000);
+    mbedtls_ssl_conf_handshake_timeout(&mConf, 8000, 6000000);
+    mbedtls_ssl_conf_read_timeout( &mConf, 8000000);
     mbedtls_ssl_conf_dbg(&mConf, HandleMbedtlsDebug, NULL);
 
     if (!mClient)

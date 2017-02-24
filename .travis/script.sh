@@ -50,7 +50,6 @@ set -x
 [ $BUILD_TARGET != arm-gcc49 ] || {
     export PATH=/tmp/gcc-arm-none-eabi-4_9-2015q3/bin:$PATH || die
 
-    git checkout -- . || die
     git clean -xfd || die
     ./bootstrap || die
     COMMISSIONER=1 JOINER=1 DHCP6_CLIENT=1 DHCP6_SERVER=1 make -f examples/Makefile-cc2538 || die
@@ -58,7 +57,6 @@ set -x
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-cli-mtd || die
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp || die
 
-    git checkout -- . || die
     git clean -xfd || die
     ./bootstrap || die
     COMMISSIONER=1 JOINER=1 DHCP6_CLIENT=1 DHCP6_SERVER=1 make -f examples/Makefile-da15000 || die
@@ -66,7 +64,6 @@ set -x
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-cli-mtd || die
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp || die
 
-    git checkout -- . || die
     git clean -xfd || die
     ./bootstrap || die
     COMMISSIONER=1 JOINER=1 DHCP6_CLIENT=1 DHCP6_SERVER=1 make -f examples/Makefile-nrf52840 || die
@@ -78,7 +75,6 @@ set -x
 [ $BUILD_TARGET != arm-gcc54 ] || {
     export PATH=/tmp/gcc-arm-none-eabi-5_4-2016q3/bin:$PATH || die
 
-    git checkout -- . || die
     git clean -xfd || die
     ./bootstrap || die
     COMMISSIONER=1 JOINER=1 DHCP6_CLIENT=1 DHCP6_SERVER=1 make -f examples/Makefile-cc2538 || die
@@ -86,7 +82,6 @@ set -x
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-cli-mtd || die
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp || die
 
-    git checkout -- . || die
     git clean -xfd || die
     ./bootstrap || die
     COMMISSIONER=1 JOINER=1 DHCP6_CLIENT=1 DHCP6_SERVER=1 make -f examples/Makefile-da15000 || die
@@ -94,7 +89,6 @@ set -x
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-cli-mtd || die
     arm-none-eabi-size  output/bin/arm-none-eabi-ot-ncp || die
 
-    git checkout -- . || die
     git clean -xfd || die
     ./bootstrap || die
     COMMISSIONER=1 JOINER=1 DHCP6_CLIENT=1 DHCP6_SERVER=1 make -f examples/Makefile-nrf52840 || die

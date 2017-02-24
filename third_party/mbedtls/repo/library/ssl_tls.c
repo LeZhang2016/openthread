@@ -3487,6 +3487,8 @@ static int ssl_parse_record_header( mbedtls_ssl_context *ssl )
                         ssl->in_msgtype,
                         major_ver, minor_ver, ssl->in_msglen ) );
 
+    MBEDTLS_SSL_DEBUG_BUF( 3, "output message", ssl->in_msg, ssl->in_msglen );
+
     /* Check record type */
     if( ssl->in_msgtype != MBEDTLS_SSL_MSG_HANDSHAKE &&
         ssl->in_msgtype != MBEDTLS_SSL_MSG_ALERT &&
@@ -3522,6 +3524,7 @@ static int ssl_parse_record_header( mbedtls_ssl_context *ssl )
     if( ssl->in_msglen > MBEDTLS_SSL_BUFFER_LEN
                          - (size_t)( ssl->in_msg - ssl->in_buf ) )
     {
+        MBEDTLS_SSL_DEBUG_MSG( 1, ( ">>> the 1" ) );
         MBEDTLS_SSL_DEBUG_MSG( 1, ( "bad message length" ) );
         return( MBEDTLS_ERR_SSL_INVALID_RECORD );
     }
@@ -3532,6 +3535,7 @@ static int ssl_parse_record_header( mbedtls_ssl_context *ssl )
         if( ssl->in_msglen < 1 ||
             ssl->in_msglen > MBEDTLS_SSL_MAX_CONTENT_LEN )
         {
+            MBEDTLS_SSL_DEBUG_MSG( 1, ( ">>> the 2" ) );
             MBEDTLS_SSL_DEBUG_MSG( 1, ( "bad message length" ) );
             return( MBEDTLS_ERR_SSL_INVALID_RECORD );
         }
@@ -3540,6 +3544,7 @@ static int ssl_parse_record_header( mbedtls_ssl_context *ssl )
     {
         if( ssl->in_msglen < ssl->transform_in->minlen )
         {
+            MBEDTLS_SSL_DEBUG_MSG( 1, ( ">>> the 3 inmsglen %d, %d", ssl->in_msglen, ssl->transform_in->minlen) );
             MBEDTLS_SSL_DEBUG_MSG( 1, ( "bad message length" ) );
             return( MBEDTLS_ERR_SSL_INVALID_RECORD );
         }
@@ -3548,6 +3553,7 @@ static int ssl_parse_record_header( mbedtls_ssl_context *ssl )
         if( ssl->minor_ver == MBEDTLS_SSL_MINOR_VERSION_0 &&
             ssl->in_msglen > ssl->transform_in->minlen + MBEDTLS_SSL_MAX_CONTENT_LEN )
         {
+            MBEDTLS_SSL_DEBUG_MSG( 1, ( ">>> the 4" ) );
             MBEDTLS_SSL_DEBUG_MSG( 1, ( "bad message length" ) );
             return( MBEDTLS_ERR_SSL_INVALID_RECORD );
         }
@@ -3561,6 +3567,7 @@ static int ssl_parse_record_header( mbedtls_ssl_context *ssl )
             ssl->in_msglen > ssl->transform_in->minlen +
                              MBEDTLS_SSL_MAX_CONTENT_LEN + 256 )
         {
+            MBEDTLS_SSL_DEBUG_MSG( 1, ( ">>> the 5" ) );
             MBEDTLS_SSL_DEBUG_MSG( 1, ( "bad message length" ) );
             return( MBEDTLS_ERR_SSL_INVALID_RECORD );
         }
@@ -3607,6 +3614,24 @@ static int ssl_parse_record_header( mbedtls_ssl_context *ssl )
             MBEDTLS_SSL_DEBUG_MSG( 1, ( "record from another epoch: "
                                         "expected %d, received %d",
                                         ssl->in_epoch, rec_epoch ) );
+
+#if defined(MBEDTLS_SSL_SRV_C)
+            /*
+             * Check for an epoch 0 Change Cipher Spec retransmission.
+             */
+            if( ssl->conf->endpoint == MBEDTLS_SSL_IS_SERVER &&
+                ssl->state == MBEDTLS_SSL_HANDSHAKE_OVER &&
+                rec_epoch == 0 &&
+                ssl->in_epoch == 1 &&
+                ssl->in_msgtype == MBEDTLS_SSL_MSG_HANDSHAKE &&
+                ssl->in_left > 13 &&
+                ssl->in_buf[13] == MBEDTLS_SSL_HS_CLIENT_KEY_EXCHANGE )
+            {
+                MBEDTLS_SSL_DEBUG_MSG( 1, ( "possible Client Key Exchange "
+                                            "retransmission" ) );
+                return( mbedtls_ssl_resend( ssl ) );
+            }
+#endif
 
 #if defined(MBEDTLS_SSL_DTLS_CLIENT_PORT_REUSE) && defined(MBEDTLS_SSL_SRV_C)
             /*
@@ -3737,8 +3762,8 @@ int mbedtls_ssl_read_record( mbedtls_ssl_context *ssl )
 
         ret = mbedtls_ssl_handle_message_type( ssl );
 
-    } while( MBEDTLS_ERR_SSL_NON_FATAL == ret );
-
+    } while( MBEDTLS_ERR_SSL_NON_FATAL == ret ||
+          ( MBEDTLS_ERR_SSL_WANT_READ == ret && ssl->in_msglen ) );
     if( 0 != ret )
     {
         MBEDTLS_SSL_DEBUG_RET( 1, ( "mbedtls_ssl_handle_message_type" ), ret );

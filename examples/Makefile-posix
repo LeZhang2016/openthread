@@ -89,14 +89,10 @@ configure_OPTIONS               = \
     --with-examples=posix         \
     --with-platform-info=POSIX    \
     --enable-commissioner         \
-    --enable-joiner
+    --enable-joiner               \
+    --enable-border-agent         \
     $(NULL)
 
-ifeq ($(COVERAGE),1)
-configure_OPTIONS              += --enable-coverage --enable-commissioner --enable-joiner --enable-dhcp6-client --enable-dhcp6-server
-else
-configure_OPTIONS              +=
-endif
 
 # If the user has asserted DEBUG, alter the configuration options
 # accordingly.
