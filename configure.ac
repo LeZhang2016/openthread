@@ -1143,6 +1143,7 @@ tools/spinel-cli/Makefile
 tools/spinel-cli/spinel/Makefile
 tests/Makefile
 tests/scripts/Makefile
+tests/scripts/thread-cert/Makefile
 tests/unit/Makefile
 doc/Makefile
 ])
