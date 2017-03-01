@@ -814,7 +814,7 @@ bool Message::IsLinkSecurityEnabled(void) const
 
 void Message::SetLinkSecurityEnabled(bool aLinkSecurityEnabled)
 {
-    mInfo.mLinkSecurity = false;
+    mInfo.mLinkSecurity = aLinkSecurityEnabled;
 }
 
 uint16_t Message::UpdateChecksum(uint16_t aChecksum, uint16_t aOffset, uint16_t aLength) const

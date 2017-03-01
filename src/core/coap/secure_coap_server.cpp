@@ -112,6 +112,7 @@ void SecureServer::Receive(void *aContext, Message &aMessage, const Ip6::Message
 void SecureServer::Receive(Message &aMessage, const Ip6::MessageInfo &aMessageInfo)
 {
     otLogFuncEntry();
+    otLogInfoMeshCoP(">>>>>>>>>>>>>>>Receive");
 
     if (!mNetif.GetDtls().IsStarted())
     {

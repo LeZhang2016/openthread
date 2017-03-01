@@ -3487,7 +3487,7 @@ static int ssl_parse_record_header( mbedtls_ssl_context *ssl )
                         ssl->in_msgtype,
                         major_ver, minor_ver, ssl->in_msglen ) );
 
-    MBEDTLS_SSL_DEBUG_BUF( 3, "output message", ssl->in_msg, ssl->in_msglen );
+    // MBEDTLS_SSL_DEBUG_BUF( 3, "output message", ssl->in_msg, ssl->in_msglen );
 
     /* Check record type */
     if( ssl->in_msgtype != MBEDTLS_SSL_MSG_HANDSHAKE &&
@@ -4878,7 +4878,7 @@ static void ssl_calc_finished_tls_sha256(
 
     mbedtls_sha256_init( &sha256 );
 
-    MBEDTLS_SSL_DEBUG_MSG( 2, ( "=> calc  finished tls sha256" ) );
+    // MBEDTLS_SSL_DEBUG_MSG( 2, ( "=> calc  finished tls sha256" ) );
 
     mbedtls_sha256_clone( &sha256, &ssl->handshake->fin_sha256 );
 
@@ -4902,13 +4902,14 @@ static void ssl_calc_finished_tls_sha256(
     ssl->handshake->tls_prf( session->master, 48, sender,
                              padbuf, 32, buf, len );
 
-    MBEDTLS_SSL_DEBUG_BUF( 3, "calc finished result", buf, len );
+    MBEDTLS_SSL_DEBUG_BUF( 3, "master secret", session->master, 48 );
+    // MBEDTLS_SSL_DEBUG_BUF( 3, "calc finished result", buf, len );
 
     mbedtls_sha256_free( &sha256 );
 
     mbedtls_zeroize(  padbuf, sizeof(  padbuf ) );
 
-    MBEDTLS_SSL_DEBUG_MSG( 2, ( "<= calc  finished" ) );
+    // MBEDTLS_SSL_DEBUG_MSG( 2, ( "<= calc  finished" ) );
 }
 #endif /* MBEDTLS_SHA256_C */
 
@@ -5179,7 +5180,7 @@ int mbedtls_ssl_parse_finished( mbedtls_ssl_context *ssl )
     unsigned int hash_len;
     unsigned char buf[SSL_MAX_HASH_LEN];
 
-    MBEDTLS_SSL_DEBUG_MSG( 2, ( "=> parse finished" ) );
+    // MBEDTLS_SSL_DEBUG_MSG( 2, ( "=> parse finished" ) );
 
     ssl->handshake->calc_finished( ssl, buf, ssl->conf->endpoint ^ 1 );
 
@@ -5241,7 +5242,7 @@ int mbedtls_ssl_parse_finished( mbedtls_ssl_context *ssl )
         mbedtls_ssl_recv_flight_completed( ssl );
 #endif
 
-    MBEDTLS_SSL_DEBUG_MSG( 2, ( "<= parse finished" ) );
+    // MBEDTLS_SSL_DEBUG_MSG( 2, ( "<= parse finished" ) );
 
     return( 0 );
 }

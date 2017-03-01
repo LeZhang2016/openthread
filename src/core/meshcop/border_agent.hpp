@@ -138,6 +138,8 @@ private:
     Ip6::Address mJoinerRouterAddr;
     uint16_t mJoinerRouterUdpPort;
     ThreadNetif &mNetif;
+    uint8_t mToken[8];
+    uint8_t mTokenLength;
 
 
 };
