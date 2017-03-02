@@ -262,7 +262,7 @@ void BorderAgent::HandleLeaderPetitionResponse(Coap::Header &aHeader, Message &a
 
     otLogFuncEntry();
     VerifyOrExit(aResult == kThreadError_None && aHeader.GetCode() == kCoapResponseChanged, ;);
-    otLogInfoMeshCoP("received petition response from leader");
+    otLogCritMeshCoP("received petition response from leader");
 
     responseHeader.Init(kCoapTypeAcknowledgment, kCoapResponseChanged);
     responseHeader.SetToken(mToken, mTokenLength);
@@ -293,7 +293,7 @@ void BorderAgent::HandleLeaderPetitionResponse(Coap::Header &aHeader, Message &a
 
     SuccessOrExit(error = mNetif.GetSecureCoapServer().SendMessage(*message, messageInfo));
 
-    otLogInfoMeshCoP("sent Petition response to commissioner");
+    otLogCritMeshCoP("sent Petition response to commissioner");
 
 exit:
     (void)aMessageInfo;
@@ -376,7 +376,7 @@ ThreadError BorderAgent::SendLeaderKeepAlive(Message &aMessage, const Ip6::Messa
     SuccessOrExit(error = mNetif.GetCoapClient().SendMessage(aMessage, aMessageInfo,
                                                              BorderAgent::HandleLeaderKeepAliveResponse, this));
 
-    otLogInfoMeshCoP("sent keep alive to leader");
+    otLogCritMeshCoP("sent keep alive to leader");
 
 exit:
     (void)aMessageInfo;
@@ -403,7 +403,7 @@ void BorderAgent::HandleLeaderKeepAliveResponse(Coap::Header &aHeader, Message &
 
     otLogFuncEntry();
     VerifyOrExit(aResult == kThreadError_None && aHeader.GetCode() == kCoapResponseChanged, ;);
-    otLogInfoMeshCoP("received keep alive response from leader");
+    otLogCritMeshCoP("received keep alive response from leader");
 
     responseHeader.Init(kCoapTypeAcknowledgment, kCoapResponseChanged);
     responseHeader.SetToken(mToken, mTokenLength);
@@ -434,7 +434,7 @@ void BorderAgent::HandleLeaderKeepAliveResponse(Coap::Header &aHeader, Message &
 
     SuccessOrExit(error = mNetif.GetSecureCoapServer().SendMessage(*message, messageInfo));
 
-    otLogInfoMeshCoP("sent keep alive response to commissioner");
+    otLogCritMeshCoP("sent keep alive response to commissioner");
 
 exit:
     
@@ -467,7 +467,7 @@ void BorderAgent::HandleRelayTransmit(Coap::Header &aHeader, Message &aMessage,
     otLogFuncEntry();
     // VerifyOrExit(aHeader.GetType() == kCoapTypeNonConfirmable &&
     //              aHeader.GetCode() == kCoapRequestPost, ;);
-    otLogInfoMeshCoP("received relay transmit from commissioner");
+    otLogCritMeshCoP("received relay transmit from commissioner");
 
     header.Init(kCoapTypeNonConfirmable, kCoapRequestPost);
     header.AppendUriPathOptions(OPENTHREAD_URI_RELAY_TX);
@@ -495,7 +495,7 @@ void BorderAgent::HandleRelayTransmit(Coap::Header &aHeader, Message &aMessage,
     messageInfo.SetPeerAddr(mJoinerRouterAddr);
     messageInfo.SetPeerPort(mJoinerRouterUdpPort);
 
-    otLogInfoMeshCoP("send relay transmit to joiner router");
+    otLogCritMeshCoP("send relay transmit to joiner router");
 
     SuccessOrExit(error = mNetif.GetCoapServer().SendMessage(*message, messageInfo));
 
@@ -583,7 +583,7 @@ ThreadError BorderAgent::SendLeaderMgmtCommissionerSet(Message &aMessage, const 
     SuccessOrExit(error = mNetif.GetCoapClient().SendMessage(aMessage, aMessageInfo,
                                                              BorderAgent::HandleLeaderMgmtCommissionerSetResponse, this));
 
-    otLogInfoMeshCoP("sent MGMT_COMMISSIONER_SET to leader");
+    otLogCritMeshCoP("sent MGMT_COMMISSIONER_SET to leader");
 
 exit:
     (void) aMessageInfo;
@@ -675,13 +675,13 @@ void BorderAgent::HandleRelayReceive(Coap::Header &aHeader, Message &aMessage,
     // VerifyOrExit(aHeader.GetType() == kCoapTypeNonConfirmable &&
     //              aHeader.GetCode() == kCoapRequestPost, ;);
 
-    otLogInfoMeshCoP("received Relay Recevie from Joiner Router");
+    otLogCritMeshCoP("received Relay Recevie from Joiner Router");
     
     //Records the peer address and peer udp port
     mJoinerRouterAddr = aMessageInfo.GetSockAddr();
     mJoinerRouterUdpPort = aMessageInfo.GetSockPort();
 
-    otLogInfoMeshCoP("send Relay Receive to Commissioner");
+    otLogCritMeshCoP("send Relay Receive to Commissioner");
 
     header.Init(kCoapTypeConfirmable, kCoapRequestPost);
     header.SetToken(aHeader.GetToken(), aHeader.GetTokenLength());
@@ -731,7 +731,7 @@ ThreadError BorderAgent::SendCommissionerRelayReceive(Message &aMessage, const I
 
     SuccessOrExit(error = mNetif.GetSecureCoapServer().SendMessage(aMessage, aMessageInfo));
 
-    otLogInfoMeshCoP("sent Realy Receive to Commissioner");
+    otLogCritMeshCoP("sent Realy Receive to Commissioner");
 
 exit:
     (void) aMessageInfo;
