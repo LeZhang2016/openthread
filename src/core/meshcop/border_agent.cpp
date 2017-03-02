@@ -685,7 +685,7 @@ void BorderAgent::HandleRelayReceive(Coap::Header &aHeader, Message &aMessage,
 
     header.Init(kCoapTypeConfirmable, kCoapRequestPost);
     header.SetToken(aHeader.GetToken(), aHeader.GetTokenLength());
-    header.AppendUriPathOptions(OPENTHREAD_URI_COMMISSIONER_SET);
+    header.AppendUriPathOptions(OPENTHREAD_URI_RELAY_RX);
     header.SetPayloadMarker();
     
     VerifyOrExit((message = mNetif.GetSecureCoapServer().NewMeshCoPMessage(header)) != NULL, error = kThreadError_NoBufs);
@@ -735,7 +735,7 @@ ThreadError BorderAgent::SendCommissionerRelayReceive(Message &aMessage, const I
 
 exit:
     (void) aMessageInfo;
-    aMessage.Free();
+    // aMessage.Free();
     otLogFuncExitErr(error);
     return error;
 }
