@@ -85,7 +85,7 @@ void PanIdQueryServer::HandleQuery(Coap::Header &aHeader, Message &aMessage, con
     memset(&responseInfo.mSockAddr, 0, sizeof(responseInfo.mSockAddr));
     SuccessOrExit(mNetif.GetCoapServer().SendEmptyAck(aHeader, responseInfo));
 
-    otLogInfoMeshCoP("sent panid query response");
+    otLogCritMeshCoP("sent panid query response");
 
 exit:
     return;
@@ -143,7 +143,7 @@ ThreadError PanIdQueryServer::SendConflict(void)
     messageInfo.SetPeerPort(kCoapUdpPort);
     SuccessOrExit(error = mNetif.GetCoapClient().SendMessage(*message, messageInfo));
 
-    otLogInfoMeshCoP("sent panid conflict");
+    otLogCritMeshCoP("sent panid conflict");
 
 exit:
 

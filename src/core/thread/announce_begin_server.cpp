@@ -121,7 +121,7 @@ void AnnounceBeginServer::HandleRequest(Coap::Header &aHeader, Message &aMessage
     memset(&responseInfo.mSockAddr, 0, sizeof(responseInfo.mSockAddr));
     SuccessOrExit(mNetif.GetCoapServer().SendEmptyAck(aHeader, responseInfo));
 
-    otLogInfoMeshCoP("sent announce begin response");
+    otLogCritMeshCoP("sent announce begin response");
 
 exit:
     return;

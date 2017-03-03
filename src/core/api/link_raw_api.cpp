@@ -47,7 +47,7 @@ ThreadError otLinkRawSetEnable(otInstance *aInstance, bool aEnabled)
 
     VerifyOrExit(!aInstance->mThreadNetif.IsUp(), error = kThreadError_InvalidState);
 
-    otLogInfoPlat("LinkRaw Enabled=%d", aEnabled ? 1 : 0);
+    otLogCritPlat("LinkRaw Enabled=%d", aEnabled ? 1 : 0);
 
     aInstance->mLinkRaw.SetEnabled(aEnabled);
 
@@ -113,7 +113,7 @@ ThreadError otLinkRawSetPromiscuous(otInstance *aInstance, bool aEnable)
 
     VerifyOrExit(aInstance->mLinkRaw.IsEnabled(), error = kThreadError_InvalidState);
 
-    otLogInfoPlat("LinkRaw Promiscuous=%d", aEnabled ? 1 : 0);
+    otLogCritPlat("LinkRaw Promiscuous=%d", aEnabled ? 1 : 0);
 
     otPlatRadioSetPromiscuous(aInstance, aEnable);
 

@@ -74,7 +74,7 @@ void Leader::HandlePetition(Coap::Header &aHeader, Message &aMessage, const Ip6:
     CommissionerIdTlv commissionerId;
     StateTlv::State state = StateTlv::kReject;
 
-    otLogInfoMeshCoP("received petition");
+    otLogCritMeshCoP("received petition");
 
     SuccessOrExit(Tlv::GetTlv(aMessage, Tlv::kCommissionerId, sizeof(commissionerId), commissionerId));
     VerifyOrExit(commissionerId.IsValid(), ;);
@@ -138,7 +138,7 @@ ThreadError Leader::SendPetitionResponse(const Coap::Header &aRequestHeader, con
 
     SuccessOrExit(error = mNetif.GetCoapServer().SendMessage(*message, aMessageInfo));
 
-    otLogInfoMeshCoP("sent petition response");
+    otLogCritMeshCoP("sent petition response");
 
 exit:
 
@@ -164,7 +164,7 @@ void Leader::HandleKeepAlive(Coap::Header &aHeader, Message &aMessage, const Ip6
     CommissionerSessionIdTlv sessionId;
     StateTlv::State responseState;
 
-    otLogInfoMeshCoP("received keep alive");
+    otLogCritMeshCoP("received keep alive");
 
     SuccessOrExit(Tlv::GetTlv(aMessage, Tlv::kState, sizeof(state), state));
     VerifyOrExit(state.IsValid(),);
@@ -215,7 +215,7 @@ ThreadError Leader::SendKeepAliveResponse(const Coap::Header &aRequestHeader, co
 
     SuccessOrExit(error = mNetif.GetCoapServer().SendMessage(*message, aMessageInfo));
 
-    otLogInfoMeshCoP("sent keep alive response");
+    otLogCritMeshCoP("sent keep alive response");
 
 exit:
 
@@ -244,7 +244,7 @@ ThreadError Leader::SendDatasetChanged(const Ip6::Address &aAddress)
     messageInfo.SetPeerPort(kCoapUdpPort);
     SuccessOrExit(error = mNetif.GetCoapClient().SendMessage(*message, messageInfo));
 
-    otLogInfoMeshCoP("sent dataset changed");
+    otLogCritMeshCoP("sent dataset changed");
 
 exit:
 
@@ -297,7 +297,7 @@ void Leader::ResignCommissioner(void)
     mNetif.GetNetworkDataLeader().SetCommissioningData(reinterpret_cast<uint8_t *>(&mCommissionerSessionId),
                                                        sizeof(Tlv) + mCommissionerSessionId.GetLength());
 
-    otLogInfoMeshCoP("commissioner inactive");
+    otLogCritMeshCoP("commissioner inactive");
 }
 
 }  // namespace MeshCoP

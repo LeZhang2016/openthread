@@ -315,7 +315,7 @@ void Joiner::SendJoinerFinalize(void)
 
     mNetif.GetSecureCoapClient().SendMessage(*message, Joiner::HandleJoinerFinalizeResponse, this);
 
-    otLogInfoMeshCoP("Sent joiner finalize");
+    otLogCritMeshCoP("Sent joiner finalize");
 
 exit:
 
@@ -354,7 +354,7 @@ void Joiner::HandleJoinerFinalizeResponse(Coap::Header *aHeader, Message *aMessa
     mState = kStateEntrust;
     mTimer.Start(kTimeout);
 
-    otLogInfoMeshCoP("received joiner finalize response %d", static_cast<uint8_t>(state.GetState()));
+    otLogCritMeshCoP("received joiner finalize response %d", static_cast<uint8_t>(state.GetState()));
     otLogCertMeshCoP("[THCI] direction=recv | type=JOIN_FIN.rsp");
 
 exit:
@@ -387,7 +387,7 @@ void Joiner::HandleJoinerEntrust(Coap::Header &aHeader, Message &aMessage, const
                  aHeader.GetType() == kCoapTypeConfirmable &&
                  aHeader.GetCode() == kCoapRequestPost, error = kThreadError_Drop);
 
-    otLogInfoMeshCoP("Received joiner entrust");
+    otLogCritMeshCoP("Received joiner entrust");
     otLogCertMeshCoP("[THCI] direction=recv | type=JOIN_ENT.ntf");
 
     SuccessOrExit(error = Tlv::GetTlv(aMessage, Tlv::kNetworkMasterKey, sizeof(masterKey), masterKey));
@@ -414,7 +414,7 @@ void Joiner::HandleJoinerEntrust(Coap::Header &aHeader, Message &aMessage, const
     mNetif.GetMac().SetExtendedPanId(extendedPanId.GetExtendedPanId());
     mNetif.GetMac().SetNetworkName(networkName.GetNetworkName());
 
-    otLogInfoMeshCoP("join success!");
+    otLogCritMeshCoP("join success!");
 
     // Send dummy response.
     SendJoinerEntrustResponse(aHeader, aMessageInfo);
@@ -448,9 +448,9 @@ void Joiner::SendJoinerEntrustResponse(const Coap::Header &aRequestHeader,
 
     mState = kStateJoined;
 
-    otLogInfoArp("Sent Joiner Entrust response");
+    otLogCritArp("Sent Joiner Entrust response");
 
-    otLogInfoMeshCoP("Sent joiner entrust response length = %d", message->GetLength());
+    otLogCritMeshCoP("Sent joiner entrust response length = %d", message->GetLength());
     otLogCertMeshCoP("[THCI] direction=send | type=JOIN_ENT.rsp");
 
 exit:

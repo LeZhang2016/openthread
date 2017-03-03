@@ -152,7 +152,7 @@ void AddressResolver::InvalidateCacheEntry(Cache &aEntry)
 
     aEntry.mAge = kCacheEntries - 1;
     aEntry.mState = Cache::kStateInvalid;
-    otLogInfoArp("cache entry removed!");
+    otLogCritArp("cache entry removed!");
 }
 
 ThreadError AddressResolver::Resolve(const Ip6::Address &aEid, uint16_t &aRloc16)
@@ -246,7 +246,7 @@ ThreadError AddressResolver::SendAddressQuery(const Ip6::Address &aEid)
 
     SuccessOrExit(error = mNetif.GetCoapClient().SendMessage(*message, messageInfo));
 
-    otLogInfoArp("Sent address query");
+    otLogCritArp("Sent address query");
 
 exit:
 
@@ -283,7 +283,7 @@ void AddressResolver::HandleAddressNotification(Coap::Header &aHeader, Message &
     VerifyOrExit(aHeader.GetType() == kCoapTypeConfirmable &&
                  aHeader.GetCode() == kCoapRequestPost, ;);
 
-    otLogInfoArp("Received address notification from %04x", HostSwap16(aMessageInfo.GetPeerAddr().mFields.m16[7]));
+    otLogCritArp("Received address notification from %04x", HostSwap16(aMessageInfo.GetPeerAddr().mFields.m16[7]));
 
     SuccessOrExit(ThreadTlv::GetTlv(aMessage, ThreadTlv::kTarget, sizeof(targetTlv), targetTlv));
     VerifyOrExit(targetTlv.IsValid(), ;);
@@ -341,7 +341,7 @@ void AddressResolver::HandleAddressNotification(Coap::Header &aHeader, Message &
 
             if (mNetif.GetCoapServer().SendEmptyAck(aHeader, aMessageInfo) == kThreadError_None)
             {
-                otLogInfoArp("Sent address notification acknowledgment");
+                otLogCritArp("Sent address notification acknowledgment");
             }
 
             mNetif.GetMeshForwarder().HandleResolved(*targetTlv.GetTarget(), kThreadError_None);
@@ -387,7 +387,7 @@ ThreadError AddressResolver::SendAddressError(const ThreadTargetTlv &aTarget, co
 
     SuccessOrExit(error = mNetif.GetCoapClient().SendMessage(*message, messageInfo));
 
-    otLogInfoArp("Sent address error");
+    otLogCritArp("Sent address error");
 
 exit:
 
@@ -421,13 +421,13 @@ void AddressResolver::HandleAddressError(Coap::Header &aHeader, Message &aMessag
     VerifyOrExit(aHeader.GetType() == kCoapTypeConfirmable &&
                  aHeader.GetCode() == kCoapRequestPost, error = kThreadError_Drop);
 
-    otLogInfoArp("Received address error notification");
+    otLogCritArp("Received address error notification");
 
     if (!aMessageInfo.GetSockAddr().IsMulticast())
     {
         if (mNetif.GetCoapServer().SendEmptyAck(aHeader, aMessageInfo) == kThreadError_None)
         {
-            otLogInfoArp("Sent address error notification acknowledgment");
+            otLogCritArp("Sent address error notification acknowledgment");
         }
     }
 
@@ -502,7 +502,7 @@ void AddressResolver::HandleAddressQuery(Coap::Header &aHeader, Message &aMessag
     VerifyOrExit(aHeader.GetType() == kCoapTypeNonConfirmable &&
                  aHeader.GetCode() == kCoapRequestPost, ;);
 
-    otLogInfoArp("Received address query from %04x", HostSwap16(aMessageInfo.GetPeerAddr().mFields.m16[7]));
+    otLogCritArp("Received address query from %04x", HostSwap16(aMessageInfo.GetPeerAddr().mFields.m16[7]));
 
     SuccessOrExit(ThreadTlv::GetTlv(aMessage, ThreadTlv::kTarget, sizeof(targetTlv), targetTlv));
     VerifyOrExit(targetTlv.IsValid(), ;);
@@ -584,7 +584,7 @@ void AddressResolver::SendAddressQueryResponse(const ThreadTargetTlv &aTargetTlv
 
     SuccessOrExit(error = mNetif.GetCoapClient().SendMessage(*message, messageInfo));
 
-    otLogInfoArp("Sent address notification");
+    otLogCritArp("Sent address notification");
 
 exit:
 

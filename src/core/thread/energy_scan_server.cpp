@@ -107,7 +107,7 @@ void EnergyScanServer::HandleRequest(Coap::Header &aHeader, Message &aMessage, c
     memset(&responseInfo.mSockAddr, 0, sizeof(responseInfo.mSockAddr));
     SuccessOrExit(mNetif.GetCoapServer().SendEmptyAck(aHeader, responseInfo));
 
-    otLogInfoMeshCoP("sent energy scan query response");
+    otLogCritMeshCoP("sent energy scan query response");
 
 exit:
     return;
@@ -204,7 +204,7 @@ ThreadError EnergyScanServer::SendReport(void)
     messageInfo.SetPeerPort(kCoapUdpPort);
     SuccessOrExit(error = mNetif.GetCoapClient().SendMessage(*message, messageInfo));
 
-    otLogInfoMeshCoP("sent scan results");
+    otLogCritMeshCoP("sent scan results");
 
 exit:
 
