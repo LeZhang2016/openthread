@@ -388,7 +388,7 @@ ThreadError Mle::Discover(uint32_t aScanChannels, uint16_t aScanDuration, uint16
 
     mIsDiscoverInProgress = true;
 
-    otLogCritMle("Sent discovery request");
+    otLogWarnMle("Sent discovery request");
 
 exit:
 
@@ -513,7 +513,7 @@ ThreadError Mle::SetStateDetached(void)
     mNetif.GetIp6().SetForwardingEnabled(false);
     mNetif.GetIp6().mMpl.SetTimerExpirations(0);
 
-    otLogCritMle("Mode -> Detached");
+    otLogWarnMle("Mode -> Detached");
     return kThreadError_None;
 }
 
@@ -554,7 +554,7 @@ ThreadError Mle::SetStateChild(uint16_t aRloc16)
         mNetif.GetAnnounceBeginServer().SendAnnounce(1 << mPreviousChannel);
     }
 
-    otLogCritMle("Mode -> Child");
+    otLogWarnMle("Mode -> Child");
     return kThreadError_None;
 }
 
@@ -1443,7 +1443,7 @@ void Mle::HandleDelayedResponseTimer(void)
             // Send the message.
             if (SendMessage(*message, delayedResponse.GetDestination()) == kThreadError_None)
             {
-                otLogCritMle("Sent delayed response");
+                otLogWarnMle("Sent delayed response");
             }
             else
             {
@@ -1508,11 +1508,11 @@ ThreadError Mle::SendParentRequest(void)
 
     if ((scanMask & ScanMaskTlv::kEndDeviceFlag) == 0)
     {
-        otLogCritMle("Sent parent request to routers");
+        otLogWarnMle("Sent parent request to routers");
     }
     else
     {
-        otLogCritMle("Sent parent request to all devices");
+        otLogWarnMle("Sent parent request to all devices");
     }
 
 exit:
@@ -1563,7 +1563,7 @@ ThreadError Mle::SendChildIdRequest(void)
     destination.mFields.m16[0] = HostSwap16(0xfe80);
     destination.SetIid(mParentCandidate.mMacAddr);
     SuccessOrExit(error = SendMessage(*message, destination));
-    otLogCritMle("Sent Child ID Request");
+    otLogWarnMle("Sent Child ID Request");
 
     if ((mDeviceMode & ModeTlv::kModeRxOnWhenIdle) == 0)
     {
@@ -1602,7 +1602,7 @@ ThreadError Mle::SendDataRequest(const Ip6::Address &aDestination, const uint8_t
         SuccessOrExit(error = SendMessage(*message, aDestination));
     }
 
-    otLogCritMle("Sent Data Request");
+    otLogWarnMle("Sent Data Request");
 
 exit:
 
@@ -1678,7 +1678,7 @@ ThreadError Mle::SendChildUpdateRequest(void)
     destination.SetIid(mParent.mMacAddr);
     SuccessOrExit(error = SendMessage(*message, destination));
 
-    otLogCritMle("Sent Child Update Request to parent");
+    otLogWarnMle("Sent Child Update Request to parent");
 
     if ((mDeviceMode & ModeTlv::kModeRxOnWhenIdle) == 0)
     {
@@ -1746,7 +1746,7 @@ ThreadError Mle::SendChildUpdateResponse(const uint8_t *aTlvs, uint8_t aNumTlvs,
     destination.SetIid(mParent.mMacAddr);
     SuccessOrExit(error = SendMessage(*message, destination));
 
-    otLogCritMle("Sent Child Update Response to parent");
+    otLogWarnMle("Sent Child Update Response to parent");
 
 exit:
 
@@ -1801,7 +1801,7 @@ ThreadError Mle::SendAnnounce(uint8_t aChannel, bool aOrphanAnnounce)
     destination.mFields.m16[7] = HostSwap16(0x0001);
     SuccessOrExit(error = SendMessage(*message, destination));
 
-    otLogCritMle("sent announce on channel %d", aChannel);
+    otLogWarnMle("sent announce on channel %d", aChannel);
 
 exit:
 
@@ -2218,7 +2218,7 @@ ThreadError Mle::HandleAdvertisement(const Message &aMessage, const Ip6::Message
     SuccessOrExit(error = Tlv::GetTlv(aMessage, Tlv::kLeaderData, sizeof(leaderData), leaderData));
     VerifyOrExit(leaderData.IsValid(), error = kThreadError_Parse);
 
-    otLogCritMle("Received advertisement from %04x", sourceAddress.GetRloc16());
+    otLogWarnMle("Received advertisement from %04x", sourceAddress.GetRloc16());
 
     if (mDeviceState != kDeviceStateDetached)
     {
@@ -2297,7 +2297,7 @@ ThreadError Mle::HandleDataResponse(const Message &aMessage, const Ip6::MessageI
 {
     ThreadError error;
 
-    otLogCritMle("Received Data Response");
+    otLogWarnMle("Received Data Response");
 
     error = HandleLeaderData(aMessage, aMessageInfo);
 
@@ -2523,7 +2523,7 @@ ThreadError Mle::HandleParentResponse(const Message &aMessage, const Ip6::Messag
     ChallengeTlv challenge;
     int8_t diff;
 
-    otLogCritMle("Received Parent Response");
+    otLogWarnMle("Received Parent Response");
 
     // Response
     SuccessOrExit(error = Tlv::GetTlv(aMessage, Tlv::kResponse, sizeof(response), response));
@@ -2664,7 +2664,7 @@ ThreadError Mle::HandleChildIdResponse(const Message &aMessage, const Ip6::Messa
     uint16_t offset;
     uint8_t numRouters = 0;
 
-    otLogCritMle("Received Child ID Response");
+    otLogWarnMle("Received Child ID Response");
 
     VerifyOrExit(mParentRequestState == kChildIdRequest, ;);
 
@@ -2798,7 +2798,7 @@ ThreadError Mle::HandleChildUpdateRequest(const Message &aMessage, const Ip6::Me
     uint8_t tlvs[kMaxResponseTlvs] = {};
     uint8_t numTlvs = 0;
 
-    otLogCritMle("Received Child Update Request from parent");
+    otLogWarnMle("Received Child Update Request from parent");
 
     // Source Address
     SuccessOrExit(error = Tlv::GetTlv(aMessage, Tlv::kSourceAddress, sizeof(sourceAddress), sourceAddress));
@@ -2871,7 +2871,7 @@ ThreadError Mle::HandleChildUpdateResponse(const Message &aMessage, const Ip6::M
     SourceAddressTlv sourceAddress;
     TimeoutTlv timeout;
 
-    otLogCritMle("Received Child Update Response from parent");
+    otLogWarnMle("Received Child Update Response from parent");
 
     // Status
     if (Tlv::GetTlv(aMessage, Tlv::kStatus, sizeof(status), status) == kThreadError_None)
@@ -2973,7 +2973,7 @@ ThreadError Mle::HandleAnnounce(const Message &aMessage, const Ip6::MessageInfo 
     const MeshCoP::Timestamp *localTimestamp;
     PanIdTlv panid;
 
-    otLogCritMle("Received announce");
+    otLogWarnMle("Received announce");
 
     SuccessOrExit(Tlv::GetTlv(aMessage, Tlv::kChannel, sizeof(channel), channel));
     VerifyOrExit(channel.IsValid(),);
@@ -3020,7 +3020,7 @@ ThreadError Mle::HandleDiscoveryResponse(const Message &aMessage, const Ip6::Mes
     uint16_t offset;
     uint16_t end;
 
-    otLogCritMle("Handle discovery response");
+    otLogWarnMle("Handle discovery response");
 
     VerifyOrExit(mIsDiscoverInProgress, error = kThreadError_Drop);
 

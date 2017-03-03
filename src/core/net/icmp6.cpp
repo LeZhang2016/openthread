@@ -97,7 +97,7 @@ ThreadError Icmp::SendEchoRequest(Message &aMessage, const MessageInfo &aMessage
     aMessage.SetOffset(0);
     SuccessOrExit(error = mIp6.SendDatagram(aMessage, messageInfoLocal, kProtoIcmp6));
 
-    otLogCritIcmp("Sent echo request: (seq = %d)", icmpHeader.GetSequence());
+    otLogWarnIcmp("Sent echo request: (seq = %d)", icmpHeader.GetSequence());
 
 exit:
     return error;
@@ -125,7 +125,7 @@ ThreadError Icmp::SendError(IcmpHeader::Type aType, IcmpHeader::Code aCode, cons
 
     SuccessOrExit(error = mIp6.SendDatagram(*message, messageInfoLocal, kProtoIcmp6));
 
-    otLogCritIcmp("Sent ICMPv6 Error");
+    otLogWarnIcmp("Sent ICMPv6 Error");
 
 exit:
 
@@ -177,7 +177,7 @@ ThreadError Icmp::HandleEchoRequest(Message &aRequestMessage, const MessageInfo 
     MessageInfo replyMessageInfo;
     uint16_t payloadLength;
 
-    otLogCritIcmp("Received Echo Request");
+    otLogWarnIcmp("Received Echo Request");
 
     icmp6Header.Init();
     icmp6Header.SetType(kIcmp6TypeEchoReply);
@@ -207,7 +207,7 @@ ThreadError Icmp::HandleEchoRequest(Message &aRequestMessage, const MessageInfo 
     SuccessOrExit(error = mIp6.SendDatagram(*replyMessage, replyMessageInfo, kProtoIcmp6));
 
     replyMessage->Read(replyMessage->GetOffset(), sizeof(icmp6Header), &icmp6Header);
-    otLogCritIcmp("Sent Echo Reply (seq = %d)", icmp6Header.GetSequence());
+    otLogWarnIcmp("Sent Echo Reply (seq = %d)", icmp6Header.GetSequence());
 
 exit:
 

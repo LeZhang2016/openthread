@@ -105,14 +105,14 @@ Buffer *MessagePool::NewBuffer(void)
 
     if (buffer == NULL)
     {
-        otLogCritMac("No available message buffer\n");
+        otLogWarnMac("No available message buffer\n");
     }
 
 #else
 
     if (mFreeBuffers == NULL)
     {
-        otLogCritMac("No available message buffer");
+        otLogWarnMac("No available message buffer");
         ExitNow();
     }
 

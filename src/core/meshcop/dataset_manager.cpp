@@ -298,7 +298,7 @@ ThreadError DatasetManager::Register(void)
     messageInfo.SetPeerPort(kCoapUdpPort);
     SuccessOrExit(error = mNetif.GetCoapClient().SendMessage(*message, messageInfo));
 
-    otLogCritMeshCoP("sent dataset to leader");
+    otLogWarnMeshCoP("sent dataset to leader");
 
 exit:
 
@@ -709,7 +709,7 @@ ThreadError DatasetManager::SendSetRequest(const otOperationalDataset &aDataset,
     messageInfo.SetPeerPort(kCoapUdpPort);
     SuccessOrExit(error = mNetif.GetCoapClient().SendMessage(*message, messageInfo));
 
-    otLogCritMeshCoP("sent dataset set request to leader");
+    otLogWarnMeshCoP("sent dataset set request to leader");
 
 exit:
 
@@ -761,7 +761,7 @@ ThreadError DatasetManager::SendGetRequest(const uint8_t *aTlvTypes, const uint8
     messageInfo.SetPeerPort(kCoapUdpPort);
     SuccessOrExit(error = mNetif.GetCoapClient().SendMessage(*message, messageInfo));
 
-    otLogCritMeshCoP("sent dataset get request");
+    otLogWarnMeshCoP("sent dataset get request");
 
 exit:
 
@@ -794,7 +794,7 @@ void DatasetManager::SendSetResponse(const Coap::Header &aRequestHeader, const I
 
     SuccessOrExit(error = mNetif.GetCoapServer().SendMessage(*message, aMessageInfo));
 
-    otLogCritMeshCoP("sent dataset set response");
+    otLogWarnMeshCoP("sent dataset set response");
 
 exit:
 
@@ -861,7 +861,7 @@ void DatasetManager::SendGetResponse(const Coap::Header &aRequestHeader, const I
 
     SuccessOrExit(error = mNetif.GetCoapServer().SendMessage(*message, aMessageInfo));
 
-    otLogCritMeshCoP("sent dataset get response");
+    otLogWarnMeshCoP("sent dataset get response");
 
 exit:
 
@@ -1048,7 +1048,7 @@ void PendingDatasetBase::ResetDelayTimer(uint8_t aFlags)
             else
             {
                 mTimer.Start(delayTimer->GetDelayTimer());
-                otLogCritMeshCoP("delay timer started");
+                otLogWarnMeshCoP("delay timer started");
             }
         }
     }
@@ -1099,7 +1099,7 @@ void PendingDatasetBase::HandleTimer(void)
 {
     DelayTimerTlv *delayTimer;
 
-    otLogCritMeshCoP("pending delay timer expired");
+    otLogWarnMeshCoP("pending delay timer expired");
 
     UpdateDelayTimer();
     delayTimer = static_cast<DelayTimerTlv *>(mNetwork.Get(Tlv::kDelayTimer));

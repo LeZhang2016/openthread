@@ -78,7 +78,7 @@ void enableReceiver(void)
 {
     if (!sIsReceiverEnabled)
     {
-        otLogCritPlat("Enabling receiver", NULL);
+        otLogWarnPlat("Enabling receiver", NULL);
 
         // flush rxfifo
         HWREG(RFCORE_SFR_RFST) = RFCORE_SFR_RFST_INSTR_FLUSHRX;
@@ -94,7 +94,7 @@ void disableReceiver(void)
 {
     if (sIsReceiverEnabled)
     {
-        otLogCritPlat("Disabling receiver", NULL);
+        otLogWarnPlat("Disabling receiver", NULL);
 
         while (HWREG(RFCORE_XREG_FSMSTAT1) & RFCORE_XREG_FSMSTAT1_TX_ACTIVE);
 
@@ -124,7 +124,7 @@ void setChannel(uint8_t channel)
             enabled = true;
         }
 
-        otLogCritPlat("Channel=%d", channel);
+        otLogWarnPlat("Channel=%d", channel);
 
         HWREG(RFCORE_XREG_FREQCTRL) = 11 + (channel - 11) * 5;
         sChannel = channel;
@@ -151,7 +151,7 @@ void otPlatRadioSetPanId(otInstance *aInstance, uint16_t panid)
 {
     (void)aInstance;
 
-    otLogCritPlat("PANID=%X", panid);
+    otLogWarnPlat("PANID=%X", panid);
 
     HWREG(RFCORE_FFSM_PAN_ID0) = panid & 0xFF;
     HWREG(RFCORE_FFSM_PAN_ID1) = panid >> 8;
@@ -161,7 +161,7 @@ void otPlatRadioSetExtendedAddress(otInstance *aInstance, uint8_t *address)
 {
     (void)aInstance;
 
-    otLogCritPlat("ExtAddr=%X%X%X%X%X%X%X%X",
+    otLogWarnPlat("ExtAddr=%X%X%X%X%X%X%X%X",
                   address[7], address[6], address[5], address[4], address[3], address[2], address[1], address[0]);
 
     for (int i = 0; i < 8; i++)
@@ -174,7 +174,7 @@ void otPlatRadioSetShortAddress(otInstance *aInstance, uint16_t address)
 {
     (void)aInstance;
 
-    otLogCritPlat("ShortAddr=%X", address);
+    otLogWarnPlat("ShortAddr=%X", address);
 
     HWREG(RFCORE_FFSM_SHORT_ADDR0) = address & 0xFF;
     HWREG(RFCORE_FFSM_SHORT_ADDR1) = address >> 8;
@@ -205,7 +205,7 @@ void cc2538RadioInit(void)
     // default: SRCMATCH.SRC_MATCH_EN(1), SRCMATCH.AUTOPEND(1),
     // SRCMATCH.PEND_DATAREQ_ONLY(1), RFCORE_XREG_FRMCTRL1_PENDING_OR(0)
 
-    otLogCritPlat("Initialized", NULL);
+    otLogWarnPlat("Initialized", NULL);
 }
 
 bool otPlatRadioIsEnabled(otInstance *aInstance)
@@ -350,7 +350,7 @@ void otPlatRadioSetPromiscuous(otInstance *aInstance, bool aEnable)
 {
     (void)aInstance;
 
-    otLogCritPlat("PromiscuousMode=%d", aEnable ? 1 : 0);
+    otLogWarnPlat("PromiscuousMode=%d", aEnable ? 1 : 0);
 
     if (aEnable)
     {
@@ -653,7 +653,7 @@ void otPlatRadioEnableSrcMatch(otInstance *aInstance, bool aEnable)
 {
     (void)aInstance;
 
-    otLogCritPlat("EnableSrcMatch=%d", aEnable ? 1 : 0);
+    otLogWarnPlat("EnableSrcMatch=%d", aEnable ? 1 : 0);
 
     if (aEnable)
     {

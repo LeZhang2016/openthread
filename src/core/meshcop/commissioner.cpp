@@ -345,7 +345,7 @@ ThreadError Commissioner::SendMgmtCommissionerGetRequest(const uint8_t *aTlvs,
     SuccessOrExit(error = mNetif.GetCoapClient().SendMessage(*message, messageInfo,
                                                              Commissioner::HandleMgmtCommissionerGetResponse, this));
 
-    otLogCritMeshCoP("sent MGMT_COMMISSIONER_GET.req to leader");
+    otLogWarnMeshCoP("sent MGMT_COMMISSIONER_GET.req to leader");
 
 exit:
 
@@ -375,7 +375,7 @@ void Commissioner::HandleMgmtCommissisonerGetResponse(Coap::Header *aHeader, Mes
     otLogFuncEntry();
 
     VerifyOrExit(aResult == kThreadError_None && aHeader->GetCode() == kCoapResponseChanged, ;);
-    otLogCritMeshCoP("received MGMT_COMMISSIONER_GET response");
+    otLogWarnMeshCoP("received MGMT_COMMISSIONER_GET response");
 
 exit:
     otLogFuncExit();
@@ -447,7 +447,7 @@ ThreadError Commissioner::SendMgmtCommissionerSetRequest(const otCommissioningDa
     SuccessOrExit(error = mNetif.GetCoapClient().SendMessage(*message, messageInfo,
                                                              Commissioner::HandleMgmtCommissionerSetResponse, this));
 
-    otLogCritMeshCoP("sent MGMT_COMMISSIONER_SET.req to leader");
+    otLogWarnMeshCoP("sent MGMT_COMMISSIONER_SET.req to leader");
 
 exit:
 
@@ -477,7 +477,7 @@ void Commissioner::HandleMgmtCommissisonerSetResponse(Coap::Header *aHeader, Mes
     otLogFuncEntry();
 
     VerifyOrExit(aResult == kThreadError_None && aHeader->GetCode() == kCoapResponseChanged, ;);
-    otLogCritMeshCoP("received MGMT_COMMISSIONER_SET response");
+    otLogWarnMeshCoP("received MGMT_COMMISSIONER_SET response");
 
 exit:
     otLogFuncExit();
@@ -512,7 +512,7 @@ ThreadError Commissioner::SendPetition(void)
     SuccessOrExit(error = mNetif.GetCoapClient().SendMessage(*message, messageInfo,
                                                              Commissioner::HandleLeaderPetitionResponse, this));
 
-    otLogCritMeshCoP("sent petition");
+    otLogWarnMeshCoP("sent petition");
 
 exit:
 
@@ -549,7 +549,7 @@ void Commissioner::HandleLeaderPetitionResponse(Coap::Header *aHeader, Message *
     VerifyOrExit(aResult == kThreadError_None &&
                  aHeader->GetCode() == kCoapResponseChanged, retransmit = true);
 
-    otLogCritMeshCoP("received Leader Petition response");
+    otLogWarnMeshCoP("received Leader Petition response");
 
     SuccessOrExit(Tlv::GetTlv(*aMessage, Tlv::kState, sizeof(state), state));
     VerifyOrExit(state.IsValid(), ;);
@@ -612,7 +612,7 @@ ThreadError Commissioner::SendKeepAlive(void)
     SuccessOrExit(error = mNetif.GetCoapClient().SendMessage(*message, messageInfo,
                                                              Commissioner::HandleLeaderKeepAliveResponse, this));
 
-    otLogCritMeshCoP("sent keep alive");
+    otLogWarnMeshCoP("sent keep alive");
 
 exit:
 
@@ -646,7 +646,7 @@ void Commissioner::HandleLeaderKeepAliveResponse(Coap::Header *aHeader, Message 
     VerifyOrExit(aResult == kThreadError_None &&
                  aHeader->GetCode() == kCoapResponseChanged, mState = kStateDisabled);
 
-    otLogCritMeshCoP("received Leader Petition response");
+    otLogWarnMeshCoP("received Leader Petition response");
 
     SuccessOrExit(Tlv::GetTlv(*aMessage, Tlv::kState, sizeof(state), state));
     VerifyOrExit(state.IsValid(), ;);
@@ -713,7 +713,7 @@ void Commissioner::HandleRelayReceive(Coap::Header &aHeader, Message &aMessage, 
                 error = mNetif.GetSecureCoapServer().SetPsk(reinterpret_cast<const uint8_t *>(mJoiners[i].mPsk),
                                                             static_cast<uint8_t>(strlen(mJoiners[i].mPsk)));
                 SuccessOrExit(error);
-                otLogCritMeshCoP("found joiner, starting new session");
+                otLogWarnMeshCoP("found joiner, starting new session");
                 enableJoiner = true;
                 break;
             }
@@ -731,7 +731,7 @@ void Commissioner::HandleRelayReceive(Coap::Header &aHeader, Message &aMessage, 
     mJoinerPort = joinerPort.GetUdpPort();
     mJoinerRloc = joinerRloc.GetJoinerRouterLocator();
 
-    otLogCritMeshCoP("Received relay receive for %llX, rloc:%x", HostSwap64(mJoinerIid64), mJoinerRloc);
+    otLogWarnMeshCoP("Received relay receive for %llX, rloc:%x", HostSwap64(mJoinerIid64), mJoinerRloc);
 
     aMessage.SetOffset(offset);
     SuccessOrExit(error = aMessage.SetLength(offset + length));
@@ -761,12 +761,12 @@ void Commissioner::HandleDatasetChanged(Coap::Header &aHeader, Message &aMessage
     VerifyOrExit(aHeader.GetType() == kCoapTypeConfirmable &&
                  aHeader.GetCode() == kCoapRequestPost, ;);
 
-    otLogCritMeshCoP("received dataset changed");
+    otLogWarnMeshCoP("received dataset changed");
     (void)aMessage;
 
     SuccessOrExit(mNetif.GetCoapServer().SendEmptyAck(aHeader, aMessageInfo));
 
-    otLogCritMeshCoP("sent dataset changed acknowledgment");
+    otLogWarnMeshCoP("sent dataset changed acknowledgment");
 
 exit:
     otLogFuncExit();
@@ -787,7 +787,7 @@ void Commissioner::HandleJoinerFinalize(Coap::Header &aHeader, Message &aMessage
     ProvisioningUrlTlv provisioningUrl;
 
     otLogFuncEntry();
-    otLogCritMeshCoP("received joiner finalize");
+    otLogWarnMeshCoP("received joiner finalize");
 
     if (Tlv::GetTlv(aMessage, Tlv::kProvisioningUrl, sizeof(provisioningUrl), provisioningUrl) == kThreadError_None)
     {
@@ -841,7 +841,7 @@ void Commissioner::SendJoinFinalizeResponse(const Coap::Header &aRequestHeader, 
     mSendKek = true;
     SuccessOrExit(error = mNetif.GetSecureCoapServer().SendMessage(*message, joinerMessageInfo));
 
-    otLogCritMeshCoP("sent joiner finalize response");
+    otLogWarnMeshCoP("sent joiner finalize response");
     otLogCertMeshCoP("[THCI] direction=send | type=JOIN_FIN.rsp");
 exit:
 

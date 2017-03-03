@@ -99,7 +99,7 @@ ThreadError AnnounceBeginClient::SendRequest(uint32_t aChannelMask, uint8_t aCou
 
     SuccessOrExit(error = mNetif.GetCoapClient().SendMessage(*message, messageInfo));
 
-    otLogCritMeshCoP("sent announce begin query");
+    otLogWarnMeshCoP("sent announce begin query");
 
 exit:
 

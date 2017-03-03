@@ -639,7 +639,7 @@ ThreadError NetworkData::SendServerDataNotification(uint16_t aRloc16)
         mLastAttemptWait = true;
     }
 
-    otLogCritNetData("Sent server data notification");
+    otLogWarnNetData("Sent server data notification");
 
 exit:
 

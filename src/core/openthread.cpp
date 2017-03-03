@@ -1265,7 +1265,7 @@ otInstance *otInstanceInit(void *aInstanceBuffer, size_t *aInstanceBufferSize)
     otInstance *aInstance = NULL;
 
     otLogFuncEntry();
-    otLogCritApi("otInstanceInit");
+    otLogWarnApi("otInstanceInit");
 
     VerifyOrExit(aInstanceBufferSize != NULL, ;);
 
@@ -1292,7 +1292,7 @@ otInstance *otInstanceInit()
 {
     otLogFuncEntry();
 
-    otLogCritApi("otInstanceInit");
+    otLogWarnApi("otInstanceInit");
 
     VerifyOrExit(sInstance == NULL, ;);
 

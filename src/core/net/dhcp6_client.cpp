@@ -393,7 +393,7 @@ ThreadError Dhcp6Client::Solicit(uint16_t aRloc16)
     messageInfo.mInterfaceId = mNetif.GetInterfaceId();
 
     SuccessOrExit(error = mSocket.SendTo(*message, messageInfo));
-    otLogCritIp6("solicit\n");
+    otLogWarnIp6("solicit\n");
 
 exit:
 

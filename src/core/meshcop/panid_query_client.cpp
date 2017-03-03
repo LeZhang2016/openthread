@@ -90,7 +90,7 @@ ThreadError PanIdQueryClient::SendQuery(uint16_t aPanId, uint32_t aChannelMask, 
     messageInfo.SetInterfaceId(mNetif.GetInterfaceId());
     SuccessOrExit(error = mNetif.GetCoapClient().SendMessage(*message, messageInfo));
 
-    otLogCritMeshCoP("sent panid query");
+    otLogWarnMeshCoP("sent panid query");
 
     mCallback = aCallback;
     mContext = aContext;
@@ -122,7 +122,7 @@ void PanIdQueryClient::HandleConflict(Coap::Header &aHeader, Message &aMessage, 
     VerifyOrExit(aHeader.GetType() == kCoapTypeConfirmable &&
                  aHeader.GetCode() == kCoapRequestPost, ;);
 
-    otLogCritMeshCoP("received panid conflict");
+    otLogWarnMeshCoP("received panid conflict");
 
     SuccessOrExit(MeshCoP::Tlv::GetTlv(aMessage, MeshCoP::Tlv::kPanId, sizeof(panId), panId));
     VerifyOrExit(panId.IsValid(), ;);
@@ -138,7 +138,7 @@ void PanIdQueryClient::HandleConflict(Coap::Header &aHeader, Message &aMessage, 
     memset(&responseInfo.mSockAddr, 0, sizeof(responseInfo.mSockAddr));
     SuccessOrExit(mNetif.GetCoapServer().SendEmptyAck(aHeader, responseInfo));
 
-    otLogCritMeshCoP("sent panid query conflict response");
+    otLogWarnMeshCoP("sent panid query conflict response");
 
 exit:
     return;

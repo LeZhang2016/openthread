@@ -131,7 +131,7 @@ ThreadError Dtls::Start(bool aClient, ConnectedHandler aConnectedHandler, Receiv
     mStarted = true;
     Process();
 
-    otLogCritMeshCoP("DTLS started");
+    otLogWarnMeshCoP("DTLS started");
 
 exit:
     return MapError(rval);
@@ -231,7 +231,7 @@ int Dtls::HandleMbedtlsTransmit(const unsigned char *aBuf, size_t aLength)
     ThreadError error;
     int rval = 0;
 
-    otLogCritMeshCoP("Dtls::HandleMbedtlsTransmit");
+    otLogWarnMeshCoP("Dtls::HandleMbedtlsTransmit");
 
     error = mSendHandler(mContext, aBuf, (uint16_t)aLength);
 
@@ -262,7 +262,7 @@ int Dtls::HandleMbedtlsReceive(unsigned char *aBuf, size_t aLength)
 {
     int rval;
 
-    otLogCritMeshCoP("Dtls::HandleMbedtlsReceive");
+    otLogWarnMeshCoP("Dtls::HandleMbedtlsReceive");
 
     VerifyOrExit(mReceiveMessage != NULL && mReceiveLength != 0, rval = MBEDTLS_ERR_SSL_WANT_READ);
 
@@ -288,7 +288,7 @@ int Dtls::HandleMbedtlsGetTimer(void)
 {
     int rval;
 
-    otLogCritMeshCoP("Dtls::HandleMbedtlsGetTimer");
+    otLogWarnMeshCoP("Dtls::HandleMbedtlsGetTimer");
 
     if (!mTimerSet)
     {
@@ -317,7 +317,7 @@ void Dtls::HandleMbedtlsSetTimer(void *aContext, uint32_t aIntermediate, uint32_
 
 void Dtls::HandleMbedtlsSetTimer(uint32_t aIntermediate, uint32_t aFinish)
 {
-    otLogCritMeshCoP("Dtls::SetTimer");
+    otLogWarnMeshCoP("Dtls::SetTimer");
 
     if (aFinish == 0)
     {
@@ -351,7 +351,7 @@ int Dtls::HandleMbedtlsExportKeys(const unsigned char *aMasterSecret, const unsi
 
     mNetif.GetKeyManager().SetKek(kek);
 
-    otLogCritMeshCoP("Generated KEK");
+    otLogWarnMeshCoP("Generated KEK");
 
     (void)aMasterSecret;
     return 0;
@@ -476,7 +476,7 @@ void Dtls::HandleMbedtlsDebug(void *, int level, const char *, int , const char 
     switch (level)
     {
     case 1:
-        otLogCritMbedTls("%s", str);
+        otLogWarnMbedTls("%s", str);
         break;
 
     case 2:
@@ -484,7 +484,7 @@ void Dtls::HandleMbedtlsDebug(void *, int level, const char *, int , const char 
         break;
 
     case 3:
-        otLogCritMbedTls("%s", str);
+        otLogWarnMbedTls("%s", str);
         break;
 
     case 4:
