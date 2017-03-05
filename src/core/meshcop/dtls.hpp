@@ -59,7 +59,7 @@ public:
     enum
     {
         kPskMaxLength = 32,
-        kApplicationDataMaxLength = 128,
+        kApplicationDataMaxLength = 1024,
     };
 
     /**

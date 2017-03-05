@@ -65,6 +65,7 @@ BorderAgent::BorderAgent(ThreadNetif &aThreadNetif):
     mNetif(aThreadNetif)
 {
     mTokenLength = 0;
+
 }
 
 
@@ -177,10 +178,9 @@ void BorderAgent::HandleCommissionerPetition(Coap::Header &aHeader, Message &aMe
     otLogCritMeshCoP("Token is %s", printStr);
 
     
-    mCommissionerAddr = aMessageInfo.GetSockAddr();
+    mCommissionerAddr = aMessageInfo.GetPeerAddr();
 
-    mCommissionerUdpPort = aMessageInfo.GetSockPort();
-
+    mCommissionerUdpPort = aMessageInfo.GetPeerPort();
     message = NULL;
 
     header.Init(kCoapTypeConfirmable, kCoapRequestPost);
@@ -206,8 +206,6 @@ void BorderAgent::HandleCommissionerPetition(Coap::Header &aHeader, Message &aMe
         SuccessOrExit(error = message->Append(tmp, length));
     }
     mNetif.GetMle().GetLeaderAloc(messageInfo.GetPeerAddr());
-    char str[40];
-    otLogCritMeshCoP("send sDest Add is  ----> %s", messageInfo.GetPeerAddr().ToString(str, 40));
     messageInfo.SetSockAddr(mNetif.GetMle().GetMeshLocal16());
     messageInfo.SetPeerPort(kCoapUdpPort);  
     SendLeaderPetition(*message, messageInfo);
@@ -535,9 +533,6 @@ void BorderAgent::HandleMgmtCommissionerSet(Coap::Header &aHeader, Message &aMes
     mTokenLength = aHeader.GetTokenLength();
     memcpy(mToken, aHeader.GetToken(), aHeader.GetTokenLength());
     //Records the peer address and peer udp port
-    mCommissionerAddr = aMessageInfo.GetSockAddr();
-    mCommissionerUdpPort = aMessageInfo.GetSockPort();
-
     otLogCritMeshCoP("send MGMT_COMMISSIONER_SET request to Leader");
 
     header.Init(kCoapTypeConfirmable, kCoapRequestPost);
@@ -681,8 +676,8 @@ void BorderAgent::HandleRelayReceive(Coap::Header &aHeader, Message &aMessage,
     otLogCritMeshCoP("received Relay Recevie from Joiner Router");
     
     //Records the peer address and peer udp port
-    mJoinerRouterAddr = aMessageInfo.GetSockAddr();
-    mJoinerRouterUdpPort = aMessageInfo.GetSockPort();
+    mJoinerRouterAddr = aMessageInfo.GetPeerAddr();
+    mJoinerRouterUdpPort = aMessageInfo.GetPeerPort();
 
     otLogCritMeshCoP("send Relay Receive to Commissioner");
 
@@ -711,8 +706,7 @@ void BorderAgent::HandleRelayReceive(Coap::Header &aHeader, Message &aMessage,
     char str[40];
     otLogCritMeshCoP("commissioner's address is %s", mCommissionerAddr.ToString(str, 40));
     messageInfo.SetPeerAddr(mCommissionerAddr);
-    otLogCritMeshCoP("kCoapUdpPort is %d", mCommissionerUdpPort)
-    messageInfo.SetPeerPort(mCommissionerUdpPort);
+    messageInfo.SetPeerPort(448);
 
     SendCommissionerRelayReceive(*message, messageInfo);
 
@@ -734,6 +728,7 @@ ThreadError BorderAgent::SendCommissionerRelayReceive(Message &aMessage, const I
 
     otLogFuncEntry();
 
+     otLogCritMeshCoP(">>>>>>>>the message length is %d", aMessage.GetLength());
     SuccessOrExit(error = mNetif.GetSecureCoapServer().SendMessage(aMessage, aMessageInfo));
 
     otLogCritMeshCoP("sent Realy Receive to Commissioner");
@@ -741,6 +736,7 @@ ThreadError BorderAgent::SendCommissionerRelayReceive(Message &aMessage, const I
 exit:
     (void) aMessageInfo;
     // aMessage.Free();
+    otLogCritMeshCoP("!!!!!!send message failed %d" ,error);
     otLogFuncExitErr(error);
     return error;
 }

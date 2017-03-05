@@ -64,15 +64,15 @@ ThreadError Server::AddResource(Resource &aResource)
     // char a[255];
     // uint16_t idx = 0;
 
-    // for (Resource *cur = mResources; cur; cur = cur->GetNext())
-    // {
-    //     for (uint16_t i = 0; i< strlen(cur->mUriPath); i++)
-    //     {
-    //         a[idx++] = cur->mUriPath[i];
-    //     }
-    //     a[idx++] = ' ';
-    //     VerifyOrExit(cur != &aResource, error = kThreadError_Already);
-    // }
+    for (Resource *cur = mResources; cur; cur = cur->GetNext())
+    {
+        // for (uint16_t i = 0; i< strlen(cur->mUriPath); i++)
+        // {
+        //     // a[idx++] = cur->mUriPath[i];
+        // }
+        // a[idx++] = ' ';
+        VerifyOrExit(cur != &aResource, error = kThreadError_Already);
+    }
     // a[idx++] = '\0';
     // otLogCritMeshCoP("1. %s, 2.%s",a, aResource.mUriPath);
 
