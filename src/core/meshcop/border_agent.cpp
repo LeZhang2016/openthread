@@ -206,7 +206,10 @@ void BorderAgent::HandleCommissionerPetition(Coap::Header &aHeader, Message &aMe
         SuccessOrExit(error = message->Append(tmp, length));
     }
     mNetif.GetMle().GetLeaderAloc(messageInfo.GetPeerAddr());
-    messageInfo.SetPeerPort(kCoapUdpPort);    
+    char str[40];
+    otLogCritMeshCoP("send sDest Add is  ----> %s", messageInfo.GetPeerAddr().ToString(str, 40));
+    messageInfo.SetSockAddr(mNetif.GetMle().GetMeshLocal16());
+    messageInfo.SetPeerPort(kCoapUdpPort);  
     SendLeaderPetition(*message, messageInfo);
 
     otLogCritMeshCoP("send petition to leader");
