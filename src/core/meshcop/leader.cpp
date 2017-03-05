@@ -84,6 +84,15 @@ void Leader::HandlePetition(Coap::Header &aHeader, Message &aMessage, const Ip6:
     data.mBorderAgentLocator.Init();
     data.mBorderAgentLocator.SetBorderAgentLocator(HostSwap16(aMessageInfo.GetPeerAddr().mFields.m16[7]));
 
+    otLogInfoMeshCoP("------mBorderAgentLocator is : %x:%x:%x:%x:%x:%x:%x:%x",
+                          HostSwap16(aMessageInfo.GetPeerAddr().mFields.m16[0]),
+                          HostSwap16(aMessageInfo.GetPeerAddr().mFields.m16[1]),
+                          HostSwap16(aMessageInfo.GetPeerAddr().mFields.m16[2]),
+                          HostSwap16(aMessageInfo.GetPeerAddr().mFields.m16[3]),
+                          HostSwap16(aMessageInfo.GetPeerAddr().mFields.m16[4]),
+                          HostSwap16(aMessageInfo.GetPeerAddr().mFields.m16[5]),
+                          HostSwap16(aMessageInfo.GetPeerAddr().mFields.m16[6]),
+                          HostSwap16(aMessageInfo.GetPeerAddr().mFields.m16[7]));
     data.mCommissionerSessionId.Init();
     data.mCommissionerSessionId.SetCommissionerSessionId(++mSessionId);
 

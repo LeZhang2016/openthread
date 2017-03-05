@@ -166,7 +166,7 @@ void JoinerRouter::HandleUdpReceive(Message &aMessage, const Ip6::MessageInfo &a
     otLogFuncEntryMsg("from peer: %llX",
                       HostSwap64(*reinterpret_cast<const uint64_t *>(aMessageInfo.GetPeerAddr().mFields.m8 + 8)));
     otLogInfoMeshCoP("JoinerRouter::HandleUdpReceive");
-
+    otLogInfoMeshCoP("JoinerRouter::rloc is  %d", borderAgentRloc);
     SuccessOrExit(error = GetBorderAgentRloc(borderAgentRloc));
 
     header.Init(kCoapTypeNonConfirmable, kCoapRequestPost);
@@ -208,12 +208,25 @@ void JoinerRouter::HandleUdpReceive(Message &aMessage, const Ip6::MessageInfo &a
         SuccessOrExit(error = message->Append(tmp, length));
     }
 
+    char str1[40];
+    // mNetif.GetMle().GetMeshLocal16().FromString(str1);
+    otLogInfoMeshCoP("Sent rloc 16 dest is-------------> %s", mNetif.GetMle().GetMeshLocal16().ToString(str1, 40));
     messageInfo.SetPeerAddr(mNetif.GetMle().GetMeshLocal16());
     messageInfo.GetPeerAddr().mFields.m16[7] = HostSwap16(borderAgentRloc);
     messageInfo.SetPeerPort(kCoapUdpPort);
     char str[40];
-    messageInfo.GetPeerAddr().FromString(str);
+    // messageInfo.GetPeerAddr().FromString(str);
     otLogInfoMeshCoP("Sent relay rx dest is-------------> %s", messageInfo.GetPeerAddr().ToString(str, 40));
+
+    otLogInfoMeshCoP("%x:%x:%x:%x:%x:%x:%x:%x",
+                          HostSwap16(messageInfo.GetPeerAddr().mFields.m16[0]),
+                          HostSwap16(messageInfo.GetPeerAddr().mFields.m16[1]),
+                          HostSwap16(messageInfo.GetPeerAddr().mFields.m16[2]),
+                          HostSwap16(messageInfo.GetPeerAddr().mFields.m16[3]),
+                          HostSwap16(messageInfo.GetPeerAddr().mFields.m16[4]),
+                          HostSwap16(messageInfo.GetPeerAddr().mFields.m16[5]),
+                          HostSwap16(messageInfo.GetPeerAddr().mFields.m16[6]),
+                          HostSwap16(messageInfo.GetPeerAddr().mFields.m16[7]));
 
 
     SuccessOrExit(error = mNetif.GetCoapClient().SendMessage(*message, messageInfo));

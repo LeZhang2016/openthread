@@ -48,6 +48,7 @@
 #include <thread/thread_tlvs.hpp>
 #include <thread/thread_uris.hpp>
 #include <thread/lowpan.hpp>
+#include <meshcop/tlvs.hpp>
 
 using Thread::Encoding::BigEndian::HostSwap16;
 
@@ -191,6 +192,7 @@ void Leader::HandleCommissioningSet(Coap::Header &aHeader, Message &aMessage, co
     bool hasSessionId = false;
     bool hasValidTlv = false;
     uint16_t sessionId = 0;
+    MeshCoP::BorderAgentLocatorTlv *borderAgentLocator;
 
     VerifyOrExit(mNetif.GetMle().GetDeviceState() == Mle::kDeviceStateLeader, state = MeshCoP::StateTlv::kReject);
 
@@ -253,10 +255,22 @@ void Leader::HandleCommissioningSet(Coap::Header &aHeader, Message &aMessage, co
                     length += (cur->GetLength() + sizeof(MeshCoP::Tlv));
                 }
             }
+
+            borderAgentLocator = static_cast<MeshCoP::BorderAgentLocatorTlv *>(mNetif.GetNetworkDataLeader().GetCommissioningDataSubTlv(
+                                                              MeshCoP::Tlv::kBorderAgentLocator));
+            length += (borderAgentLocator->GetLength()+  sizeof(MeshCoP::Tlv));
+            memcpy(tlvs+length, borderAgentLocator, length);
+
+            otLogInfoNetData(">>>>>>>>border borderAgentLocator is %X", borderAgentLocator->GetBorderAgentLocator());
         }
     }
 
+
     SetCommissioningData(tlvs, length);
+    borderAgentLocator = static_cast<MeshCoP::BorderAgentLocatorTlv *>(mNetif.GetNetworkDataLeader().GetCommissioningDataSubTlv(
+                                                              MeshCoP::Tlv::kBorderAgentLocator));
+    otLogInfoNetData("(((((((((((((borderAgentLocator is %X", borderAgentLocator->GetBorderAgentLocator());
+
 
 exit:
 

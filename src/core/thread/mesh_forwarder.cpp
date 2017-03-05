@@ -1925,7 +1925,6 @@ void MeshForwarder::HandleFragment(uint8_t *aFrame, uint8_t aFrameLength,
 
     if (fragmentHeader->GetDatagramOffset() == 0)
     {
-        otLogDebgMacErr(error, "1. GetDatagramOffset");
         aFrame += fragmentHeader->GetHeaderLength();
         aFrameLength -= fragmentHeader->GetHeaderLength();
 
@@ -1936,7 +1935,6 @@ void MeshForwarder::HandleFragment(uint8_t *aFrame, uint8_t aFrameLength,
         headerLength = mNetif.GetLowpan().Decompress(*message, aMacSource, aMacDest, aFrame, aFrameLength,
                                                      datagramLength);
         VerifyOrExit(headerLength > 0, error = kThreadError_Parse);
-        otLogDebgMacErr(error, "2. headerLength");
         aFrame += headerLength;
         aFrameLength -= static_cast<uint8_t>(headerLength);
 
@@ -1946,15 +1944,12 @@ void MeshForwarder::HandleFragment(uint8_t *aFrame, uint8_t aFrameLength,
 
         message->SetDatagramTag(datagramTag);
         message->SetTimeout(kReassemblyTimeout);
-        otLogDebgMacErr(error, "3. datagram");
         // copy Fragment
         message->Write(message->GetOffset(), aFrameLength, aFrame);
         message->MoveOffset(aFrameLength);
 
         // Security Check
-        otLogDebgMacErr(error, "4. Accept");
         VerifyOrExit(mNetif.GetIp6Filter().Accept(*message), error = kThreadError_Drop);
-        otLogDebgMacErr(error, "5. Accept");
 
 
         mReassemblyList.Enqueue(*message);
@@ -1966,10 +1961,8 @@ void MeshForwarder::HandleFragment(uint8_t *aFrame, uint8_t aFrameLength,
     }
     else
     {
-        otLogDebgMacErr(error, "1.begin receive the fragment");
         aFrame += fragmentHeader->GetHeaderLength();
         aFrameLength -= fragmentHeader->GetHeaderLength();
-        otLogDebgMacErr(error, "2.Header lenght is %d", fragmentHeader->GetHeaderLength());
         for (message = mReassemblyList.GetHead(); message; message = message->GetNext())
         {
             // Security Check: only consider reassembly buffers that had the same Security Enabled setting.
@@ -1981,9 +1974,7 @@ void MeshForwarder::HandleFragment(uint8_t *aFrame, uint8_t aFrameLength,
                 break;
             }
         }
-        otLogDebgMacErr(error, "!!! begin");
         VerifyOrExit(message != NULL, error = kThreadError_Drop);
-        otLogDebgMacErr(error, "!!! end Dropping");
 
         // copy Fragment
         message->Write(message->GetOffset(), aFrameLength, aFrame);
