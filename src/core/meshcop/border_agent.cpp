@@ -708,8 +708,10 @@ void BorderAgent::HandleRelayReceive(Coap::Header &aHeader, Message &aMessage,
 
         SuccessOrExit(error = message->Append(tmp, length));
     }
- 
+    char str[40];
+    otLogCritMeshCoP("commissioner's address is %s", mCommissionerAddr.ToString(str, 40));
     messageInfo.SetPeerAddr(mCommissionerAddr);
+    otLogCritMeshCoP("kCoapUdpPort is %d", mCommissionerUdpPort)
     messageInfo.SetPeerPort(mCommissionerUdpPort);
 
     SendCommissionerRelayReceive(*message, messageInfo);

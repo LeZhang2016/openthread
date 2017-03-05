@@ -61,20 +61,20 @@ ThreadError Server::Stop(void)
 ThreadError Server::AddResource(Resource &aResource)
 {
     ThreadError error = kThreadError_None;
-    char a[255];
-    uint16_t idx = 0;
+    // char a[255];
+    // uint16_t idx = 0;
 
-    for (Resource *cur = mResources; cur; cur = cur->GetNext())
-    {
-        for (uint16_t i = 0; i< strlen(cur->mUriPath); i++)
-        {
-            a[idx++] = cur->mUriPath[i];
-        }
-        a[idx++] = ' ';
-        VerifyOrExit(cur != &aResource, error = kThreadError_Already);
-    }
-    a[idx++] = '\0';
-    otLogCritMeshCoP("1. %s, 2.%s",a, aResource.mUriPath);
+    // for (Resource *cur = mResources; cur; cur = cur->GetNext())
+    // {
+    //     for (uint16_t i = 0; i< strlen(cur->mUriPath); i++)
+    //     {
+    //         a[idx++] = cur->mUriPath[i];
+    //     }
+    //     a[idx++] = ' ';
+    //     VerifyOrExit(cur != &aResource, error = kThreadError_Already);
+    // }
+    // a[idx++] = '\0';
+    // otLogCritMeshCoP("1. %s, 2.%s",a, aResource.mUriPath);
 
     aResource.mNext = mResources;
     mResources = &aResource;
@@ -163,7 +163,7 @@ void Server::ProcessReceivedMessage(Message &aMessage, const Ip6::MessageInfo &a
 
     while (coapOption != NULL)
     {
-        otLogCritMeshCoP(">>>>>>>>  00 %d", coapOption->mNumber);
+        // otLogCritMeshCoP(">>>>>>>>  00 %d", coapOption->mNumber);
         switch (coapOption->mNumber)
         {
         case kCoapOptionUriPath:
@@ -174,7 +174,7 @@ void Server::ProcessReceivedMessage(Message &aMessage, const Ip6::MessageInfo &a
 
             VerifyOrExit(coapOption->mLength < sizeof(uriPath) - static_cast<size_t>(curUriPath + 1 - uriPath), ;);
             memcpy(curUriPath, coapOption->mValue, coapOption->mLength);
-            otLogCritMeshCoP(">>>>>>>>  33 %s", curUriPath);
+            // otLogCritMeshCoP(">>>>>>>>  33 %s", curUriPath);
             curUriPath += coapOption->mLength;
             break;
 
@@ -185,7 +185,7 @@ void Server::ProcessReceivedMessage(Message &aMessage, const Ip6::MessageInfo &a
             break;
 
         default:
-            otLogCritMeshCoP(">>>>>>>>  44");
+            // otLogCritMeshCoP(">>>>>>>>  44");
             ExitNow();
         }
 
@@ -205,7 +205,7 @@ void Server::ProcessReceivedMessage(Message &aMessage, const Ip6::MessageInfo &a
     }
 
 exit:
-     otLogCritMeshCoP(">>>>>>>>>>>>>>>exit");
+     // otLogCritMeshCoP(">>>>>>>>>>>>>>>exit");
     {}
 }
 
