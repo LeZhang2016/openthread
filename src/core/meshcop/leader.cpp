@@ -173,7 +173,7 @@ void Leader::HandleKeepAlive(Coap::Header &aHeader, Message &aMessage, const Ip6
     CommissionerSessionIdTlv sessionId;
     StateTlv::State responseState;
 
-    otLogWarnMeshCoP("received keep alive");
+    //otLogWarnMeshCoP("received keep alive");
 
     SuccessOrExit(Tlv::GetTlv(aMessage, Tlv::kState, sizeof(state), state));
     VerifyOrExit(state.IsValid(),);
@@ -224,7 +224,7 @@ ThreadError Leader::SendKeepAliveResponse(const Coap::Header &aRequestHeader, co
 
     SuccessOrExit(error = mNetif.GetCoapServer().SendMessage(*message, aMessageInfo));
 
-    otLogWarnMeshCoP("sent keep alive response");
+    //otLogWarnMeshCoP("sent keep alive response");
 
 exit:
 
