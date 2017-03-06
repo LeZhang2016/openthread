@@ -464,16 +464,19 @@ void BorderAgent::HandleRelayTransmit(Coap::Header &aHeader, Message &aMessage,
     Coap::Header header;
     Message *message;
     Ip6::MessageInfo messageInfo;
+    Message tmpMessage;
+    JoinerRouterLocatorTlv joinerRloc;
 
     otLogFuncEntry();
     // VerifyOrExit(aHeader.GetType() == kCoapTypeNonConfirmable &&
     //              aHeader.GetCode() == kCoapRequestPost, ;);
     otLogCritMeshCoP("received relay transmit from commissioner");
 
-    header.Init(kCoapTypeNonConfirmable, kCoapRequestPost);
+    header.Init(kCoapTypeConfirmable, kCoapRequestPost);
     header.AppendUriPathOptions(OPENTHREAD_URI_RELAY_TX);
     header.SetToken(aHeader.GetToken(), aHeader.GetTokenLength());
     header.SetPayloadMarker();
+    tmpMessage.Write(0, aMessage.GetLength(), &aMessage);
     // Construct the Coap Message
     VerifyOrExit((message = mNetif.GetCoapServer().NewMeshCoPMessage(header)) != NULL, error = kThreadError_NoBufs);
     // Copy the payload to new message
@@ -493,12 +496,23 @@ void BorderAgent::HandleRelayTransmit(Coap::Header &aHeader, Message &aMessage,
         SuccessOrExit(error = message->Append(tmp, length));
     }
     //set peer addr and peer port
-    messageInfo.SetPeerAddr(mJoinerRouterAddr);
-    messageInfo.SetPeerPort(mJoinerRouterUdpPort);
+    // messageInfo.SetPeerAddr(mJoinerRouterAddr);
+    
+    SuccessOrExit(error = Tlv::GetTlv(tmpMessage, Tlv::kJoinerRouterLocator, sizeof(joinerRloc), joinerRloc));
+    VerifyOrExit(joinerRloc.IsValid(), error = kThreadError_Parse);
+
+    messageInfo.SetSockAddr(mNetif.GetMle().GetMeshLocal16());
+    messageInfo.SetPeerAddr(mNetif.GetMle().GetMeshLocal16());
+    messageInfo.GetPeerAddr().mFields.m16[7] = HostSwap16(joinerRloc.GetJoinerRouterLocator());
+    char str[40];
+    otLogCritMeshCoP("########## joiner_router addr is %s", messageInfo.GetPeerAddr().ToString(str, 40));
+    messageInfo.SetPeerPort(kCoapUdpPort);
 
     otLogCritMeshCoP("send relay transmit to joiner router");
 
     SuccessOrExit(error = mNetif.GetCoapServer().SendMessage(*message, messageInfo));
+
+    otLogCritMeshCoP("sent relay transmit to joiner router %d", error);
 
 exit:
     (void) aMessageInfo;
@@ -676,8 +690,8 @@ void BorderAgent::HandleRelayReceive(Coap::Header &aHeader, Message &aMessage,
     otLogCritMeshCoP("received Relay Recevie from Joiner Router");
     
     //Records the peer address and peer udp port
-    mJoinerRouterAddr = aMessageInfo.GetPeerAddr();
-    mJoinerRouterUdpPort = aMessageInfo.GetPeerPort();
+    // mJoinerRouterAddr = aMessageInfo.GetPeerAddr();
+    // mJoinerRouterUdpPort = aMessageInfo.GetPeerPort();
 
     otLogCritMeshCoP("send Relay Receive to Commissioner");
 
@@ -706,7 +720,7 @@ void BorderAgent::HandleRelayReceive(Coap::Header &aHeader, Message &aMessage,
     char str[40];
     otLogCritMeshCoP("commissioner's address is %s", mCommissionerAddr.ToString(str, 40));
     messageInfo.SetPeerAddr(mCommissionerAddr);
-    messageInfo.SetPeerPort(448);
+    // messageInfo.SetPeerPort(448);
 
     SendCommissionerRelayReceive(*message, messageInfo);
 
