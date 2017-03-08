@@ -464,19 +464,20 @@ void BorderAgent::HandleRelayTransmit(Coap::Header &aHeader, Message &aMessage,
     Coap::Header header;
     Message *message;
     Ip6::MessageInfo messageInfo;
-    // Message tmpMessage;
-    JoinerRouterLocatorTlv joinerRloc;
+    JoinerRouterLocatorTlv joinerRloc;    
 
     otLogFuncEntry();
     // VerifyOrExit(aHeader.GetType() == kCoapTypeNonConfirmable &&
     //              aHeader.GetCode() == kCoapRequestPost, ;);
     otLogCritMeshCoP("received relay transmit from commissioner");
 
-    header.Init(kCoapTypeConfirmable, kCoapRequestPost);
+    SuccessOrExit(error = Tlv::GetTlv(aMessage, Tlv::kJoinerRouterLocator, sizeof(joinerRloc), joinerRloc));
+    VerifyOrExit(joinerRloc.IsValid(), error = kThreadError_Parse);
+
+    (void) aHeader;
+    header.Init(kCoapTypeNonConfirmable, kCoapRequestPost);
     header.AppendUriPathOptions(OPENTHREAD_URI_RELAY_TX);
-    header.SetToken(aHeader.GetToken(), aHeader.GetTokenLength());
     header.SetPayloadMarker();
-    // tmpMessage.Write(0, aMessage.GetLength(), &aMessage);
     // Construct the Coap Message
     VerifyOrExit((message = mNetif.GetCoapServer().NewMeshCoPMessage(header)) != NULL, error = kThreadError_NoBufs);
     // Copy the payload to new message
@@ -498,8 +499,6 @@ void BorderAgent::HandleRelayTransmit(Coap::Header &aHeader, Message &aMessage,
     //set peer addr and peer port
     // messageInfo.SetPeerAddr(mJoinerRouterAddr);
     
-    SuccessOrExit(error = Tlv::GetTlv(aMessage, Tlv::kJoinerRouterLocator, sizeof(joinerRloc), joinerRloc));
-    VerifyOrExit(joinerRloc.IsValid(), error = kThreadError_Parse);
 
     messageInfo.SetSockAddr(mNetif.GetMle().GetMeshLocal16());
     messageInfo.SetPeerAddr(mNetif.GetMle().GetMeshLocal16());
