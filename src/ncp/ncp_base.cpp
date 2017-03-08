@@ -5452,76 +5452,49 @@ ThreadError NcpBase::SetPropertyHandler_NEST_STREAM_MFG(uint8_t header, spinel_p
                                                         uint16_t value_len)
 {
     char *string(NULL);
-    char *output(NULL);
+    char output[200];
     spinel_ssize_t parsedLength;
     ThreadError errorCode = kThreadError_None;
-
+    otNetifAddress aAddress;
+    
     parsedLength = spinel_datatype_unpack(
-                       value_ptr,
-                       value_len,
-                       SPINEL_DATATYPE_UTF8_S,
-                       &string
-                   );
-
+                                          value_ptr,
+                                          value_len,
+                                          SPINEL_DATATYPE_UTF8_S,
+                                          &string
+                                          );
+    
     if ((parsedLength > 0) && (string != NULL))
     {
-        // all diagnostics related features are processed within diagnostics module
-        output = diagProcessCmdLine(string);
-
+        otIp6AddressFromString(string + 4, &aAddress.mAddress);
+        aAddress.mPrefixLength = 64;
+        aAddress.mPreferred = true;
+        aAddress.mValid = true;
+        errorCode = otAddUnicastAddress(mInstance, &aAddress);
+        
+        sprintf(output, "status: %d, address added: %x:%x:%x:%x:%x:%x:%x:%x\r\n", errorCode,
+                HostSwap16(aAddress.mAddress.mFields.m16[0]),
+                HostSwap16(aAddress.mAddress.mFields.m16[1]),
+                HostSwap16(aAddress.mAddress.mFields.m16[2]),
+                HostSwap16(aAddress.mAddress.mFields.m16[3]),
+                HostSwap16(aAddress.mAddress.mFields.m16[4]),
+                HostSwap16(aAddress.mAddress.mFields.m16[5]),
+                HostSwap16(aAddress.mAddress.mFields.m16[6]),
+                HostSwap16(aAddress.mAddress.mFields.m16[7]));
+        
         errorCode = SendPropertyUpdate(
-                        header,
-                        SPINEL_CMD_PROP_VALUE_IS,
-                        key,
-                        reinterpret_cast<uint8_t *>(output),
-                        static_cast<uint16_t>(strlen(output) + 1)
-                    );
+                                       header,
+                                       SPINEL_CMD_PROP_VALUE_IS,
+                                       key,
+                                       reinterpret_cast<uint8_t *>(output),
+                                       static_cast<uint16_t>(strlen(output) + 1)
+                                       );
     }
     else
     {
         errorCode = SendLastStatus(header, SPINEL_STATUS_PARSE_ERROR);
     }
-
-    return errorCode;
-}
-#endif
-
-#if OPENTHREAD_ENABLE_LEGACY
-ThreadError NcpBase::SetPropertyHandler_NEST_LEGACY_ULA_PREFIX(uint8_t header, spinel_prop_key_t key,
-                                                                const uint8_t *value_ptr, uint16_t value_len)
-{
-    ThreadError errorCode = kThreadError_None;
-    const uint8_t *ptr = NULL;
-    spinel_size_t len;
-    spinel_ssize_t parsedLength;
-
-    parsedLength = spinel_datatype_unpack(
-                       value_ptr,
-                       value_len,
-                       SPINEL_DATATYPE_DATA_S,
-                       &ptr,
-                       &len
-                   );
-
-    if ((parsedLength > 0) && (len <= sizeof(mLegacyUlaPrefix)))
-    {
-        memset(mLegacyUlaPrefix, 0, sizeof(mLegacyUlaPrefix));
-        memcpy(mLegacyUlaPrefix, ptr, len);
-
-        if (mLegacyHandlers)
-        {
-            if (mLegacyHandlers->mSetLegacyUlaPrefix)
-            {
-                mLegacyHandlers->mSetLegacyUlaPrefix(mLegacyUlaPrefix);
-            }
-        }
-
-        errorCode = HandleCommandPropertyGet(header, key);
-    }
-    else
-    {
-        errorCode = SendLastStatus(header, SPINEL_STATUS_PARSE_ERROR);
-    }
-
+    
     return errorCode;
 }
 #endif  // OPENTHREAD_ENABLE_LEGACY
