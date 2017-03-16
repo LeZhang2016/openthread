@@ -83,8 +83,8 @@ ThreadError BorderAgent::Start(void)
     //default PSKc value derived from network name is "Test Network" , xpanid is "0001020304050607" passphrase "12SECRETPASSWORD34"
     //"C3F59368445A1B6106BE420A706D4CC9"
     //C3 F5 93 68 44 5A 1B 61 06 BE 42 0A 70 6D 4C C9
-        
-    const char kThreadPSKc[] = 
+
+    const char kThreadPSKc[] =
     {
         0xc3, 0xf5, 0x93, 0x68, 0x44, 0x5a, 0x1b, 0x61,
         0x06, 0xbe, 0x42, 0x0a, 0x70, 0x6d, 0x4c, 0xc9,
@@ -100,11 +100,11 @@ ThreadError BorderAgent::Start(void)
     // };
 
     otLogFuncEntry();
-    SetPSKc(kThreadPSKc, 16);
+    SetPSKc(kThreadPSKc, sizeof(kThreadPSKc));
 
     SuccessOrExit(error = mNetif.GetSecureCoapServer().SetPsk(reinterpret_cast<const uint8_t *>(kThreadPSKc),
-                                                              static_cast<uint8_t>(strlen(kThreadPSKc))));
-    SuccessOrExit(error = mNetif.GetSecureCoapServer().Start(NULL, this));
+                                                              static_cast<uint8_t>(sizeof(kThreadPSKc))));
+    SuccessOrExit(error = mNetif.GetSecureCoapServer().Start(NULL, NULL));
     // mNetif.GetDtls().SetPsk(mPSKc, mPSKcLength);
 
 
@@ -142,20 +142,20 @@ void BorderAgent::HandleCommissionerPetition(void *aContext, otCoapHeader *aHead
         *static_cast<const Ip6::MessageInfo *>(aMessageInfo));
 }
 
-void Hex2Str( const uint8_t *sSrc,  char *sDest, int nSrcLen )  
-{  
-    int  i;  
-    char szTmp[3];  
-  
-    for( i = 0; i < nSrcLen; i++ )  
-    {  
+void Hex2Str( const uint8_t *sSrc,  char *sDest, int nSrcLen )
+{
+    int  i;
+    char szTmp[3];
+
+    for( i = 0; i < nSrcLen; i++ )
+    {
         sprintf( szTmp, "%02X", sSrc[i] );
         memcpy( &sDest[i*3], szTmp, 2 );
-        sDest[i*3+2] = ' ';  
+        sDest[i*3+2] = ' ';
     }
     sDest[i+1] = '\0';
-    return ;  
-}  
+    return ;
+}
 
 
 void BorderAgent::HandleCommissionerPetition(Coap::Header &aHeader, Message &aMessage, const Ip6::MessageInfo &aMessageInfo)
@@ -177,7 +177,7 @@ void BorderAgent::HandleCommissionerPetition(Coap::Header &aHeader, Message &aMe
     Hex2Str(mToken, printStr, mTokenLength);
     otLogCritMeshCoP("Token is %s", printStr);
 
-    
+
     mCommissionerAddr = aMessageInfo.GetPeerAddr();
 
     mCommissionerUdpPort = aMessageInfo.GetPeerPort();
@@ -187,7 +187,7 @@ void BorderAgent::HandleCommissionerPetition(Coap::Header &aHeader, Message &aMe
     header.SetToken(Coap::Header::kDefaultTokenLength);
     header.AppendUriPathOptions(OPENTHREAD_URI_LEADER_PETITION);
     header.SetPayloadMarker();
-    
+
     VerifyOrExit((message = mNetif.GetCoapClient().NewMeshCoPMessage(header)) != NULL, error = kThreadError_NoBufs);
 
     while (aMessage.GetOffset() < aMessage.GetLength())
@@ -207,11 +207,11 @@ void BorderAgent::HandleCommissionerPetition(Coap::Header &aHeader, Message &aMe
     }
     mNetif.GetMle().GetLeaderAloc(messageInfo.GetPeerAddr());
     messageInfo.SetSockAddr(mNetif.GetMle().GetMeshLocal16());
-    messageInfo.SetPeerPort(kCoapUdpPort);  
+    messageInfo.SetPeerPort(kCoapUdpPort);
     SendLeaderPetition(*message, messageInfo);
 
     otLogCritMeshCoP("send petition to leader");
-    
+
 exit:
     (void)aMessageInfo;
     (void) aHeader;
@@ -271,8 +271,8 @@ void BorderAgent::HandleLeaderPetitionResponse(Coap::Header &aHeader, Message &a
     responseHeader.SetPayloadMarker();
 
     VerifyOrExit((message = mNetif.GetSecureCoapServer().NewMeshCoPMessage(responseHeader)) != NULL,
-                 error = kThreadError_NoBufs);    
-    
+                 error = kThreadError_NoBufs);
+
     while (aMessage.GetOffset() < aMessage.GetLength())
     {
         uint16_t length = aMessage.GetLength() - aMessage.GetOffset();
@@ -334,7 +334,7 @@ void BorderAgent::HandleCommisionerKeepAlive(Coap::Header &aHeader, Message &aMe
     header.SetToken(Coap::Header::kDefaultTokenLength);
     header.AppendUriPathOptions(OPENTHREAD_URI_LEADER_KEEP_ALIVE);
     header.SetPayloadMarker();
-    
+
     VerifyOrExit((message = mNetif.GetCoapClient().NewMeshCoPMessage(header)) != NULL, error = kThreadError_NoBufs);
 
     while (aMessage.GetOffset() < aMessage.GetLength())
@@ -353,11 +353,11 @@ void BorderAgent::HandleCommisionerKeepAlive(Coap::Header &aHeader, Message &aMe
         SuccessOrExit(error = message->Append(tmp, length));
     }
     mNetif.GetMle().GetLeaderAloc(messageInfo.GetPeerAddr());
-    messageInfo.SetPeerPort(kCoapUdpPort);    
+    messageInfo.SetPeerPort(kCoapUdpPort);
     SendLeaderKeepAlive(*message, messageInfo);
 
     otLogCritMeshCoP("send keep alive to leader");
-    
+
 exit:
     (void)aMessageInfo;
     // aMessage.Free();
@@ -412,8 +412,8 @@ void BorderAgent::HandleLeaderKeepAliveResponse(Coap::Header &aHeader, Message &
     responseHeader.SetPayloadMarker();
 
     VerifyOrExit((message = mNetif.GetSecureCoapServer().NewMeshCoPMessage(responseHeader)) != NULL,
-                 error = kThreadError_NoBufs);    
-    
+                 error = kThreadError_NoBufs);
+
     while (aMessage.GetOffset() < aMessage.GetLength())
     {
         uint16_t length = aMessage.GetLength() - aMessage.GetOffset();
@@ -438,7 +438,7 @@ void BorderAgent::HandleLeaderKeepAliveResponse(Coap::Header &aHeader, Message &
     otLogCritMeshCoP("sent keep alive response to commissioner");
 
 exit:
-    
+
     (void) aMessageInfo;
     // aMessage.Free();
     if (error != kThreadError_None && message != NULL)
@@ -464,7 +464,7 @@ void BorderAgent::HandleRelayTransmit(Coap::Header &aHeader, Message &aMessage,
     Coap::Header header;
     Message *message;
     Ip6::MessageInfo messageInfo;
-    JoinerRouterLocatorTlv joinerRloc;    
+    JoinerRouterLocatorTlv joinerRloc;
 
     otLogFuncEntry();
     // VerifyOrExit(aHeader.GetType() == kCoapTypeNonConfirmable &&
@@ -498,7 +498,7 @@ void BorderAgent::HandleRelayTransmit(Coap::Header &aHeader, Message &aMessage,
     }
     //set peer addr and peer port
     // messageInfo.SetPeerAddr(mJoinerRouterAddr);
-    
+
 
     messageInfo.SetSockAddr(mNetif.GetMle().GetMeshLocal16());
     messageInfo.SetPeerAddr(mNetif.GetMle().GetMeshLocal16());
@@ -552,7 +552,7 @@ void BorderAgent::HandleMgmtCommissionerSet(Coap::Header &aHeader, Message &aMes
     header.SetToken(Coap::Header::kDefaultTokenLength);
     header.AppendUriPathOptions(OPENTHREAD_URI_COMMISSIONER_SET);
     header.SetPayloadMarker();
-    
+
     VerifyOrExit((message = mNetif.GetCoapClient().NewMeshCoPMessage(header)) != NULL, error = kThreadError_NoBufs);
 
     while (aMessage.GetOffset() < aMessage.GetLength())
@@ -571,7 +571,7 @@ void BorderAgent::HandleMgmtCommissionerSet(Coap::Header &aHeader, Message &aMes
         SuccessOrExit(error = message->Append(tmp, length));
     }
     mNetif.GetMle().GetLeaderAloc(messageInfo.GetPeerAddr());
-    messageInfo.SetPeerPort(kCoapUdpPort);    
+    messageInfo.SetPeerPort(kCoapUdpPort);
     SendLeaderMgmtCommissionerSet(*message, messageInfo);
 
 exit:
@@ -631,8 +631,8 @@ void BorderAgent::HandleLeaderMgmtCommissionerSetResponse(Coap::Header &aHeader,
     responseHeader.AppendUriPathOptions(OPENTHREAD_URI_COMMISSIONER_SET);
     responseHeader.SetPayloadMarker();
     VerifyOrExit((message = mNetif.GetSecureCoapServer().NewMeshCoPMessage(responseHeader)) != NULL,
-                 error = kThreadError_NoBufs);    
-    
+                 error = kThreadError_NoBufs);
+
     while (aMessage.GetOffset() < aMessage.GetLength())
     {
         uint16_t length = aMessage.GetLength() - aMessage.GetOffset();
@@ -687,7 +687,7 @@ void BorderAgent::HandleRelayReceive(Coap::Header &aHeader, Message &aMessage,
     //              aHeader.GetCode() == kCoapRequestPost, ;);
 
     otLogCritMeshCoP("received Relay Recevie from Joiner Router");
-    
+
     //Records the peer address and peer udp port
     // mJoinerRouterAddr = aMessageInfo.GetPeerAddr();
     // mJoinerRouterUdpPort = aMessageInfo.GetPeerPort();
@@ -698,7 +698,7 @@ void BorderAgent::HandleRelayReceive(Coap::Header &aHeader, Message &aMessage,
     header.SetToken(aHeader.GetToken(), aHeader.GetTokenLength());
     header.AppendUriPathOptions(OPENTHREAD_URI_RELAY_RX);
     header.SetPayloadMarker();
-    
+
     VerifyOrExit((message = mNetif.GetSecureCoapServer().NewMeshCoPMessage(header)) != NULL, error = kThreadError_NoBufs);
 
     while (aMessage.GetOffset() < aMessage.GetLength())
@@ -723,7 +723,7 @@ void BorderAgent::HandleRelayReceive(Coap::Header &aHeader, Message &aMessage,
 
     SendCommissionerRelayReceive(*message, messageInfo);
 
-    
+
 exit:
     (void)aMessageInfo;
     // aMessage.Free();
