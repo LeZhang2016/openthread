@@ -116,6 +116,8 @@ void SecureServer::Receive(Message &aMessage, const Ip6::MessageInfo &aMessageIn
 
     if (!mNetif.GetDtls().IsStarted())
     {
+        mPeerAddress.SetSockAddr(aMessageInfo.GetSockAddr());
+        mPeerAddress.SetSockPort(aMessageInfo.GetSockPort());
         mPeerAddress.SetPeerAddr(aMessageInfo.GetPeerAddr());
         mPeerAddress.SetPeerPort(aMessageInfo.GetPeerPort());
 

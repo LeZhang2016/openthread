@@ -45,6 +45,8 @@ configure_OPTIONS               = \
     --enable-cli                  \
     --enable-ncp                  \
     --enable-diag                 \
+    --enable-dtls                 \
+    --enable-border-agent         \
     --with-examples=nrf52840      \
     --with-platform-info=NRF52840 \
     $(NULL)
