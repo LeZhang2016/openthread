@@ -216,11 +216,11 @@ exit:
     (void)aMessageInfo;
     (void) aHeader;
     // aMessage.Free();
-    // message->Free();
     (void) aMessage;
     (void) message;
     if (error != kThreadError_None && message != NULL)
     {
+        message->Free();
     }
     otLogFuncExit();
 }
@@ -298,10 +298,9 @@ void BorderAgent::HandleLeaderPetitionResponse(Coap::Header &aHeader, Message &a
 
 exit:
     (void)aMessageInfo;
-    // aMessage.Free();
     if (error != kThreadError_None && message != NULL)
     {
-        // message->Free();
+        message->Free();
     }
     otLogFuncExit();
 }
@@ -363,7 +362,7 @@ exit:
     // aMessage.Free();
     if (error != kThreadError_None && message != NULL)
     {
-        // message->Free();
+        message->Free();
     }
     otLogFuncExit();
 }
@@ -443,7 +442,7 @@ exit:
     // aMessage.Free();
     if (error != kThreadError_None && message != NULL)
     {
-        // message->Free();
+        message->Free();
     }
     otLogFuncExit();
 }
@@ -515,10 +514,9 @@ void BorderAgent::HandleRelayTransmit(Coap::Header &aHeader, Message &aMessage,
 
 exit:
     (void) aMessageInfo;
-    // aMessage.Free();
     if (error != kThreadError_None && message != NULL)
     {
-        // message->Free();
+        message->Free();
     }
     otLogFuncExit();
 }
@@ -579,7 +577,7 @@ exit:
     // aMessage.Free();
     if (error != kThreadError_None && message != NULL)
     {
-        // message->Free();
+        message->Free();
     }
     otLogFuncExit();
 }
@@ -661,7 +659,7 @@ exit:
     // aMessage.Free();
     if (error != kThreadError_None && message != NULL)
     {
-        // message->Free();
+        message->Free();
     }
     otLogFuncExit();
 }
@@ -721,7 +719,7 @@ void BorderAgent::HandleRelayReceive(Coap::Header &aHeader, Message &aMessage,
     messageInfo.SetPeerAddr(mCommissionerAddr);
     // messageInfo.SetPeerPort(448);
 
-    SendCommissionerRelayReceive(*message, messageInfo);
+    error = SendCommissionerRelayReceive(*message, messageInfo);
 
 
 exit:
@@ -729,7 +727,7 @@ exit:
     // aMessage.Free();
     if (error != kThreadError_None && message != NULL)
     {
-        // message->Free();
+        message->Free();
     }
     otLogFuncExit();
 }
@@ -748,7 +746,6 @@ ThreadError BorderAgent::SendCommissionerRelayReceive(Message &aMessage, const I
 
 exit:
     (void) aMessageInfo;
-    // aMessage.Free();
     otLogCritMeshCoP("!!!!!!send message failed %d" ,error);
     otLogFuncExitErr(error);
     return error;
