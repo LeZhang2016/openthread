@@ -49,6 +49,10 @@
 #include <cli/cli_server.hpp>
 #include <common/code_utils.hpp>
 
+#if OPENTHREAD_ENABLE_APPLICATION_COAP
+#include <coap/coap_header.hpp>
+#endif
+
 #ifndef OTDLL
 #include <net/icmp6.hpp>
 #include <common/timer.hpp>
@@ -162,6 +166,9 @@ private:
     void ProcessChild(int argc, char *argv[]);
     void ProcessChildTimeout(int argc, char *argv[]);
     void ProcessChildMax(int argc, char *argv[]);
+#if OPENTHREAD_ENABLE_APPLICATION_COAP
+    void ProcessCoap(int argc, char *argv[]);
+#endif  //OPENTHREAD_ENABLE_APPLICATION_COAP
 #if OPENTHREAD_ENABLE_COMMISSIONER
     void ProcessCommissioner(int argc, char *argv[]);
 #endif  // OPENTHREAD_ENABLE_COMMISSIONER
@@ -198,6 +205,9 @@ private:
 #if OPENTHREAD_ENABLE_JOINER
     void ProcessJoiner(int argc, char *argv[]);
 #endif  // OPENTHREAD_ENABLE_JOINER
+#if OPENTHREAD_ENABLE_BORDER_AGENT
+    void ProcessBorderAgent(int argc, char *argv[]);
+#endif  // OPENTHREAD_ENABLE_BORDER_AGENT
     void ProcessJoinerPort(int argc, char *argv[]);
     void ProcessKeySequence(int argc, char *argv[]);
     void ProcessLeaderData(int argc, char *argv[]);

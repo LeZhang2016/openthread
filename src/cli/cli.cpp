@@ -66,6 +66,9 @@
 #include "cli.hpp"
 #include "cli_dataset.hpp"
 #include "cli_uart.hpp"
+#if OPENTHREAD_ENABLE_APPLICATION_COAP
+#include "cli_coap.hpp"
+#endif
 
 using Thread::Encoding::BigEndian::HostSwap16;
 using Thread::Encoding::BigEndian::HostSwap32;
@@ -79,11 +82,17 @@ const struct Command Interpreter::sCommands[] =
     { "help", &Interpreter::ProcessHelp },
     { "autostart", &Interpreter::ProcessAutoStart },
     { "blacklist", &Interpreter::ProcessBlacklist },
+#if OPENTHREAD_ENABLE_BORDER_AGENT
+    { "borderagent", &Interpreter::ProcessBorderAgent },
+#endif
     { "bufferinfo", &Interpreter::ProcessBufferInfo },
     { "channel", &Interpreter::ProcessChannel },
     { "child", &Interpreter::ProcessChild },
     { "childmax", &Interpreter::ProcessChildMax },
     { "childtimeout", &Interpreter::ProcessChildTimeout },
+#if OPENTHREAD_ENABLE_APPLICATION_COAP
+    { "coap", &Interpreter::ProcessCoap },
+#endif
 #if OPENTHREAD_ENABLE_COMMISSIONER
     { "commissioner", &Interpreter::ProcessCommissioner },
 #endif
@@ -602,6 +611,17 @@ exit:
     AppendResult(error);
 }
 
+#if OPENTHREAD_ENABLE_APPLICATION_COAP
+
+void Interpreter::ProcessCoap(int argc, char *argv[])
+{
+    ThreadError error;
+    error = Coap::Process(mInstance, argc, argv, *sServer);
+    AppendResult(error);
+}
+
+#endif // OPENTHREAD_ENABLE_APPLICATION_COAP
+
 void Interpreter::ProcessContextIdReuseDelay(int argc, char *argv[])
 {
     ThreadError error = kThreadError_None;
@@ -709,7 +729,7 @@ void Interpreter::ProcessDiscover(int argc, char *argv[])
         scanChannels = 1 << value;
     }
 
-    SuccessOrExit(error = otThreadDiscover(mInstance, scanChannels, 0, OT_PANID_BROADCAST,
+    SuccessOrExit(error = otThreadDiscover(mInstance, scanChannels, OT_PANID_BROADCAST,
                                            &Interpreter::s_HandleActiveScanResult, this));
     sServer->OutputFormat("| J | Network Name     | Extended PAN     | PAN  | MAC Address      | Ch | dBm | LQI |\r\n");
     sServer->OutputFormat("+---+------------------+------------------+------+------------------+----+-----+-----+\r\n");
@@ -1454,7 +1474,7 @@ void Interpreter::HandleIcmpReceive(Message &aMessage, const Ip6::MessageInfo &a
 {
     uint32_t timestamp = 0;
 
-    VerifyOrExit(aIcmpHeader.GetType() == kIcmp6TypeEchoReply, ;);
+    VerifyOrExit(aIcmpHeader.GetType() == kIcmp6TypeEchoReply);
 
     sServer->OutputFormat("%d bytes from ", aMessage.GetLength() - aMessage.GetOffset());
     sServer->OutputFormat("%x:%x:%x:%x:%x:%x:%x:%x",
@@ -2679,6 +2699,38 @@ void Interpreter::HandlePanIdConflict(uint16_t aPanId, uint32_t aChannelMask)
 
 #endif  // OPENTHREAD_ENABLE_COMMISSIONER
 
+#if OPENTHREAD_ENABLE_BORDER_AGENT
+
+void Interpreter::ProcessBorderAgent(int argc, char *argv[])
+{
+    ThreadError error = kThreadError_None;
+
+    VerifyOrExit(argc > 0, error = kThreadError_Parse);
+
+    if (strcmp(argv[0], "start") == 0)
+    {
+        error = otBorderAgentStart(mInstance);
+
+        if (error == kThreadError_None)
+        {
+            sServer->OutputFormat("start success\r\n");
+        }
+        else
+        {
+            sServer->OutputFormat("start failed [%s]\r\n", otThreadErrorToString(error));
+        }
+    }
+    else if (strcmp(argv[0], "stop") == 0)
+    {
+        SuccessOrExit(error = otBorderAgentStop(mInstance));
+    }
+
+exit:
+    AppendResult(error);
+}
+
+#endif
+
 #if OPENTHREAD_ENABLE_JOINER
 
 void Interpreter::ProcessJoiner(int argc, char *argv[])
@@ -2841,7 +2893,7 @@ void Interpreter::ProcessLine(char *aBuf, uint16_t aBufLength, Server &aServer)
 
     sServer = &aServer;
 
-    VerifyOrExit(aBuf != NULL, ;);
+    VerifyOrExit(aBuf != NULL);
 
     for (; *aBuf == ' '; aBuf++, aBufLength--);
 
@@ -2903,7 +2955,7 @@ void Interpreter::HandleNetifStateChanged(otInstance *aInstance, uint32_t aFlags
 void Interpreter::HandleNetifStateChanged(uint32_t aFlags)
 #endif
 {
-    VerifyOrExit((aFlags & OT_THREAD_NETDATA_UPDATED) != 0, ;);
+    VerifyOrExit((aFlags & OT_THREAD_NETDATA_UPDATED) != 0);
 
 #ifndef OTDLL
     otIp6SlaacUpdate(mInstance, mSlaacAddresses, sizeof(mSlaacAddresses) / sizeof(mSlaacAddresses[0]),

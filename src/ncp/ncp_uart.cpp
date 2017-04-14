@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include <common/code_utils.hpp>
 #include <common/new.hpp>
+#include <common/debug.hpp>
 #include <net/ip6.hpp>
 #include <ncp/ncp_uart.hpp>
 #include <core/openthread-core-config.h>
@@ -51,11 +52,16 @@
 namespace Thread {
 
 static otDEFINE_ALIGNED_VAR(sNcpRaw, sizeof(NcpUart), uint64_t);
-static NcpUart *sNcpUart;
 
 extern "C" void otNcpInit(otInstance *aInstance)
 {
-    sNcpUart = new(&sNcpRaw) NcpUart(aInstance);
+    NcpUart *ncpUart = NULL;
+    ncpUart = new(&sNcpRaw) NcpUart(aInstance);
+
+    if (ncpUart == NULL || ncpUart != NcpBase::GetNcpInstance())
+    {
+        assert(false);
+    }
 }
 
 NcpUart::UartTxBuffer::UartTxBuffer(void)
@@ -100,10 +106,9 @@ NcpUart::NcpUart(otInstance *aInstance):
 
 void NcpUart::TxFrameBufferHasData(void *aContext, NcpFrameBuffer *aNcpFrameBuffer)
 {
-    (void)aContext;
     (void)aNcpFrameBuffer;
 
-    sNcpUart->TxFrameBufferHasData();
+    static_cast<NcpUart *>(aContext)->TxFrameBufferHasData();
 }
 
 void NcpUart::TxFrameBufferHasData(void)
@@ -171,13 +176,21 @@ exit:
 
     if (len > 0)
     {
-        otPlatUartSend(mUartBuffer.GetBuffer(), len);
+        if (otPlatUartSend(mUartBuffer.GetBuffer(), len) != kThreadError_None)
+        {
+            assert(false);
+        }
     }
 }
 
 extern "C" void otPlatUartSendDone(void)
 {
-    sNcpUart->HandleUartSendDone();
+    NcpUart *ncpUart = static_cast<NcpUart *>(NcpBase::GetNcpInstance());
+
+    if (ncpUart != NULL)
+    {
+        ncpUart->HandleUartSendDone();
+    }
 }
 
 void NcpUart::HandleUartSendDone(void)
@@ -189,7 +202,12 @@ void NcpUart::HandleUartSendDone(void)
 
 extern "C" void otPlatUartReceived(const uint8_t *aBuf, uint16_t aBufLength)
 {
-    sNcpUart->HandleUartReceiveDone(aBuf, aBufLength);
+    NcpUart *ncpUart = static_cast<NcpUart *>(NcpBase::GetNcpInstance());
+
+    if (ncpUart != NULL)
+    {
+        ncpUart->HandleUartReceiveDone(aBuf, aBufLength);
+    }
 }
 
 void NcpUart::HandleUartReceiveDone(const uint8_t *aBuf, uint16_t aBufLength)
@@ -197,10 +215,9 @@ void NcpUart::HandleUartReceiveDone(const uint8_t *aBuf, uint16_t aBufLength)
     mFrameDecoder.Decode(aBuf, aBufLength);
 }
 
-void NcpUart::HandleFrame(void *context, uint8_t *aBuf, uint16_t aBufLength)
+void NcpUart::HandleFrame(void *aContext, uint8_t *aBuf, uint16_t aBufLength)
 {
-    sNcpUart->HandleFrame(aBuf, aBufLength);
-    (void)context;
+    static_cast<NcpUart *>(aContext)->HandleFrame(aBuf, aBufLength);
 }
 
 void NcpUart::HandleFrame(uint8_t *aBuf, uint16_t aBufLength)
@@ -208,10 +225,9 @@ void NcpUart::HandleFrame(uint8_t *aBuf, uint16_t aBufLength)
     super_t::HandleReceive(aBuf, aBufLength);
 }
 
-void NcpUart::HandleError(void *context, ThreadError aError, uint8_t *aBuf, uint16_t aBufLength)
+void NcpUart::HandleError(void *aContext, ThreadError aError, uint8_t *aBuf, uint16_t aBufLength)
 {
-    sNcpUart->HandleError(aError, aBuf, aBufLength);
-    (void)context;
+    static_cast<NcpUart *>(aContext)->HandleError(aError, aBuf, aBufLength);
 }
 
 void NcpUart::HandleError(ThreadError aError, uint8_t *aBuf, uint16_t aBufLength)

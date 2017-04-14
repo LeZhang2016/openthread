@@ -41,6 +41,7 @@
 #include <common/encoding.hpp>
 #include <common/logging.hpp>
 #include <meshcop/energy_scan_client.hpp>
+#include <meshcop/meshcop.hpp>
 #include <meshcop/tlvs.hpp>
 #include <thread/thread_netif.hpp>
 #include <thread/thread_uris.hpp>
@@ -84,7 +85,8 @@ ThreadError EnergyScanClient::SendQuery(uint32_t aChannelMask, uint8_t aCount, u
     header.AppendUriPathOptions(OPENTHREAD_URI_ENERGY_SCAN);
     header.SetPayloadMarker();
 
-    VerifyOrExit((message = mNetif.GetCoapClient().NewMeshCoPMessage(header)) != NULL, error = kThreadError_NoBufs);
+    VerifyOrExit((message = MeshCoP::NewMeshCoPMessage(mNetif.GetCoapClient(), header)) != NULL,
+                 error = kThreadError_NoBufs);
 
     sessionId.Init();
     sessionId.SetCommissionerSessionId(mNetif.GetCommissioner().GetSessionId());
@@ -147,15 +149,15 @@ void EnergyScanClient::HandleReport(Coap::Header &aHeader, Message &aMessage, co
     } OT_TOOL_PACKED_END energyList;
 
     VerifyOrExit(aHeader.GetType() == kCoapTypeConfirmable &&
-                 aHeader.GetCode() == kCoapRequestPost, ;);
+                 aHeader.GetCode() == kCoapRequestPost);
 
     otLogInfoMeshCoP(GetInstance(), "received energy scan report");
 
     SuccessOrExit(MeshCoP::Tlv::GetTlv(aMessage, MeshCoP::Tlv::kChannelMask, sizeof(channelMask), channelMask));
-    VerifyOrExit(channelMask.IsValid(),);
+    VerifyOrExit(channelMask.IsValid());
 
     SuccessOrExit(MeshCoP::Tlv::GetTlv(aMessage, MeshCoP::Tlv::kEnergyList, sizeof(energyList), energyList.tlv));
-    VerifyOrExit(energyList.tlv.IsValid(), ;);
+    VerifyOrExit(energyList.tlv.IsValid());
 
     if (mCallback != NULL)
     {
