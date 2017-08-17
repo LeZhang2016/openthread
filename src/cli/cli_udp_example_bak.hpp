@@ -83,17 +83,16 @@ private:
     otError ProcessSend(int argc, char *argv[]);
     otError ProcessTest(int argc, char *argv[]);
     
+    void Init(void);
+    otError SendUDPPacket(void);
+    uint32_t ReadSequence(otMessage *aMessage);
+
     static void s_HandlePingTimer(Timer &aTimer);
     void HandlePingTimer();
     static Udp &GetOwner(const Context &aContext);
 
     static void HandleUdpReceive(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo);
     void HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMessageInfo);
-
-    otError SendUdpPacket(void);
-    uint32_t GetAcceptedCount(otMessage *aMessage);
-    uint32_t GetAcceptedTimestamp(otMessage *aMessage);
-    void Init(void);
 
     static const Command sCommands[];
     Interpreter &mInterpreter;
@@ -102,18 +101,18 @@ private:
 
     uint16_t mLength;
     uint16_t mCount;
+    uint16_t mSequence;
     uint32_t mInterval;
-    char mPayload[1500];
+    char mPayload[2048];
     otMessageInfo mMessageInfo;
     otMessage *mMessage = NULL;
     TimerMilli mPingTimer;
     uint32_t mTimestamp;
-    uint32_t mTimeElapse;
+    uint8_t mRole;
     uint32_t mLossNum;
+    bool mIsReceived;
     uint32_t mLatency;
-    uint32_t mJitter;
-    uint32_t mAcceptTimestamp;
-    uint16_t mInitialCount;
+    uint32_t mTimeElapse;
 };
 
 }  // namespace Cli

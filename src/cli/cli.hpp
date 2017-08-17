@@ -150,6 +150,7 @@ public:
      */
     static int Hex2Bin(const char *aHex, uint8_t *aBin, uint16_t aBinLength);
 
+
 private:
     enum
     {
