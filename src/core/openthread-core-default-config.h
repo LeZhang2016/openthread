@@ -438,7 +438,7 @@
  *
  */
 #ifndef OPENTHREAD_CONFIG_LOG_LEVEL
-#define OPENTHREAD_CONFIG_LOG_LEVEL                             OT_LOG_LEVEL_CRIT
+#define OPENTHREAD_CONFIG_LOG_LEVEL                             OT_LOG_LEVEL_INFO
 #endif  // OPENTHREAD_CONFIG_LOG_LEVEL
 
 /**
