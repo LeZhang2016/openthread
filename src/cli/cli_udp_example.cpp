@@ -31,7 +31,7 @@
  *   This file implements a simple CLI for the CoAP service.
  */
 
-#include "cli_udp_example_bak2.hpp"
+#include "cli_udp_example.hpp"
 
 #include <openthread/config.h>
 #include <openthread/message.h>
@@ -48,11 +48,95 @@ namespace Cli {
 
 Udp::Udp(Interpreter &aInterpreter):
     mInterpreter(aInterpreter),
-    mCount(10),
+    mLength(1232),
+    mCount(0),
+    mInterval(1),
     mPingTimer(*aInterpreter.mInstance, &Udp::s_HandlePingTimer, this)
+{
+}
+
+void Udp::Init(void)
+{
+    mCount = 0;
+    mLossNum = 0;
+    mLatency = 0;
+    mTimestamp = 0;
+    mTimeElapse = 0;
+    mJitter = 0;
+    mAcceptTimestamp = 0;
+}
+
+otError Udp::SendUdpPacket(void)
+{
+    otError error;
+    uint32_t timestamp = 0;
+    otMessage *message;
+
+    timestamp = TimerMilli::GetNow();
+    mInterpreter.mServer->OutputFormat("the timestamp is %u and count is %d \r\n", static_cast<unsigned int>(timestamp), mCount);
+
+    mPayload[0] = timestamp >> 24;
+    mPayload[1] = timestamp >> 16;
+    mPayload[2] = timestamp >> 8;
+    mPayload[3] = timestamp;
+    mPayload[4] = mCount >> 24;
+    mPayload[5] = mCount >> 16;
+    mPayload[6] = mCount >> 8;
+    mPayload[7] = mCount;
+
+    for (uint16_t i = 8; i < mLength; i++)
     {
+        mPayload[i] = 'T';
     }
 
+    message = otUdpNewMessage(mInterpreter.mInstance, true);
+
+    VerifyOrExit(message != NULL, error = OT_ERROR_NO_BUFS);
+
+    error = otMessageAppend(message, mPayload, static_cast<uint16_t>(mLength));
+
+    SuccessOrExit(error);
+
+    error = otUdpSend(&mSocket, message, &mMessageInfo);
+
+    SuccessOrExit(error);
+
+    mCount++;
+
+exit:
+
+    if (error != OT_ERROR_NONE && message != NULL)
+    {
+        otMessageFree(message);
+    }
+
+    return error;
+
+}
+
+uint32_t Udp::GetAcceptedTimestamp(otMessage *aMessage)
+{
+    uint8_t buf[1500];
+    int length;
+    uint32_t timestamp;
+
+    length = otMessageRead(aMessage, otMessageGetOffset(aMessage), buf, sizeof(buf) - 1);
+    buf[length] = '\0';
+    timestamp = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
+    return timestamp;
+}
+
+uint32_t Udp::GetAcceptedCount(otMessage *aMessage)
+{
+    uint8_t buf[1500];
+    int length;
+    uint32_t count;
+
+    length = otMessageRead(aMessage, otMessageGetOffset(aMessage), buf, sizeof(buf) - 1);
+    buf[length] = '\0';
+    count = buf[4] << 24 | buf[5] << 16 | buf[6] << 8 | buf[7];
+    return count;
+}
 
 const struct Udp::Command Udp::sCommands[] =
 {
@@ -64,64 +148,6 @@ const struct Udp::Command Udp::sCommands[] =
     { "send", &Udp::ProcessSend },
     { "test", &Udp::ProcessTest }
 };
-
-
-otError Udp::SendUDPPacket()
-{
-    otMessage *message;
-    otError error;
-    uint32_t timestamp = 0;
-    timestamp = TimerMilli::GetNow();
-
-    mPayload[0] = timestamp >> 24;
-    mPayload[1] = timestamp >> 16;
-    mPayload[2] = timestamp >> 8;
-    mPayload[3] = timestamp;
-    mPayload[4] = mSequence >> 24;
-    mPayload[5] = mSequence >> 16;
-    mPayload[6] = mSequence >> 8;
-    mPayload[7] = mSequence;
-
-    for (uint16_t i = 8; i < mLength; i++)
-    {
-        mPayload[i] = 'T';
-    }
-
-    mSequence++;
-
-    message = otUdpNewMessage(mInterpreter.mInstance, true);
-
-    printf("Send pkt sequence No is %u, and length is %d\n", mSequence, mLength);
-
-    error = otMessageAppend(message, mPayload, mLength);
-
-    error = otUdpSend(&mSocket, message, &mMessageInfo);
-
-    mIsReceived = false;
-
-    return error;
-}
-
-uint32_t Udp::ReadSequence(otMessage *aMessage)
-{
-    uint8_t buf[1500];
-    int length;
-    uint32_t sequence;
-    length = otMessageRead(aMessage, otMessageGetOffset(aMessage), buf, sizeof(buf) - 1);
-    buf[length] = '\0';
-    sequence = buf[4] << 24 | buf[5] << 16 | buf[6] << 8 | buf[7];
-    return sequence;
-}
-
-void Udp::Init()
-{
-    mSequence = 0;
-    mLossNum = 0;
-    mIsReceived = false;
-    mLatency = 0;
-    mTimestamp = 0;
-    mTimeElapse = 0;
-}
 
 otError Udp::ProcessHelp(int argc, char *argv[])
 {
@@ -194,23 +220,9 @@ otError Udp::ProcessClose(int argc, char *argv[])
 
 otError Udp::ProcessOpen(int argc, char *argv[])
 {
-    // OT_UNUSED_VARIABLE(argc);
-    // OT_UNUSED_VARIABLE(argv);
-    otError error;
-    int curArg = 0;
-
-    VerifyOrExit(argc == 1, error = OT_ERROR_PARSE);
-
-    if(argc == 1)
-    {
-        long value;
-        error = Interpreter::ParseLong(argv[curArg], value);
-        mRole = value;
-    }
-    error = otUdpOpen(mInterpreter.mInstance, &mSocket, HandleUdpReceive, this);
-
-exit:
-    return error;
+    OT_UNUSED_VARIABLE(argc);
+    OT_UNUSED_VARIABLE(argv);
+    return otUdpOpen(mInterpreter.mInstance, &mSocket, HandleUdpReceive, this);
 }
 
 otError Udp::ProcessSend(int argc, char *argv[])
@@ -278,76 +290,65 @@ void Udp::HandleUdpReceive(void *aContext, otMessage *aMessage, const otMessageI
 
 void Udp::HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMessageInfo)
 {
-    int length;
     otMessageInfo messageInfo;
     otMessage *message;
-    uint32_t sequence;
-    uint32_t timestamp;
+    uint32_t timestamp = 0;
+    uint32_t sendTimestamp = 0;
+    uint16_t count;
 
-    mIsReceived = true;
+    timestamp = TimerMilli::GetNow();
 
     memset(&messageInfo, 0, sizeof(messageInfo));
     memset(&message, 0, sizeof(message));
 
-    sequence = ReadSequence(aMessage);
-    timestamp = TimerMilli::GetNow();
-    if (mRole == 2)
+    count = GetAcceptedCount(aMessage);
+    sendTimestamp = GetAcceptedTimestamp(aMessage);
+
+    if (count == 0)
     {
-        if (sequence <= 0)
-        {
-            Init();
-            mTimestamp = TimerMilli::GetNow();
-        }
-
-        if (sequence - mSequence > 0)
-        {
-            mLossNum = sequence - mSequence;
-            mSequence = sequence;
-        }
-        else
-        {
-            mSequence++;
-        }
-        if (mTimestamp < timestamp)
-        {
-            mTimeElapse = mTimeElapse + timestamp - mTimestamp;
-            mTimestamp = timestamp;
-        }
-
-        memcpy(messageInfo.mPeerAddr.mFields.m8, aMessageInfo->mPeerAddr.mFields.m8, sizeof(aMessageInfo->mSockAddr.mFields.m8));
-        messageInfo.mPeerPort = aMessageInfo->mPeerPort;
-        memcpy(messageInfo.mSockAddr.mFields.m8, aMessageInfo->mSockAddr.mFields.m8, sizeof(aMessageInfo->mPeerAddr.mFields.m8));
-        messageInfo.mSockPort = aMessageInfo->mSockPort;
-        length = otMessageRead(aMessage, otMessageGetOffset(aMessage), mPayload, sizeof(mPayload) - 1);
-        mPayload[length] = '\0';
-        message = otUdpNewMessage(mInterpreter.mInstance, true);
-        otMessageAppend(message, mPayload, static_cast<uint16_t>(length));
-        otUdpSend(&mSocket, message, &messageInfo);
-        mInterpreter.mServer->OutputFormat("Send received message and reply it to sender %u and time elapse %u and lost pkt %u\r\n", static_cast<unsigned int>(mSequence), static_cast<unsigned int>(mTimeElapse), static_cast<unsigned int>(mLossNum));
-        mInterpreter.mServer->OutputFormat("%x:%x:%x:%x:%x:%x:%x:%x %d \r\n",
-                                           HostSwap16(messageInfo.mPeerAddr.mFields.m16[0]),
-                                           HostSwap16(messageInfo.mPeerAddr.mFields.m16[1]),
-                                           HostSwap16(messageInfo.mPeerAddr.mFields.m16[2]),
-                                           HostSwap16(messageInfo.mPeerAddr.mFields.m16[3]),
-                                           HostSwap16(messageInfo.mPeerAddr.mFields.m16[4]),
-                                           HostSwap16(messageInfo.mPeerAddr.mFields.m16[5]),
-                                           HostSwap16(messageInfo.mPeerAddr.mFields.m16[6]),
-                                           HostSwap16(messageInfo.mPeerAddr.mFields.m16[7]),
-                                           messageInfo.mPeerPort);
-
-        //retrieve the data records the sequence
+        Init();
+        mTimestamp = TimerMilli::GetNow();
+        mAcceptTimestamp = sendTimestamp;
     }
-    else if (mRole == 1)
+
+    if (count - mCount > 0)
     {
-        //send the next packets
-//        printf("Send received message and reply it to sender %u\n", mSequence);
-        if (mSequence <= mCount)
-        {
-            SendUDPPacket();
-            mPingTimer.Start(mInterval);
-        }
-
+        mLossNum = count - mCount;
+        mCount = count + 1;
     }
+    else
+    {
+        mCount++;
+    }
+
+    if (mTimestamp < timestamp)
+    {
+//        mTimeElapse = mTimeElapse + timestamp - mTimestamp;
+        mTimeElapse = timestamp - mTimestamp;
+        mTimestamp = timestamp;
+    }
+
+    if (mAcceptTimestamp < sendTimestamp)
+    {
+        mJitter = sendTimestamp - mAcceptTimestamp;
+        mAcceptTimestamp = sendTimestamp;
+    }
+
+    mInterpreter.mServer->OutputFormat("%u, %d, %d, %u, %u from ", timestamp, count, otMessageGetLength(aMessage) - otMessageGetOffset(aMessage), mTimeElapse, mJitter);
+    mInterpreter.mServer->OutputFormat("%x:%x:%x:%x:%x:%x:%x:%x %d \r\n",
+                                       HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[0]),
+                                       HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[1]),
+                                       HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[2]),
+                                       HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[3]),
+                                       HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[4]),
+                                       HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[5]),
+                                       HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[6]),
+                                       HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[7]),
+                                       aMessageInfo->mPeerPort);
+    //TODO: count the maximum throughput after the following test
+
+
+
 }
 
 Udp &Udp::GetOwner(const Context &aContext)
@@ -369,10 +370,20 @@ void Udp::s_HandlePingTimer(Timer &aTimer)
 
 void Udp::HandlePingTimer()
 {
-    if (mIsReceived == false)
+    otError error;
+
+    error = SendUdpPacket();
+    SuccessOrExit(error);
+exit:
+    if (mCount < mInitialCount)
     {
-        SendUDPPacket();
+        mPingTimer.Start(mInterval);
     }
+    else
+    {
+        Init();
+    }
+
 }
 
 otError Udp::ProcessTest(int argc, char *argv[])
@@ -382,29 +393,30 @@ otError Udp::ProcessTest(int argc, char *argv[])
 
     memset(&mMessageInfo, 0, sizeof(mMessageInfo));
 
-    VerifyOrExit(argc == 1 || argc == 5, error = OT_ERROR_PARSE);
+    VerifyOrExit(argc == 2 || argc == 5, error = OT_ERROR_PARSE);
+
+    long value;
+
+    error = otIp6AddressFromString(argv[curArg++], &mMessageInfo.mPeerAddr);
+    SuccessOrExit(error);
+
+    error = Interpreter::ParseLong(argv[curArg++], value);
+    SuccessOrExit(error);
+
+    mMessageInfo.mPeerPort = static_cast<uint16_t>(value);
+
+    error = Interpreter::ParseLong(argv[curArg++], value);
+    SuccessOrExit(error);
 
     if (argc == 5)
     {
-        long value;
-
-        error = otIp6AddressFromString(argv[curArg++], &mMessageInfo.mPeerAddr);
-        SuccessOrExit(error);
-
-        error = Interpreter::ParseLong(argv[curArg++], value);
-        SuccessOrExit(error);
-
-        mMessageInfo.mPeerPort = static_cast<uint16_t>(value);
-
-        error = Interpreter::ParseLong(argv[curArg++], value);
-        SuccessOrExit(error);
 
         mLength = value;
 
         error = Interpreter::ParseLong(argv[curArg++], value);
         SuccessOrExit(error);
              
-        mCount = value;
+        mInitialCount = value;
 
         error = Interpreter::ParseLong(argv[curArg++], value);
         SuccessOrExit(error);
@@ -412,18 +424,7 @@ otError Udp::ProcessTest(int argc, char *argv[])
         mInterval = value;
     }
 
-    Init();
-    // FillPayload();
-
-    // message = otUdpNewMessage(mInterpreter.mInstance, true);
-    // VerifyOrExit(message != NULL, error = OT_ERROR_NO_BUFS);
-
-    // error = otMessageAppend(message, mPayload, mLength);
-    // SuccessOrExit(error);
-
-    // error = otUdpSend(&mSocket, message, &mMessageInfo);
-    SendUDPPacket();
-    mPingTimer.Start(mInterval);
+    HandlePingTimer();
 
 exit:
 
