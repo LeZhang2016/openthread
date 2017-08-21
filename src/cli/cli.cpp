@@ -1593,6 +1593,7 @@ void Interpreter::ProcessPing(int argc, char *argv[])
 
 exit:
     AppendResult(error);
+
 }
 
 void Interpreter::s_HandlePingTimer(Timer &aTimer)
