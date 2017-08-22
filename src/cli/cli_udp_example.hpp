@@ -33,9 +33,11 @@
 
 #ifndef CLI_UDP_EXAMPLE_HPP_
 #define CLI_UDP_EXAMPLE_HPP_
-
+// #include "cli.hpp"
 #include <openthread/udp.h>
 #include <openthread/types.h>
+
+#include "common/timer.hpp"
 
 namespace ot {
 namespace Cli {
@@ -55,7 +57,7 @@ public:
      * @param[in]  aInterpreter  The CLI interpreter.
      *
      */
-    Udp(Interpreter &aInterpreter): mInterpreter(aInterpreter) { }
+    Udp(Interpreter &aInterpreter);
 
     /**
      * This method interprets a list of CLI arguments.
@@ -79,6 +81,16 @@ private:
     otError ProcessConnect(int argc, char *argv[]);
     otError ProcessOpen(int argc, char *argv[]);
     otError ProcessSend(int argc, char *argv[]);
+    otError ProcessTest(int argc, char *argv[]);
+    
+    void Init(void);
+    otError SendUDPPacket(void);
+    uint32_t ReadSequence(otMessage *aMessage);
+    uint32_t ReadTimestamp(otMessage *aMessage);
+
+    static void s_HandlePingTimer(Timer &aTimer);
+    void HandlePingTimer();
+    static Udp &GetOwner(const Context &aContext);
 
     static void HandleUdpReceive(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo);
     void HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMessageInfo);
@@ -87,6 +99,21 @@ private:
     Interpreter &mInterpreter;
 
     otUdpSocket mSocket;
+
+    uint16_t mLength;
+    uint16_t mCount;
+    uint16_t mSequence;
+    uint32_t mInterval;
+    char mPayload[2048];
+    otMessageInfo mMessageInfo;
+    otMessage *mMessage = NULL;
+    TimerMilli mPingTimer;
+    uint32_t mTimestamp;
+    uint8_t mRole;
+    uint32_t mLossNum;
+    bool mIsReceived;
+    uint32_t mLatency;
+    uint32_t mTimeElapse;
 };
 
 }  // namespace Cli
