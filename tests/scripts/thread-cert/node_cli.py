@@ -43,7 +43,8 @@ class otCli:
         elif self.node_type == 'ncp-sim':
             self.__init_ncp_sim(nodeid)
         else:
-            self.__init_sim(nodeid)
+            # self.__init_sim(nodeid)
+            self.__init_socket(nodeid)
 
         if self.verbose:
             self.pexpect.logfile_read = sys.stdout
@@ -87,16 +88,65 @@ class otCli:
         serialPort = '/dev/ttyUSB%d' % ((nodeid-1)*2)
         self.pexpect = fdpexpect.fdspawn(os.open(serialPort, os.O_RDWR|os.O_NONBLOCK|os.O_NOCTTY))
 
+    def __init_socket(self, nodeid):
+        ############################################################
+        cmd = 'telnet 127.0.0.1 200' + str(nodeid)
+        self.pexpect = pexpect.spawn(cmd, timeout = 5)
+        print(self.pexpect.readline())
+        print(self.pexpect.readline())
+        print(self.pexpect.readline())
+        ############################################################
+        # print(self.pexpect.readline())
+        # self.pexpect.sendline('\r\n')
+
+        # while self.pexpect.isalive():
+        #     try:
+        #         line = self.pexpect.readline()
+        #         print (line)
+        #     except pexpect.TIMEOUT:
+        #         break
+        # # self.pexpect.sendline('raspberry')
+        # # self.pexpect.sendline('\r\n')
+        # # print(self.pexpect.readline())
+        # # print(self.pexpect.readline())
+        # # print(self.pexpect.readline())
+        # # print(self.pexpect.readline())
+        # # print(self.pexpect.readline())
+        # # print(self.pexpect.readline())
+        # self.pexpect.sendline('\r\n')
+        #####################################################################
+        # cmd = 'ssh pi@172.23.253.59 telnet 127.0.0.1 200' + str(nodeid)
+        # self.pexpect = pexpect.spawn(cmd, timeout = 5)
+        #
+        # self.pexpect.send('raspberry\r\n')
+        # print(self.pexpect.readline())
+        # self.pexpect.sendline('raspberry')
+        # while self.pexpect.isalive():
+        #     try:
+        #         line = self.pexpect.readline()
+        #         print (line)
+        #     except pexpect.TIMEOUT:
+        #         break
+        #####################################################################
+
     def __del__(self):
-        if self.pexpect.isalive():
-            self.send_command('exit')
-            self.pexpect.expect(pexpect.EOF)
-            self.pexpect.terminate()
-            self.pexpect.close(force=True)
+        self.pexpect.sendline(chr(29))
+        self.pexpect.readline()
+        self.pexpect.send('quit')
+        self.send_command('exit')
+        self.pexpect.terminate()
+        self.pexpect.close(force=True)
+        # if self.pexpect.isalive():
+        #     self.send_command('exit')
+        #     self.pexpect.expect(pexpect.EOF)
+        #     self.pexpect.terminate()
+        #     self.pexpect.close(force=True)
 
     def send_command(self, cmd):
         print ("%d: %s" % (self.nodeid, cmd))
         self.pexpect.sendline(cmd)
+        # print(self.pexpect.readline())
+        time.sleep(0.05)
 
     def get_commands(self):
         self.send_command('?')
@@ -185,6 +235,11 @@ class otCli:
             addr16 = int(self.pexpect.match.groups()[0], 16)
         self.pexpect.expect('Done')
         return addr16
+
+    def set_addr64(self, extaddr):
+        cmd = 'extaddr ' + extaddr
+        self.send_command(cmd)
+        self.pexpect.expect('Done')
 
     def get_addr64(self):
         self.send_command('extaddr')
@@ -406,6 +461,9 @@ class otCli:
         self.send_command('netdataregister')
         self.pexpect.expect('Done')
 
+    def factory_reset(self):
+        self.send_command('factoryreset')
+
     def energy_scan(self, mask, count, period, scan_duration, ipaddr):
         cmd = 'commissioner energy ' + str(mask) + ' ' + str(count) + ' ' + str(period) + ' ' + str(scan_duration) + ' ' + ipaddr
         self.send_command(cmd)
@@ -415,6 +473,76 @@ class otCli:
         cmd = 'commissioner panid ' + str(panid) + ' ' + str(mask) + ' ' + ipaddr
         self.send_command(cmd)
         self.pexpect.expect('Conflict:', timeout=8)
+
+    def udp_close(self):
+        cmd = 'udp close'
+        self.send_command(cmd)
+        self.pexpect.expect('Done')
+
+    def duty_cycle(self):
+        cmd = 'dutycycle 100 50 2 10'
+        self.send_command(cmd)
+        self.pexpect.expect('Done')
+
+    def udp_open(self):
+        cmd = 'udp open'
+        self.send_command(cmd)
+        self.pexpect.expect('Done')
+
+    def udp_bind(self, ipaddr, port):
+        cmd = 'udp bind ' + ipaddr + ' ' + port
+        self.send_command(cmd)
+        self.pexpect.expect('Done')
+
+    def udp_test(self, ipaddr, port, pkt_size, count, interval):
+        cmd = 'udp test ' + ipaddr + ' ' + port + ' ' + str(pkt_size) + ' ' + str(count) + ' ' + str(interval)
+        self.send_command(cmd)
+        self.pexpect.expect('Done')
+
+    def udp_result(self):
+        cmd = 'udp result'
+        self.send_command(cmd)
+        while self.pexpect.isalive():
+            try:
+                line = self.pexpect.readline()
+                if 'udp' not in line:
+                    result  = line
+                    break
+            except pexpect.TIMEOUT:
+                break
+        try:
+            self.pexpect.expect('Done')
+        except pexpect.TIMEOUT:
+            print ('timeout')
+        return result
+
+    def udp_monitor(self):
+        while self.pexpect.isalive():
+            try:
+                line = self.pexpect.readline()
+                print(line)
+            except pexpect.TIMEOUT:
+                break
+
+    def monitor_open(self, receive_node_id, send_node_id):
+        cmd = 'monitor open ' + str(receive_node_id) + ' ' + str(send_node_id)
+        self.send_command(cmd)
+        self.pexpect.expect('Done')
+
+    def monitor_monitor(self, receiver_id, sender_id):
+        a = []
+        while self.pexpect.isalive():
+            try:
+                line = self.pexpect.readline()
+                print('\'' + line.decode('UTF-8')[0:-2] + '\',')
+                if str(sender_id) + ' ,' in line.decode('UTF-8'):
+                    s_pin_reval = int(line.decode('UTF-8').split(' ')[-1])
+                if str(receiver_id) + ' ,' in line.decode('UTF-8'):
+                    r_pin_reval = int(line.decode('UTF-8').split(' ')[-1])
+                    a.append(r_pin_reval - s_pin_reval)
+
+            except pexpect.TIMEOUT:
+                return a
 
     def scan(self):
         self.send_command('scan')

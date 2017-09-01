@@ -562,7 +562,7 @@
 *
 */
 #ifndef OPENTHREAD_CONFIG_LOG_PLATFORM
-#define OPENTHREAD_CONFIG_LOG_PLATFORM                          0
+#define OPENTHREAD_CONFIG_LOG_PLATFORM                          1
 #endif  // OPENTHREAD_CONFIG_LOG_PLATFORM
 
 /**

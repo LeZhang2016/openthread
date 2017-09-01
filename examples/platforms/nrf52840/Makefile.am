@@ -58,6 +58,7 @@ PLATFORM_SOURCES                                                                
     misc.c                                                                                                   \
     platform.c                                                                                               \
     uart.c                                                                                                   \
+    gpio.c                                                                                                   \
     platform-config.h                                                                                        \
     platform-nrf5.h                                                                                          \
     radio.c                                                                                                  \

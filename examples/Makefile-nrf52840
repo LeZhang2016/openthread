@@ -43,11 +43,11 @@ BuildJobs                      ?= 10
 
 configure_OPTIONS                                 = \
     --enable-cli-app=all                            \
-    --enable-ncp-app=all                            \
     --with-ncp-bus=uart                             \
     --enable-diag                                   \
     --with-examples=nrf52840                        \
     --enable-linker-map                             \
+    --enable-mac-filter                             \
     MBEDTLS_CPPFLAGS="$(NRF52840_MBEDTLS_CPPFLAGS)" \
     $(NULL)
 
@@ -79,9 +79,7 @@ COMMONCFLAGS                   := \
     -I$(CONFIG_FILE_PATH)         \
     $(NULL)
 
-ifeq ($(CERT_LOG),1)
 COMMONCFLAGS += -DOPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT=1
-endif
 
 CPPFLAGS                       += \
     $(COMMONCFLAGS)               \

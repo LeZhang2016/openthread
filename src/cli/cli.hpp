@@ -44,6 +44,8 @@
 
 #include "cli/cli_server.hpp"
 #include "cli/cli_udp_example.hpp"
+#include "cli/cli_udp_latency.hpp"
+#include "cli/cli_latency_monitor.hpp"
 
 #if OPENTHREAD_ENABLE_APPLICATION_COAP
 #include <coap/coap_header.hpp>
@@ -95,6 +97,8 @@ class Interpreter
 {
     friend class Coap;
     friend class Udp;
+    friend class UdpLatency;
+    friend class LatencyMonitor;
 
 public:
 
@@ -291,6 +295,8 @@ private:
 
 #ifndef OTDLL
     void ProcessUdp(int argc, char *argv[]);
+    void ProcessLatency(int argc, char *argv[]);
+    void ProcessMonitor(int argc, char *argv[]);
 #endif
 
 #ifndef OTDLL
@@ -390,6 +396,8 @@ private:
 #endif
 
     Udp mUdp;
+    UdpLatency mUdpLatency;
+    LatencyMonitor mLatencyMonitor;
 
 #endif
 

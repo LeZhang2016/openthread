@@ -43,6 +43,8 @@ class Node:
         else:
             self.interface = node_api.otApi(nodeid)
 
+        self.interface.factory_reset()
+        time.sleep(0.5)
         self.interface.clear_whitelist()
         self.interface.disable_whitelist()
         self.interface.set_timeout(100)
@@ -102,6 +104,9 @@ class Node:
 
     def get_addr16(self):
         return self.interface.get_addr16()
+
+    def set_addr64(self, extaddr):
+        return self.interface.set_addr64(extaddr)
 
     def get_addr64(self):
         return self.interface.get_addr64()
@@ -213,6 +218,33 @@ class Node:
 
     def panid_query(self, panid, mask, ipaddr):
         self.interface.panid_query(panid, mask, ipaddr)
+
+    def udp_close(self):
+        self.interface.udp_close()
+
+    def udp_open(self):
+        self.interface.udp_open()
+
+    def udp_bind(self, ipaddr, port):
+        self.interface.udp_bind(ipaddr, port)
+
+    def udp_test(self, ipaddr, port, pkt_size, count, interval):
+        self.interface.udp_test(ipaddr, port, pkt_size, count, interval)
+
+    def udp_result(self):
+        return self.interface.udp_result()
+
+    def udp_monitor(self):
+        return self.interface.udp_monitor()
+
+    def monitor_monitor(self, receiver_id, sender_id):
+        return self.interface.monitor_monitor(receiver_id, sender_id)
+
+    def monitor_open(self, receive_node_id, send_node_id):
+        return self.interface.monitor_open(receive_node_id, send_node_id)
+
+    def duty_cycle(self):
+        return self.interface.duty_cycle()
 
     def scan(self):
         return self.interface.scan()

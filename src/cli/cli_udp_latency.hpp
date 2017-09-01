@@ -31,14 +31,11 @@
  *   This file contains definitions for a simple CLI CoAP server and client.
  */
 
-#ifndef CLI_UDP_EXAMPLE_HPP_
-#define CLI_UDP_EXAMPLE_HPP_
+#ifndef CLI_UDP_LATENCY_HPP_
+#define CLI_UDP_LATENCY_HPP_
 // #include "cli.hpp"
 #include <openthread/udp.h>
 #include <openthread/types.h>
-
-#include <openthread/platform/gpio.h>
-#include <openthread/platform/random.h>
 
 #include "common/timer.hpp"
 
@@ -51,7 +48,7 @@ class Interpreter;
  * This class implements a CLI-based UDP example.
  *
  */
-class Udp
+class UdpLatency
 {
 public:
     /**
@@ -60,7 +57,7 @@ public:
      * @param[in]  aInterpreter  The CLI interpreter.
      *
      */
-    Udp(Interpreter &aInterpreter);
+    UdpLatency(Interpreter &aInterpreter);
 
     /**
      * This method interprets a list of CLI arguments.
@@ -75,7 +72,7 @@ private:
     struct Command
     {
         const char *mName;
-        otError(Udp::*mCommand)(int argc, char *argv[]);
+        otError(UdpLatency::*mCommand)(int argc, char *argv[]);
     };
 
     otError ProcessHelp(int argc, char *argv[]);
@@ -85,23 +82,18 @@ private:
     otError ProcessOpen(int argc, char *argv[]);
     otError ProcessSend(int argc, char *argv[]);
     otError ProcessTest(int argc, char *argv[]);
-    otError ProcessResult(int argc, char *argv[]);
     
+    void Init(void);
+    otError SendUDPPacket(void);
+    uint32_t ReadSequence(otMessage *aMessage);
+    uint32_t ReadTimestamp(otMessage *aMessage);
+
     static void s_HandlePingTimer(Timer &aTimer);
     void HandlePingTimer();
-
-    static void s_HandleGpioTimer(Timer &aTimer);
-    void HandleGpioTimer();
-
-    static Udp &GetOwner(const Context &aContext);
+    static UdpLatency &GetOwner(const Context &aContext);
 
     static void HandleUdpReceive(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo);
     void HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMessageInfo);
-
-    otError SendUdpPacket(void);
-    uint32_t GetAcceptedCount(otMessage *aMessage);
-    uint32_t GetAcceptedTimestamp(otMessage *aMessage);
-    void Init(void);
 
     static const Command sCommands[];
     Interpreter &mInterpreter;
@@ -110,20 +102,18 @@ private:
 
     uint16_t mLength;
     uint16_t mCount;
+    uint16_t mSequence;
     uint32_t mInterval;
-    char mPayload[1500];
+    char mPayload[2048];
     otMessageInfo mMessageInfo;
     otMessage *mMessage = NULL;
     TimerMilli mPingTimer;
-    TimerMilli mGpioTimer;
     uint32_t mTimestamp;
-    uint32_t mTimeElapse;
+    uint8_t mRole;
     uint32_t mLossNum;
+    bool mIsReceived;
     uint32_t mLatency;
-    uint32_t mJitter;
-    uint32_t mAcceptTimestamp;
-    uint16_t mInitialCount;
-    bool mIsRun;
+    uint32_t mTimeElapse;
 };
 
 }  // namespace Cli
