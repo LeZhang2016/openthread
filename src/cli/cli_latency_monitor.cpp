@@ -56,7 +56,8 @@ LatencyMonitor::LatencyMonitor(Interpreter &aInterpreter):
 const struct LatencyMonitor::Command LatencyMonitor::sCommands[] =
 {
     { "help", &LatencyMonitor::ProcessHelp },
-    { "open", &LatencyMonitor::ProcessOpen }
+    { "open", &LatencyMonitor::ProcessOpen },
+    { "close", &LatencyMonitor::ProcessClose }
 };
 
 
@@ -101,6 +102,15 @@ exit:
     return error;
 }
 
+otError LatencyMonitor::ProcessClose(int argc, char *argv[])
+{
+    otError error = OT_ERROR_NONE;
+    OT_UNUSED_VARIABLE(argc);
+    OT_UNUSED_VARIABLE(argv);
+    otGpioInit();
+    Init();
+    return error;
+}
 
 otError LatencyMonitor::Process(int argc, char *argv[])
 {

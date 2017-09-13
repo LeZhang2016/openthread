@@ -81,6 +81,7 @@ private:
 
     otError ProcessHelp(int argc, char *argv[]);
     otError ProcessOpen(int argc, char *argv[]);
+    otError ProcessClose(int argc, char *argv[]);
     
     void Init(void);
 
