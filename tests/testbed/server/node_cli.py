@@ -31,8 +31,10 @@ import os
 import sys
 import time
 import pexpect
+import node_mgmt
 
 class otCli:
+
     def __init__(self, nodeid):
         self.nodeid = nodeid
         self.verbose = int(float(os.getenv('VERBOSE', 0)))
@@ -66,7 +68,6 @@ class otCli:
         # Add delay to ensure that the process is ready to receive commands.
         time.sleep(0.2)
 
-
     def __init_ncp_sim(self, nodeid):
         """ Initialize an NCP simulation node. """
         if "top_builddir" in os.environ.keys():
@@ -89,64 +90,63 @@ class otCli:
         self.pexpect = fdpexpect.fdspawn(os.open(serialPort, os.O_RDWR|os.O_NONBLOCK|os.O_NOCTTY))
 
     def __init_socket(self, nodeid):
-        ############################################################
-        cmd = 'telnet 127.0.0.1 200' + str(nodeid)
-        self.pexpect = pexpect.spawn(cmd, timeout = 5)
-        print(self.pexpect.readline())
-        print(self.pexpect.readline())
-        print(self.pexpect.readline())
-        ############################################################
-        # print(self.pexpect.readline())
-        # self.pexpect.sendline('\r\n')
+        node_info = node_mgmt.NodeMgmt()
+        ip, port = node_info.get_node_ip_port(nodeid)
+        cmd = 'nc ' + ip + ' 2' + str(port).zfill(3)
+        self.pexpect = pexpect.spawn(cmd, timeout=1)
 
-        # while self.pexpect.isalive():
-        #     try:
-        #         line = self.pexpect.readline()
-        #         print (line)
-        #     except pexpect.TIMEOUT:
-        #         break
-        # # self.pexpect.sendline('raspberry')
-        # # self.pexpect.sendline('\r\n')
-        # # print(self.pexpect.readline())
-        # # print(self.pexpect.readline())
-        # # print(self.pexpect.readline())
-        # # print(self.pexpect.readline())
-        # # print(self.pexpect.readline())
-        # # print(self.pexpect.readline())
-        # self.pexpect.sendline('\r\n')
-        #####################################################################
-        # cmd = 'ssh pi@172.23.253.59 telnet 127.0.0.1 200' + str(nodeid)
-        # self.pexpect = pexpect.spawn(cmd, timeout = 5)
-        #
-        # self.pexpect.send('raspberry\r\n')
-        # print(self.pexpect.readline())
-        # self.pexpect.sendline('raspberry')
-        # while self.pexpect.isalive():
-        #     try:
-        #         line = self.pexpect.readline()
-        #         print (line)
-        #     except pexpect.TIMEOUT:
-        #         break
-        #####################################################################
+        ####################################################33333############
+        ######################################################################3
+        # password = 'raspberry'
+        # cmd = 'ssh pi@' + ip + ' telnet 127.0.0.1 2' + str(port).zfill(3)
+        # self.pexpect = pexpect.spawn(cmd)
+        # ret = self.pexpect.expect([pexpect.TIMEOUT, "pi@" +ip+ "'s password:"])
+        # print ('return value is %', ret)
+        # if ret == 0:
+        #     print('[-] Error Connecting')
+        #     return
+        # if ret == 1:
+        #     self.pexpect.sendline('yes')
+        #     ret = self.pexpect.expect([pexpect.TIMEOUT, '[p|P]assword'])
+        #     if ret == 0:
+        #         print('[-] Error Connecting')
+        #         return
+        #     if ret == 1:
+        #         self.pexpect.sendline(password)
+        #         return
+        # if ret == 2:
+        #     self.pexpect.sendline(password)
+        return
 
-    def __del__(self):
+    def open_telnet(self, nodeid):
+        print(self.nodeid)
+        self.__init_socket(nodeid)
+
+    def close_telnet(self):
         self.pexpect.sendline(chr(29))
         self.pexpect.readline()
         self.pexpect.send('quit')
-        self.send_command('exit')
-        self.pexpect.terminate()
-        self.pexpect.close(force=True)
-        # if self.pexpect.isalive():
-        #     self.send_command('exit')
-        #     self.pexpect.expect(pexpect.EOF)
-        #     self.pexpect.terminate()
-        #     self.pexpect.close(force=True)
+        if self.pexpect.isalive():
+            self.send_command('exit')
+            self.pexpect.terminate()
+            self.pexpect.close(force=True)
+
+    def __del__(self):
+        # self.pexpect.sendline(chr(29))
+        # self.pexpect.readline()
+        # self.pexpect.send('quit')
+        if self.pexpect.isalive():
+            self.send_command('exit')
+            # self.pexpect.expect(pexpect.EOF)
+            self.pexpect.terminate()
+            self.pexpect.close(force=True)
+        print('over')
 
     def send_command(self, cmd):
         print ("%d: %s" % (self.nodeid, cmd))
         self.pexpect.sendline(cmd)
         # print(self.pexpect.readline())
-        time.sleep(0.05)
+        # time.sleep(0.05)
 
     def get_commands(self):
         self.send_command('?')
@@ -178,11 +178,17 @@ class otCli:
 
     def thread_start(self):
         self.send_command('thread start')
-        self.pexpect.expect('Done')
+        try:
+            self.pexpect.expect('Done')
+        except pexpect.TIMEOUT:
+            print ('timeout')
 
     def thread_stop(self):
         self.send_command('thread stop')
-        self.pexpect.expect('Done')
+        try:
+            self.pexpect.expect('Done')
+        except pexpect.TIMEOUT:
+            print('timeout')
             
     def commissioner_start(self):
         cmd = 'commissioner start'
@@ -269,7 +275,10 @@ class otCli:
     def set_channel(self, channel):
         cmd = 'channel %d' % channel
         self.send_command(cmd)
-        self.pexpect.expect('Done')
+        try:
+            self.pexpect.expect('Done')
+        except pexpect.TIMEOUT:
+            print ('timeout')
 
     def get_masterkey(self):
         self.send_command('masterkey')
@@ -463,6 +472,7 @@ class otCli:
 
     def factory_reset(self):
         self.send_command('factoryreset')
+        time.sleep(1)
 
     def energy_scan(self, mask, count, period, scan_duration, ipaddr):
         cmd = 'commissioner energy ' + str(mask) + ' ' + str(count) + ' ' + str(period) + ' ' + str(scan_duration) + ' ' + ipaddr
@@ -479,8 +489,8 @@ class otCli:
         self.send_command(cmd)
         self.pexpect.expect('Done')
 
-    def duty_cycle(self):
-        cmd = 'dutycycle 100 50 2 10'
+    def duty_cycle(self, period, work_time):
+        cmd = 'dutycycle '+  str(period) + ' ' + str(work_time) +' 2 10'
         self.send_command(cmd)
         self.pexpect.expect('Done')
 
@@ -517,12 +527,61 @@ class otCli:
         return result
 
     def udp_monitor(self):
+        count = 0
+        timestamp = 0
+        reval = []
         while self.pexpect.isalive():
             try:
                 line = self.pexpect.readline()
+                count = count + 1;
+                # current_milli_time = lambda: int(round(time.time() * 1000))
+                # # print(line + '===========' + str(current_milli_time()))
                 print(line)
+                # if (len(line.decode('UTF-8')) > 10 and int(line.decode('UTF-8').split(',')[0]) is not 0):
+                #     result = int(line.split(',')[0]) - timestamp
+                #     reval.append((result, count))
+                #     timestamp = int(line.split(',')[0])
             except pexpect.TIMEOUT:
+                return reval
+
+    def latency_close(self):
+        cmd = 'latency close'
+        self.send_command(cmd)
+        self.pexpect.expect('Done')
+
+    def latency_open(self, role):
+        cmd = 'latency open ' + str(role)
+        self.send_command(cmd)
+        self.pexpect.expect('Done')
+
+    def latency_bind(self, ipaddr, port):
+        cmd = 'latency bind ' + ipaddr + ' ' + port
+        self.send_command(cmd)
+        self.pexpect.expect('Done')
+
+    def latency_test(self, ipaddr, port, pkt_size, count, timestamp):
+        cmd = 'latency test ' + ipaddr + ' ' + port + ' ' + str(pkt_size) + ' ' + str(count) + ' ' + str(timestamp)
+        self.send_command(cmd)
+        self.pexpect.expect('Done')
+
+    def latency_monitor(self):
+        elapse = []
+        while self.pexpect.isalive():
+            try:
+                line = self.pexpect.readline()
+                # current_milli_time = lambda: int(round(time.time() * 1000))
+                print(line.decode('utf-8'))
+                if 'Elapse' in line.decode('utf-8'):
+                    elapse.append(line.decode('utf-8').split(',')[1].split(' ')[2])
+                # print(str(current_milli_time()) + '--------------end')
+            except pexpect.TIMEOUT:
+                return  elapse
                 break
+
+    def monitor_close(self):
+        cmd = 'monitor close'
+        self.send_command(cmd)
+        self.pexpect.expect('Done')
 
     def monitor_open(self, receive_node_id, send_node_id):
         cmd = 'monitor open ' + str(receive_node_id) + ' ' + str(send_node_id)
@@ -534,6 +593,7 @@ class otCli:
         while self.pexpect.isalive():
             try:
                 line = self.pexpect.readline()
+                print (line)
                 print('\'' + line.decode('UTF-8')[0:-2] + '\',')
                 if str(sender_id) + ' ,' in line.decode('UTF-8'):
                     s_pin_reval = int(line.decode('UTF-8').split(' ')[-1])

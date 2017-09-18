@@ -42,9 +42,7 @@ class Node:
             self.interface = node_cli.otCli(nodeid)
         else:
             self.interface = node_api.otApi(nodeid)
-
         self.interface.factory_reset()
-        time.sleep(0.5)
         self.interface.clear_whitelist()
         self.interface.disable_whitelist()
         self.interface.set_timeout(100)
@@ -237,14 +235,38 @@ class Node:
     def udp_monitor(self):
         return self.interface.udp_monitor()
 
+    def latency_close(self):
+        self.interface.latency_close()
+
+    def latency_open(self, role):
+        self.interface.latency_open(role)
+
+    def latency_bind(self, ipaddr, port):
+        self.interface.latency_bind(ipaddr, port)
+
+    def latency_test(self, ipaddr, port, pkt_size, count, interval):
+        self.interface.latency_test(ipaddr, port, pkt_size, count, interval)
+
+    def latency_monitor(self):
+        return self.interface.latency_monitor()
+
     def monitor_monitor(self, receiver_id, sender_id):
         return self.interface.monitor_monitor(receiver_id, sender_id)
 
     def monitor_open(self, receive_node_id, send_node_id):
         return self.interface.monitor_open(receive_node_id, send_node_id)
 
-    def duty_cycle(self):
-        return self.interface.duty_cycle()
+    def monitor_close(self):
+        return self.interface.monitor_close()
+
+    def duty_cycle(self, period, work_time):
+        return self.interface.duty_cycle(period, work_time)
+
+    def close_telnet(self):
+        self.interface.close_telnet()
+
+    def open_telnet(self, nodeid):
+        return self.interface.open_telnet(nodeid)
 
     def scan(self):
         return self.interface.scan()

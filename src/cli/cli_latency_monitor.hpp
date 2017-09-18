@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2016, The OpenThread Authors.
+ *  Copyright (c) 2017, The OpenThread Authors.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -28,60 +28,73 @@
 
 /**
  * @file
- *   This file includes the platform-specific initializers.
- *
+ *   This file contains definitions for a simple CLI CoAP server and client.
  */
 
-#include <openthread/platform/logging.h>
+#ifndef CLI_LATENCY_MONITOR_HPP_
+#define CLI_LATENCY_MONITOR_HPP_
+// #include "cli.hpp"
+#include <openthread/udp.h>
+#include <openthread/types.h>
 
-#include <device/nrf.h>
-#include <drivers/clock/nrf_drv_clock.h>
-#include "platform-nrf5.h"
+#include <openthread/platform/gpio.h>
 
-#include <openthread/config.h>
+#include "common/timer.hpp"
 
-void __cxa_pure_virtual(void) { while (1); }
+namespace ot {
+namespace Cli {
 
-void PlatformInit(int argc, char *argv[])
+class Interpreter;
+
+/**
+ * This class implements a CLI-based UDP example.
+ *
+ */
+class LatencyMonitor
 {
-    (void)argc;
-    (void)argv;
+public:
+    /**
+     * Constructor
+     *
+     * @param[in]  aInterpreter  The CLI interpreter.
+     *
+     */
+    LatencyMonitor(Interpreter &aInterpreter);
 
-#if !SOFTDEVICE_PRESENT
-    // Enable I-code cache
-    NRF_NVMC->ICACHECNF = NVMC_ICACHECNF_CACHEEN_Enabled;
-#endif
+    /**
+     * This method interprets a list of CLI arguments.
+     *
+     * @param[in]  argc  The number of elements in argv.
+     * @param[in]  argv  A pointer to an array of command line arguments.
+     *
+     */
+    otError Process(int argc, char *argv[]);
 
-    nrf_drv_clock_init();
 
-#if (OPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT == 0)
-    nrf5LogInit();
-#endif
-    nrf5AlarmInit();
-    nrf5RandomInit();
-    nrf5UartInit();
-    nrf5MiscInit();
-    nrf5CryptoInit();
-    nrf5RadioInit();
-}
+    Interpreter &mInterpreter;
+private:
+    struct Command
+    {
+        const char *mName;
+        otError(LatencyMonitor::*mCommand)(int argc, char *argv[]);
+    };
 
-void PlatformDeinit(void)
-{
-    nrf5RadioDeinit();
-    nrf5CryptoDeinit();
-    nrf5MiscDeinit();
-    nrf5UartDeinit();
-    nrf5RandomDeinit();
-    nrf5AlarmDeinit();
-#if (OPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT == 0)
-    nrf5LogDeinit();
-#endif
-}
+    otError ProcessHelp(int argc, char *argv[]);
+    otError ProcessOpen(int argc, char *argv[]);
+    otError ProcessClose(int argc, char *argv[]);
+    
+    void Init(void);
 
-void PlatformProcessDrivers(otInstance *aInstance)
-{
-    nrf5AlarmProcess(aInstance);
-    nrf5RadioProcess(aInstance);
-    nrf5UartProcess();
-    nrf5GpioProcess(aInstance);
-}
+    static LatencyMonitor &GetOwner(const Context &aContext);
+
+    static const Command sCommands[];
+
+    otUdpSocket mSocket;
+
+    uint32_t mPinNumbers[4];
+};
+
+}  // namespace Cli
+}  // namespace ot
+
+#endif  // CLI_UDP_EXAMPLE_HPP_

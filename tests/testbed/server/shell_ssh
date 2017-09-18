@@ -1,0 +1,17 @@
+#!/usr/bin/expect -f
+set ip [lindex $argv 0 ]
+set dir [lindex $argv 1 ]
+spawn scp /home/lezhan/program/$dir/output/nrf52840/bin/arm-none-eabi-ot-cli-ftd.hex pi@$ip:/home/pi/
+expect "*password:"
+send "raspberry\n"
+expect eof
+spawn ssh pi@$ip
+expect "*password:"
+set timeout 1
+send "raspberry\n"
+expect "*$"
+send "sudo kill -9 \$(pidof python)\n"
+send "python testbed/raspi/testbed_server.py &\n"
+send "exit\n"
+#expect eof
+interact

@@ -203,6 +203,8 @@ const struct Command Interpreter::sCommands[] =
     { "txpowermax", &Interpreter::ProcessTxPowerMax },
 #ifndef OTDLL
     { "udp", &Interpreter::ProcessUdp },
+    { "latency", &Interpreter::ProcessLatency },
+    { "monitor", &Interpreter::ProcessMonitor },
 #endif
     { "version", &Interpreter::ProcessVersion },
 };
@@ -252,6 +254,8 @@ Interpreter::Interpreter(otInstance *aInstance):
     mResolvingInProgress(0),
 #endif
     mUdp(*this),
+    mUdpLatency(*this),
+    mLatencyMonitor(*this),
 #endif
     mInstance(aInstance)
 {
@@ -825,6 +829,7 @@ void Interpreter::HandleDnsResponse(const char *aHostname, Ip6::Address &aAddres
     mResolvingInProgress = false;
 }
 #endif
+
 
 #if OPENTHREAD_FTD
 void Interpreter::ProcessEidCache(int argc, char *argv[])
@@ -2498,6 +2503,21 @@ void Interpreter::ProcessUdp(int argc, char *argv[])
     error = mUdp.Process(argc, argv);
     AppendResult(error);
 }
+
+void Interpreter::ProcessLatency(int argc, char *argv[])
+{
+    otError error;
+    error = mUdpLatency.Process(argc, argv);
+    AppendResult(error);
+}
+
+void Interpreter::ProcessMonitor(int argc, char *argv[])
+{
+    otError error;
+    error = mLatencyMonitor.Process(argc, argv);
+    AppendResult(error);
+}
+
 #endif
 
 #if OPENTHREAD_ENABLE_COMMISSIONER && OPENTHREAD_FTD

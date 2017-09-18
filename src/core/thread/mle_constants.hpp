@@ -132,7 +132,7 @@ enum
 enum
 {
     kMplChildDataMessageTimerExpirations  = 0, ///< Number of MPL retransmissions for Children.
-    kMplRouterDataMessageTimerExpirations = 2, ///< Number of MPL retransmissions for Routers.
+    kMplRouterDataMessageTimerExpirations = 1, ///< Number of MPL retransmissions for Routers.
 };
 
 }  // namespace Mle

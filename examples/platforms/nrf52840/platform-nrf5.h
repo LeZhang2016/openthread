@@ -41,6 +41,7 @@
 
 #include "platform-config.h"
 
+
 /**
  * Initialization of UART driver.
  *
@@ -58,6 +59,16 @@ void nrf5UartDeinit(void);
  *
  */
 void nrf5UartProcess(void);
+
+/*******************************************************/
+
+void nrf5GpioInit(void);
+
+void nrf5GpioProcess(otInstance *aInstance);
+
+void nrf5GpioDeint(void);
+
+/*******************************************************/
 
 /**
  * Initialization of Alarm driver.
