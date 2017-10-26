@@ -57,6 +57,8 @@ void otPlatGpioClear(uint32_t aPinIndex);
 
 void otPlatGpioSet(uint32_t aPinIndex);
 
+void otPlatGpioToggle(uint32_t aPinIndex);
+
 extern void otPlatGpioSignalEvent(uint32_t aPinIndex);
 
 #ifdef __cplusplus
