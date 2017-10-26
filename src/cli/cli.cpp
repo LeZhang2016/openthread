@@ -220,6 +220,7 @@ const struct Command Interpreter::sCommands[] =
     { "txpowermax", &Interpreter::ProcessTxPowerMax },
 #ifndef OTDLL
     { "udp", &Interpreter::ProcessUdp },
+    { "latency", &Interpreter::ProcessLatency},
 #endif
     { "version", &Interpreter::ProcessVersion },
 };
@@ -271,6 +272,7 @@ Interpreter::Interpreter(otInstance *aInstance):
     mResolvingInProgress(0),
 #endif
     mUdp(*this),
+    mCliLatency(*this),
 #endif
     mInstance(aInstance)
 {
@@ -2668,6 +2670,13 @@ void Interpreter::ProcessUdp(int argc, char *argv[])
 {
     otError error;
     error = mUdp.Process(argc, argv);
+    AppendResult(error);
+}
+
+void Interpreter::ProcessLatency(int argc, char *argv[])
+{
+    otError error;
+    error = mCliLatency.Process(argc, argv);
     AppendResult(error);
 }
 #endif

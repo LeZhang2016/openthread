@@ -58,97 +58,136 @@
 
 static uint8_t sPinNumbers[30];
 otInstance *sInstance;
-static uint32_t receiverTime = 0, senderTime = 0;
+// static uint32_t receiverTime = 0, senderTime = 0;
+static int state = 0;
 
 void nrf5GpioInit(void)
 {
-    for (uint32_t i = 0; i < sizeof(sPinNumbers)/sPinNumbers[0]; ++i)
+    for (uint32_t i = 0; i < 30; i++)
     {
-        sPinNumbers[i] = 0;
+        nrf_gpio_pin_clear(i);
     }
 }
 
 void otGpioInit(void)
 {
-    for (uint32_t i = 0; i < sizeof(sPinNumbers)/sPinNumbers[0]; ++i)
+    // for (uint32_t i = 0; i < sizeof(sPinNumbers)/sPinNumbers[0]; ++i)
+    // {
+    //     sPinNumbers[i] = 0;
+    // }
+    for (uint32_t i = 0; i < 30; i++)
     {
-        sPinNumbers[i] = 0;
+        nrf_gpio_pin_clear(i);
     }
 }
 
 void nrf5GpioProcess(otInstance *aInstance)
 {
-    sInstance = aInstance;
-    for (uint32_t i = 0; i < 30; i++)
+    (void) aInstance;
+    // sInstance = aInstance;
+    // for (uint32_t i = 0; i < 30; i++)
+    // {
+    if (nrf_gpio_pin_read(3) > 0)
     {
-        switch (sPinNumbers[i])
+        if (state != 1)
         {
-        case 1:
-            if (nrf_gpio_pin_read(i) > 0)
-            {
-                uint32_t receiverTimestamp = otPlatAlarmMicroGetNow();
-                sPinNumbers[i] = 2;
-                if (i == 3)
-                {
-                    receiverTime = receiverTimestamp;
-                    otLogCritPlat(sInstance, " %d , %u", i, receiverTime);
-                }
-                else
-                {
-                    senderTime = receiverTimestamp;
-                    otLogCritPlat(sInstance, " %d , %u", i, senderTime);
-                }
-            }
-        case 2:
-            if (nrf_gpio_pin_read(i) <= 0)
-            {
-                sPinNumbers[i] = 1;
-            }
+            otLogCritPlat(sInstance, " %d", state);
+            state = 1;
+            nrf_gpio_pin_toggle(13);
+            otPlatGpioSignalEvent(3);
         }
     }
+    else
+    {
+        state = 0;
+    }
+    //     switch (sPinNumbers[i])
+    //     {
+    //     case 1:
+    //         if (nrf_gpio_pin_read(i) > 0)
+    //         {
+    //             uint32_t receiverTimestamp = otPlatAlarmMicroGetNow();
+    //             sPinNumbers[i] = 2;
+    //             if (i == 3)
+    //             {
+    //                 receiverTime = receiverTimestamp;
+    //                 otLogCritPlat(sInstance, " %d , %u", i, receiverTime);
+    //             }
+    //             else
+    //             {
+    //                 senderTime = receiverTimestamp;
+    //                 otLogCritPlat(sInstance, " %d , %u", i, senderTime);
+    //             }
+    //         }
+    //     case 2:
+    //         if (nrf_gpio_pin_read(i) <= 0)
+    //         {
+    //             sPinNumbers[i] = 1;
+    //         }
+    //     }
+    // }
+
 }
 
 void nrf5GpioDeinit(void)
 {
-    for (uint32_t i = 0; i < sizeof(sPinNumbers)/sPinNumbers[0]; i++)
+    // for (uint32_t i = 0; i < sizeof(sPinNumbers)/sPinNumbers[0]; i++)
+    // {
+    //     if (sPinNumbers[i] == 1)
+    //     {
+    //         nrf_gpio_pin_clear(i);
+    //         sPinNumbers[i] = 0;
+    //     }
+    // }
+    for (uint32_t i = 0; i < 30; i++)
     {
-        if (sPinNumbers[i] == 1)
-        {
-            nrf_gpio_pin_clear(i);
-            sPinNumbers[i] = 0;
-        }
+        nrf_gpio_pin_clear(i);
     }
 }
 
-void otPlatGpioCfgOutput(uint32_t aPinIndex)
+void otPlatGpioCfgOutput(uint32_t aPin)
 {
-    nrf_gpio_cfg_output(aPinIndex);
+    nrf_gpio_cfg_output(aPin);
 }
 
-void otPlatGpioCfgInput(uint32_t aPinIndex)
+void otPlatGpioCfgInput(uint32_t aPin)
 {
-    sPinNumbers[aPinIndex] = 1;
-    otLogCritPlat(sInstance, "pin %d", aPinIndex);
-    nrf_gpio_cfg_input(aPinIndex, NRF_GPIO_PIN_NOPULL);
+    // sPinNumbers[aPin] = 1;
+    // otLogCritPlat(sInstance, "pin %d", aPin);
+    nrf_gpio_cfg_input(aPin, NRF_GPIO_PIN_NOPULL);
 }
 
-void otPlatGpioWrite(uint32_t aPinIndex, uint32_t aValue)
+void otPlatGpioWrite(uint32_t aPin, uint32_t aValue)
 {
-    nrf_gpio_pin_write(aPinIndex, aValue);
+    nrf_gpio_pin_write(aPin, aValue);
 }
 
-void otPlatGpioClear(uint32_t aPinIndex)
+void otPlatGpioClear(uint32_t aPin)
 {
-    sPinNumbers[aPinIndex] = 0;
-    nrf_gpio_pin_clear(sPinNumbers[aPinIndex]);
+    // sPinNumbers[aPin] = 0;
+    nrf_gpio_pin_clear(sPinNumbers[aPin]);
 }
 
-uint32_t otPlatGpioRead(uint32_t aPinIndex)
+uint32_t otPlatGpioRead(uint32_t aPin)
 {
-    return nrf_gpio_pin_read(aPinIndex);
+    return nrf_gpio_pin_read(aPin);
 }
 
-void otPlatGpioSet(uint32_t aPinIndex)
+void otPlatGpioSet(uint32_t aPin)
 {
-    nrf_gpio_pin_set(aPinIndex);
+    nrf_gpio_pin_set(aPin);
+}
+
+
+void otPlatGpioToggle(uint32_t aPin)
+{
+    nrf_gpio_pin_toggle(aPin);
+}
+/**
+ * The gpio driver weak functions definition.
+ *
+ */
+OT_TOOL_WEAK void otPlatGpioSignalEvent(uint32_t aPin)
+{
+    // otLogCritPlat(sInstance, "Hello world! %d", aPin);
 }
