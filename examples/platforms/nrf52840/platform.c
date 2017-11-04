@@ -80,7 +80,7 @@ void PlatformDeinit(void)
     nrf5AlarmDeinit();
 #if (OPENTHREAD_CONFIG_LOG_OUTPUT == OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED)
     nrf5LogDeinit();
-    nrf5GpioteInit();
+    // nrf5GpioteInit();
     nrf5GpioInit();
 #endif
 }
@@ -90,7 +90,7 @@ void PlatformProcessDrivers(otInstance *aInstance)
     nrf5AlarmProcess(aInstance);
     nrf5RadioProcess(aInstance);
     nrf5UartProcess();
-    nrf5GpioProcess(aInstance);
+    // nrf5GpioProcess(aInstance);
 }
 
 __WEAK void PlatformEventSignalPending(void)

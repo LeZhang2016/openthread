@@ -109,9 +109,9 @@ public:
 private:
     enum
     {
-        kRxBufferSize = 512,
-        kTxBufferSize = 1024,
-        kMaxLineLength = 128,
+        kRxBufferSize = 1024,
+        kTxBufferSize = 4096,
+        kMaxLineLength = 512,
     };
 
     otError ProcessCommand(void);

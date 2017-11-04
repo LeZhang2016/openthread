@@ -43,6 +43,8 @@
 extern "C" {
 #endif
 
+#define GPIOTE_CHANNEL 0
+
 void otGpioInit(void);
 
 void otPlatGpioCfgOutput(uint32_t aPinIndex);
@@ -58,6 +60,10 @@ void otPlatGpioClear(uint32_t aPinIndex);
 void otPlatGpioSet(uint32_t aPinIndex);
 
 void otPlatGpioToggle(uint32_t aPinIndex);
+
+void otPlatGpioEnableInterrupt(uint32_t aPinIndex);
+
+void otPlatGpioDisableInterrupt(uint32_t aPinIndex);
 
 extern void otPlatGpioSignalEvent(uint32_t aPinIndex);
 
