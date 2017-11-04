@@ -53,13 +53,22 @@
 #include <drivers/clock/nrf_drv_clock.h>
 #include <hal/nrf_uart.h>
 #include <hal/nrf_gpio.h>
+#include <hal/nrf_gpiote.h>
 #include "platform-nrf5.h"
 
+#define IN_PIN 3
+
+#define TE_IDX_TO_EVENT_ADDR(idx)    (nrf_gpiote_events_t)((uint32_t)NRF_GPIOTE_EVENTS_IN_0 + \
+                                     (sizeof(uint32_t) * (idx)))
+
+// void nrf_drv_gpiote_evt_handler_t(uint32_t pin, nrf_gpiote_polarity_t action);
 
 static uint8_t sPinNumbers[30];
 otInstance *sInstance;
 // static uint32_t receiverTime = 0, senderTime = 0;
 static int state = 0;
+
+static uint32_t sPin = 3;
 
 void nrf5GpioInit(void)
 {
@@ -93,7 +102,6 @@ void nrf5GpioProcess(otInstance *aInstance)
         {
             otLogCritPlat(sInstance, " %d", state);
             state = 1;
-            nrf_gpio_pin_toggle(13);
             otPlatGpioSignalEvent(3);
         }
     }
@@ -131,14 +139,6 @@ void nrf5GpioProcess(otInstance *aInstance)
 
 void nrf5GpioDeinit(void)
 {
-    // for (uint32_t i = 0; i < sizeof(sPinNumbers)/sPinNumbers[0]; i++)
-    // {
-    //     if (sPinNumbers[i] == 1)
-    //     {
-    //         nrf_gpio_pin_clear(i);
-    //         sPinNumbers[i] = 0;
-    //     }
-    // }
     for (uint32_t i = 0; i < 30; i++)
     {
         nrf_gpio_pin_clear(i);
@@ -183,6 +183,71 @@ void otPlatGpioToggle(uint32_t aPin)
 {
     nrf_gpio_pin_toggle(aPin);
 }
+
+
+void otPlatGpioEnableInterrupt(uint32_t aPin)
+{
+    // init gpiote for event/interrupt
+    nrf_drv_common_irq_enable(GPIOTE_IRQn, 7);//GPIOTE_CONFIG_IRQ_PRIORITY);
+    nrf_gpiote_event_clear(NRF_GPIOTE_EVENTS_PORT);
+    nrf_gpiote_int_enable(GPIOTE_INTENSET_PORT_Msk);
+
+    nrf_gpio_cfg_input(aPin, NRF_GPIO_PIN_PULLDOWN);
+    nrf_gpiote_event_configure(GPIOTE_CHANNEL, aPin, GPIOTE_CONFIG_POLARITY_LoToHi);
+
+    //nrf_drv_gpiote_in_event_enable(IN_PIN, true);
+    nrf_gpiote_events_t event   = TE_IDX_TO_EVENT_ADDR(GPIOTE_CHANNEL);
+
+    nrf_gpiote_event_enable(GPIOTE_CHANNEL);
+    nrf_gpiote_event_clear(event);
+    nrf_gpiote_int_enable(1 << GPIOTE_CHANNEL);
+    sPin = aPin;
+}
+
+void otPlatGpioDisableInterrupt(uint32_t aPin)
+{
+    nrf_drv_common_irq_disable(GPIOTE_IRQn);
+    nrf_gpiote_event_clear(NRF_GPIOTE_EVENTS_PORT);
+    nrf_gpiote_int_disable(GPIOTE_INTENSET_PORT_Msk);
+
+    nrf_gpio_pin_clear(aPin);
+    nrf_gpiote_event_disable(GPIOTE_CHANNEL);
+    nrf_gpiote_int_disable(1 << GPIOTE_CHANNEL);
+}
+
+void nrf_drv_gpiote_evt_handler_t(uint32_t pin, nrf_gpiote_polarity_t action)
+{
+    (void)pin;
+    (void)action;
+    int i;
+    nrf_gpiote_events_t event = NRF_GPIOTE_EVENTS_IN_0;
+    uint32_t            mask  = (uint32_t)NRF_GPIOTE_INT_IN0_MASK;
+
+    //clear the event
+    for (i = 0; i < GPIOTE_CH_NUM; i++)
+    {
+        if (nrf_gpiote_event_is_set(event) && nrf_gpiote_int_is_enabled(mask))
+        {
+            nrf_gpiote_event_clear(event);
+            //status |= mask;
+        }
+
+        mask <<= 1;
+        /* Incrementing to next event, utilizing the fact that events are grouped together
+         * in ascending order. */
+        event = (nrf_gpiote_events_t)((uint32_t)event + sizeof(uint32_t));
+    }
+
+    //toggle LED
+    // nrf_gpio_pin_toggle(LED_PIN);
+    otPlatGpioSignalEvent(sPin);
+}
+
+void GPIOTE_IRQHandler(void)
+{
+    nrf_drv_gpiote_evt_handler_t(sPin, GPIOTE_CONFIG_POLARITY_LoToHi);
+}
+
 /**
  * The gpio driver weak functions definition.
  *

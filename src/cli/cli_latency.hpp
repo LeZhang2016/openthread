@@ -72,6 +72,11 @@ public:
     otError Process(int argc, char *argv[]);
 
     static CliLatency *sCliLatency;
+    static uint16_t sCount;
+    static uint16_t sRecvCount;
+
+    static uint32_t sSendTimestamp[1000];
+    static uint32_t sReceiveTimestamp[1000];
 
     void platGpioResponse(void);
 
@@ -90,6 +95,8 @@ private:
     otError ProcessSend(int argc, char *argv[]);
     otError ProcessTest(int argc, char *argv[]);
     otError ProcessResult(int argc, char *argv[]);
+    otError ProcessGpio(int argc, char *argv[]);
+    otError ProcessStart(int argc, char *argv[]);
     
     static void s_HandlePingTimer(Timer &aTimer);
     void HandlePingTimer();
@@ -105,6 +112,7 @@ private:
     otError SendUdpPacket(void);
     uint32_t GetAcceptedCount(otMessage *aMessage);
     uint32_t GetAcceptedTimestamp(otMessage *aMessage);
+    uint32_t GetAcceptedAmount(otMessage *aMessage);
     void Init(void);
 
     static const Command sCommands[];
@@ -126,10 +134,11 @@ private:
     uint32_t mLatency;
     uint32_t mJitter;
     uint32_t mAcceptTimestamp;
-    uint16_t mInitialCount;
+    uint32_t mInitialCount;
     bool mIsRun;
-    uint32_t mSendTimer[1000];
+    uint32_t mSendTimer[100];
     uint32_t mReceiveTimer[1000];
+    uint32_t mAmount;
 
 };
 

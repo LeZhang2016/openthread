@@ -176,6 +176,8 @@ public:
      */
     void SetUserCommands(const otCliCommand *aCommands, uint8_t aLength);
 
+    CliLatency GetCliLatency() {return mCliLatency; };
+
 private:
     enum
     {
