@@ -31,7 +31,7 @@
  *   This file implements a simple CLI for the CoAP service.
  */
 
-#include "cli_latency.hpp"
+#include "cli_throughput.hpp"
 
 // #include <openthread/config.h>
 #include <openthread/message.h>
@@ -49,26 +49,27 @@ using ot::Encoding::BigEndian::HostSwap16;
 namespace ot {
 namespace Cli {
 
-CliLatency *CliLatency::sCliLatency;
-uint16_t ot::Cli::CliLatency::sCount = 0;
-uint16_t ot::Cli::CliLatency::sRecvCount = 0;
-uint32_t ot::Cli::CliLatency::sSendTimestamp[1000], ot::Cli::CliLatency::sReceiveTimestamp[1000];
+CliThroughput *CliThroughput::sCliThroughput;
+uint16_t ot::Cli::CliThroughput::sCount = 0;
+uint16_t ot::Cli::CliThroughput::sRecvCount = 0;
+// uint32_t ot::Cli::CliThroughput::sSendTimestamp[1000], ot::Cli::CliThroughput::sReceiveTimestamp[1000];
+uint32_t ot::Cli::CliThroughput::sBeginTimestamp = 0,  ot::Cli::CliThroughput::sEndTimestamp = 0;
 
-const struct CliLatency::Command CliLatency::sCommands[] =
+const struct CliThroughput::Command CliThroughput::sCommands[] =
 {
-    { "help", &CliLatency::ProcessHelp },
-    { "bind", &CliLatency::ProcessBind },
-    { "close", &CliLatency::ProcessClose },
-    { "connect", &CliLatency::ProcessConnect },
-    { "open",  &CliLatency::ProcessOpen },
-    { "start", &CliLatency::ProcessStart },
-    { "send", &CliLatency::ProcessSend },
-    { "test", &CliLatency::ProcessTest },
-    { "result", &CliLatency::ProcessResult },
-    { "gpio", &CliLatency::ProcessGpio }
+    { "help", &CliThroughput::ProcessHelp },
+    { "bind", &CliThroughput::ProcessBind },
+    { "close", &CliThroughput::ProcessClose },
+    { "connect", &CliThroughput::ProcessConnect },
+    { "open",  &CliThroughput::ProcessOpen },
+    { "start", &CliThroughput::ProcessStart },
+    { "send", &CliThroughput::ProcessSend },
+    { "test", &CliThroughput::ProcessTest },
+    { "result", &CliThroughput::ProcessResult },
+    { "gpio", &CliThroughput::ProcessGpio }
 };
 
-otError CliLatency::ProcessHelp(int argc, char *argv[])
+otError CliThroughput::ProcessHelp(int argc, char *argv[])
 {
     for (unsigned int i = 0; i < sizeof(sCommands) / sizeof(sCommands[0]); i++)
     {
@@ -81,19 +82,21 @@ otError CliLatency::ProcessHelp(int argc, char *argv[])
     return OT_ERROR_NONE;
 }
 
-CliLatency::CliLatency(Interpreter &aInterpreter):
+CliThroughput::CliThroughput(Interpreter &aInterpreter):
     mInterpreter(aInterpreter),
     mLength(1232),
     mCount(0),
     mInterval(1),
-    mPingTimer(*aInterpreter.mInstance, &CliLatency::s_HandlePingTimer, this),
-    mGpioTimer(*aInterpreter.mInstance, &CliLatency::s_HandleGpioTimer, this)
+    mPingTimer(*aInterpreter.mInstance, &CliThroughput::s_HandlePingTimer, this),
+    mGpioTimer(*aInterpreter.mInstance, &CliThroughput::s_HandleGpioTimer, this)
 {
 }
 
-void CliLatency::Init(void)
+void CliThroughput::Init(void)
 {
-    ot::Cli::CliLatency::sCount = 0;
+    ot::Cli::CliThroughput::sCount = 0;
+    ot::Cli::CliThroughput::sBeginTimestamp = 0;
+    ot::Cli::CliThroughput::sEndTimestamp = 0;
     mLossNum = 0;
     mLatency = 0;
     mTimestamp = 0;
@@ -102,24 +105,10 @@ void CliLatency::Init(void)
     mAcceptTimestamp = 0;
     mIsRun = true;
 
-    // otPlatGpioClear(MONITOR_PIN + 1);
-    otPlatGpioCfgOutput(MONITOR_PIN + 1);
-    otPlatGpioWrite(MONITOR_PIN + 1, 1);
-
-    // otPlatGpioCfgInput(MONITOR_PIN);
-    // otPlatGpioClear(MONITOR_PIN);
-    // otPlatGpioWrite(MONITOR_PIN, 0);
     otPlatGpioEnableInterrupt(MONITOR_PIN);
-
-    for (int i = 0; i < 1000; i++)
-    {
-        ot::Cli::CliLatency::sSendTimestamp[i] = 0;
-        ot::Cli::CliLatency::sReceiveTimestamp[i] = 0;
-        mReceiveTimer[i] = 0;
-    }
 }
 
-otError CliLatency::SendUdpPacket(void)
+otError CliThroughput::SendUdpPacket(void)
 {
     otError error;
     uint32_t timestamp = 0;
@@ -132,15 +121,10 @@ otError CliLatency::SendUdpPacket(void)
     mPayload[1] = timestamp >> 16;
     mPayload[2] = timestamp >> 8;
     mPayload[3] = timestamp;
-    mPayload[4] = ot::Cli::CliLatency::sCount >> 24;
-    mPayload[5] = ot::Cli::CliLatency::sCount >> 16;
-    mPayload[6] = ot::Cli::CliLatency::sCount >> 8;
-    mPayload[7] = ot::Cli::CliLatency::sCount;
-    // // mInterpreter.mServer->OutputFormat("The mInitialCount count value is %d \r\n",mInitialCount);
-    // mPayload[8] = mInitialCount >> 24;
-    // mPayload[9] = mInitialCount >> 16;
-    // mPayload[10] = mInitialCount >> 8;
-    // mPayload[11] = mInitialCount;
+    mPayload[4] = ot::Cli::CliThroughput::sCount >> 24;
+    mPayload[5] = ot::Cli::CliThroughput::sCount >> 16;
+    mPayload[6] = ot::Cli::CliThroughput::sCount >> 8;
+    mPayload[7] = ot::Cli::CliThroughput::sCount;
 
     for (uint16_t i = 8; i < mLength; i++)
     {
@@ -154,14 +138,18 @@ otError CliLatency::SendUdpPacket(void)
     error = otMessageAppend(message, mPayload, static_cast<uint16_t>(mLength));
 
     SuccessOrExit(error);
+    
+    // if ( ot::Cli::CliThroughput::sCount == 0)
+    // {
+    //     otPlatGpioWrite(MONITOR_PIN, 1);
+    //     mGpioTimer.Start(CLEAR_PIN_INTERVAL);
+    // }
 
     error = otUdpSend(&mSocket, message, &mMessageInfo);
 
     SuccessOrExit(error);
-    otPlatGpioWrite(MONITOR_PIN, 1);
-    mGpioTimer.Start(CLEAR_PIN_INTERVAL);
 
-    ot::Cli::CliLatency::sCount++;
+    ot::Cli::CliThroughput::sCount++;
 
 exit:
 
@@ -174,7 +162,7 @@ exit:
 
 }
 
-uint32_t CliLatency::GetAcceptedTimestamp(otMessage *aMessage)
+uint32_t CliThroughput::GetAcceptedTimestamp(otMessage *aMessage)
 {
     uint8_t buf[1500];
     int length;
@@ -186,7 +174,7 @@ uint32_t CliLatency::GetAcceptedTimestamp(otMessage *aMessage)
     return timestamp;
 }
 
-uint32_t CliLatency::GetAcceptedCount(otMessage *aMessage)
+uint32_t CliThroughput::GetAcceptedCount(otMessage *aMessage)
 {
     uint8_t buf[1500];
     int length;
@@ -198,7 +186,7 @@ uint32_t CliLatency::GetAcceptedCount(otMessage *aMessage)
     return count;
 }
 
-uint32_t CliLatency::GetAcceptedAmount(otMessage *aMessage)
+uint32_t CliThroughput::GetAcceptedAmount(otMessage *aMessage)
 {
     uint8_t buf[1500];
     int length;
@@ -210,7 +198,7 @@ uint32_t CliLatency::GetAcceptedAmount(otMessage *aMessage)
     return count;
 }
 
-otError CliLatency::ProcessBind(int argc, char *argv[])
+otError CliThroughput::ProcessBind(int argc, char *argv[])
 {
     otError error;
     otSockAddr sockaddr;
@@ -234,7 +222,7 @@ exit:
     return error;
 }
 
-otError CliLatency::ProcessConnect(int argc, char *argv[])
+otError CliThroughput::ProcessConnect(int argc, char *argv[])
 {
     otError error;
     otSockAddr sockaddr;
@@ -258,7 +246,7 @@ exit:
     return error;
 }
 
-otError CliLatency::ProcessClose(int argc, char *argv[])
+otError CliThroughput::ProcessClose(int argc, char *argv[])
 {
     mIsRun = false;
     OT_UNUSED_VARIABLE(argc);
@@ -267,46 +255,25 @@ otError CliLatency::ProcessClose(int argc, char *argv[])
     return otUdpClose(&mSocket);
 }
 
-otError CliLatency::ProcessStart(int argc, char *argv[])
+otError CliThroughput::ProcessStart(int argc, char *argv[])
 {
     otError error = OT_ERROR_NONE;
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
     Init();
-    ot::Cli::CliLatency::sCount = 0;
-    for (int i = 0; i < 1000; i++)
-    {
-        ot::Cli::CliLatency::sSendTimestamp[i] = 0;
-        ot::Cli::CliLatency::sReceiveTimestamp[i] = 0;
-        mReceiveTimer[i] = 0;
-    }
+
     return error;
 }
 
-otError CliLatency::ProcessOpen(int argc, char *argv[])
+otError CliThroughput::ProcessOpen(int argc, char *argv[])
 {
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
-    // long value;
-
-    // VerifyOrExit(argc == 1, error = OT_ERROR_PARSE);
-
-    // error = Interpreter::ParseLong(argv[0], value);
-    // SuccessOrExit(error);
-
-    // if (value == 1)
-    // {
-
-    // }
-    // else
-    // {
-    //     Init();
-    // }
     Init();
     return otUdpOpen(mInterpreter.mInstance, &mSocket, HandleUdpReceive, this);
 }
 
-otError CliLatency::ProcessSend(int argc, char *argv[])
+otError CliThroughput::ProcessSend(int argc, char *argv[])
 {
     otError error;
     otMessageInfo messageInfo;
@@ -350,7 +317,7 @@ exit:
     return error;
 }
 
-otError CliLatency::Process(int argc, char *argv[])
+otError CliThroughput::Process(int argc, char *argv[])
 {
     otError error = OT_ERROR_PARSE;
 
@@ -366,69 +333,35 @@ otError CliLatency::Process(int argc, char *argv[])
     return error;
 }
 
-void CliLatency::HandleUdpReceive(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo)
+void CliThroughput::HandleUdpReceive(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo)
 {
-    static_cast<CliLatency *>(aContext)->HandleUdpReceive(aMessage, aMessageInfo);
+    static_cast<CliThroughput *>(aContext)->HandleUdpReceive(aMessage, aMessageInfo);
 }
 
-void CliLatency::HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMessageInfo)
+void CliThroughput::HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMessageInfo)
 {
     otMessageInfo messageInfo;
     otMessage *message;
     uint32_t timestamp = 0;
-    // uint32_t sendTimestamp = 0;
     uint16_t count;
 
     timestamp = TimerMilli::GetNow();
-    // otPlatGpioWrite(MONITOR_PIN, 1);
-    // mGpioTimer.Start(CLEAR_PIN_INTERVAL);
-
     memset(&messageInfo, 0, sizeof(messageInfo));
     memset(&message, 0, sizeof(message));
     
     //Get sequence number from the packet
     count = GetAcceptedCount(aMessage);
 
-    // mInitialCount = GetAcceptedAmount(aMessage);
+    if (ot::Cli::CliThroughput::sBeginTimestamp == 0)
+    {
+        ot::Cli::CliThroughput::sBeginTimestamp = timestamp;
+    }
+    ot::Cli::CliThroughput::sEndTimestamp = timestamp;
 
-    // mInterpreter.mServer->OutputFormat("The count value is %d \r\n",count);
-    // mInterpreter.mServer->OutputFormat("The mInitialCount count value is %d \r\n",mInitialCount);
+    mReceiveTimer[count] = timestamp;
 
-    //compare the sequence number with current number recorded.
+    ot::Cli::CliThroughput::sCount++;
 
-    // sendTimestamp = GetAcceptedTimestamp(aMessage);
-
-    //new test and reinitialize the receive node
-    //but the node will send gpio signal firstly
-    // if (count == 0)
-    // {
-    //     Init();
-    //     ot::Cli::CliLatency::sRecvCount = 1;
-    // }
-    // else
-    // {
-        // record the receive packet timestamp
-        // if (count >= ot::Cli::CliLatency::sCount)
-        // {
-            mReceiveTimer[count] = timestamp;
-        // }
-    // }
-
-    // if (mTimestamp < timestamp)
-    // {
-    //     mTimeElapse = mTimeElapse + timestamp - mTimestamp;
-    //     // mTimeElapse = timestamp - mTimestamp;
-    //     mTimestamp = timestamp;
-    // }
-
-    // if (mAcceptTimestamp < sendTimestamp)
-    // {
-    //     mJitter = sendTimestamp - mAcceptTimestamp;
-    //     mAcceptTimestamp = sendTimestamp;
-    // }
-
-    // if (count != 0)
-    // {
     mInterpreter.mServer->OutputFormat("hoplimit %d, amuount %d, %u, %d, %d, %u, %u from ", aMessageInfo->mHopLimit, mInitialCount, timestamp, count, otMessageGetLength(aMessage) - otMessageGetOffset(aMessage), mTimeElapse, mJitter);
     mInterpreter.mServer->OutputFormat("%x:%x:%x:%x:%x:%x:%x:%x %d \r\n",
                                        HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[0]),
@@ -440,74 +373,60 @@ void CliLatency::HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMes
                                        HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[6]),
                                        HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[7]),
                                        aMessageInfo->mPeerPort);
-    // }
-    //TODO: count the maximum throughput after the following test
-
-    // if (count >= mAmount)
-    // {
-    //      mInterpreter.mServer->OutputFormat("Done");
-    // }
 }
 
-otError CliLatency::ProcessResult(int argc, char *argv[])
+otError CliThroughput::ProcessResult(int argc, char *argv[])
 {
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
 
-    for (int i = 1; i < 1000; i++)
-    // for (int i = 1; i < ot::Cli::CliLatency::sCount + 1; i++)
-    {
-        if (sSendTimestamp[i] == 0)
-            break;
-        mInterpreter.mServer->OutputFormat("%d, %d \r\n", ot::Cli::CliLatency::sSendTimestamp[i], mReceiveTimer[i]);
-        // mInterpreter.mServer->OutputFormat("%d, %d \r\n", ot::Cli::CliLatency::sSendTimestamp[i], mReceiveTimer[i]);
-    }
+    mInterpreter.mServer->OutputFormat("%d, %d, %d\r\n",
+        ot::Cli::CliThroughput::sBeginTimestamp,
+        ot::Cli::CliThroughput::sEndTimestamp,
+        ot::Cli::CliThroughput::sCount);
 
     return OT_ERROR_NONE;
 } 
 
 
-otError CliLatency::ProcessGpio(int argc, char *argv[])
+otError CliThroughput::ProcessGpio(int argc, char *argv[])
 {
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
-
-    otPlatGpioToggle(MONITOR_PIN+1);
 
     return OT_ERROR_NONE;
 
 }
 
-CliLatency &CliLatency::GetOwner(const Context &aContext)
+CliThroughput &CliThroughput::GetOwner(const Context &aContext)
 {
 #if OPENTHREAD_ENABLE_MULTIPLE_INSTANCES
-    CliLatency &udp = *static_cast<CliLatency *>(aContext.GetContext());
+    CliThroughput &udp = *static_cast<CliThroughput *>(aContext.GetContext());
 #else
-    CliLatency &udp = Uart::sUartServer->GetInterpreter().mCliLatency;
+    CliThroughput &udp = Uart::sUartServer->GetInterpreter().mCliThroughput;
     OT_UNUSED_VARIABLE(aContext);
 #endif
     return udp;
 }
 
-void CliLatency::s_HandlePingTimer(Timer &aTimer)
+void CliThroughput::s_HandlePingTimer(Timer &aTimer)
 {
     GetOwner(aTimer).HandlePingTimer();
 }
 
-void CliLatency::s_HandleGpioTimer(Timer &aTimer)
+void CliThroughput::s_HandleGpioTimer(Timer &aTimer)
 {
     GetOwner(aTimer).HandleGpioTimer();
 }
 
-void CliLatency::HandleGpioTimer()
+void CliThroughput::HandleGpioTimer()
 {
     otPlatGpioWrite(MONITOR_PIN, 0);
 }
 
-void CliLatency::HandlePingTimer()
+void CliThroughput::HandlePingTimer()
 {
     otError error = OT_ERROR_NONE;
-    uint32_t interval = 0;
 
     if (mIsRun)
     {
@@ -519,41 +438,20 @@ void CliLatency::HandlePingTimer()
         ExitNow();
     }
 exit:
-    if (error == OT_ERROR_NONE)
+
+    if (ot::Cli::CliThroughput::sCount <= mInitialCount)
     {
-        if (ot::Cli::CliLatency::sCount <= mInitialCount)
-        {
-            if(mInterval == 0)
-            {
-                interval = otPlatRandomGet() % 100 + 500;
-            }
-            else
-            {
-                interval = mInterval;
-            }
-            mPingTimer.Start(interval);
-        }
-        else
-        {
-            Init();
-        }   
+        mPingTimer.Start(1);
     }
     else
     {
-        if(mInterval == 0)
-        {
-            interval = otPlatRandomGet() % 100 + 500;
-        }
-        else
-        {
-            interval = 50;
-        }
-        mPingTimer.Start(mInterval);
-    }
-
+        // otPlatGpioWrite(MONITOR_PIN, 1);
+        // mGpioTimer.Start(CLEAR_PIN_INTERVAL);
+        Init();
+    }   
 }
 
-otError CliLatency::ProcessTest(int argc, char *argv[])
+otError CliThroughput::ProcessTest(int argc, char *argv[])
 {
     otError error = OT_ERROR_NONE;
     int curArg = 0;
@@ -619,23 +517,19 @@ exit:
     return error;
 }
 
-void CliLatency::platGpioResponse(void)
+void CliThroughput::platGpioResponse(void)
 {
-    //record timestamp
-//    otPlatGpioToggle(13);
-    // mInterpreter.mServer->OutputFormat("receive the packet %d gpio signal\r\n", ot::Cli::CliLatency::sCount);
-     // if (ot::Cli::CliLatency::sCount > 0)
-     // {
-     // ot::Cli::CliLatency::sCount++;
-
-     // if (ot::Cli::CliLatency::sSendTimestamp[ot::Cli::CliLatency::sCount] == 0)
-     // {
-     //     ot::Cli::CliLatency::sSendTimestamp[ot::Cli::CliLatency::sCount] = TimerMilli::GetNow();
-     // }
-     ot::Cli::CliLatency::sSendTimestamp[ot::Cli::CliLatency::sCount] = TimerMilli::GetNow();
-     ot::Cli::CliLatency::sCount++;
-     // }
+    mInterpreter.mServer->OutputFormat("receive gpio signal\n");
+    if (ot::Cli::CliThroughput::sBeginTimestamp == 0)
+    {
+        ot::Cli::CliThroughput::sBeginTimestamp = TimerMilli::GetNow();
+    }
+    else if (ot::Cli::CliThroughput::sEndTimestamp == 0)
+    {
+        ot::Cli::CliThroughput::sEndTimestamp = TimerMilli::GetNow();
+    }
 }
+
 
 }  // namespace Cli
 }  // namespace ot
