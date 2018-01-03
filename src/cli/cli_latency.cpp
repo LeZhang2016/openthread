@@ -28,7 +28,7 @@
 
 /**
  * @file
- *   This file implements a simple CLI for the CoAP service.
+ *   This file implements a simple CLI for testing latency.
  */
 
 #include "cli_latency.hpp"
@@ -102,13 +102,9 @@ void CliLatency::Init(void)
     mAcceptTimestamp = 0;
     mIsRun = true;
 
-    // otPlatGpioClear(MONITOR_PIN + 1);
     otPlatGpioCfgOutput(MONITOR_PIN + 1);
     otPlatGpioWrite(MONITOR_PIN + 1, 1);
 
-    // otPlatGpioCfgInput(MONITOR_PIN);
-    // otPlatGpioClear(MONITOR_PIN);
-    // otPlatGpioWrite(MONITOR_PIN, 0);
     otPlatGpioEnableInterrupt(MONITOR_PIN);
 
     for (int i = 0; i < 1000; i++)
@@ -136,11 +132,6 @@ otError CliLatency::SendUdpPacket(void)
     mPayload[5] = ot::Cli::CliLatency::sCount >> 16;
     mPayload[6] = ot::Cli::CliLatency::sCount >> 8;
     mPayload[7] = ot::Cli::CliLatency::sCount;
-    // // mInterpreter.mServer->OutputFormat("The mInitialCount count value is %d \r\n",mInitialCount);
-    // mPayload[8] = mInitialCount >> 24;
-    // mPayload[9] = mInitialCount >> 16;
-    // mPayload[10] = mInitialCount >> 8;
-    // mPayload[11] = mInitialCount;
 
     for (uint16_t i = 8; i < mLength; i++)
     {
@@ -287,21 +278,6 @@ otError CliLatency::ProcessOpen(int argc, char *argv[])
 {
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
-    // long value;
-
-    // VerifyOrExit(argc == 1, error = OT_ERROR_PARSE);
-
-    // error = Interpreter::ParseLong(argv[0], value);
-    // SuccessOrExit(error);
-
-    // if (value == 1)
-    // {
-
-    // }
-    // else
-    // {
-    //     Init();
-    // }
     Init();
     return otUdpOpen(mInterpreter.mInstance, &mSocket, HandleUdpReceive, this);
 }
@@ -376,12 +352,10 @@ void CliLatency::HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMes
     otMessageInfo messageInfo;
     otMessage *message;
     uint32_t timestamp = 0;
-    // uint32_t sendTimestamp = 0;
+
     uint16_t count;
 
     timestamp = TimerMilli::GetNow();
-    // otPlatGpioWrite(MONITOR_PIN, 1);
-    // mGpioTimer.Start(CLEAR_PIN_INTERVAL);
 
     memset(&messageInfo, 0, sizeof(messageInfo));
     memset(&message, 0, sizeof(message));
@@ -389,46 +363,7 @@ void CliLatency::HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMes
     //Get sequence number from the packet
     count = GetAcceptedCount(aMessage);
 
-    // mInitialCount = GetAcceptedAmount(aMessage);
-
-    // mInterpreter.mServer->OutputFormat("The count value is %d \r\n",count);
-    // mInterpreter.mServer->OutputFormat("The mInitialCount count value is %d \r\n",mInitialCount);
-
-    //compare the sequence number with current number recorded.
-
-    // sendTimestamp = GetAcceptedTimestamp(aMessage);
-
-    //new test and reinitialize the receive node
-    //but the node will send gpio signal firstly
-    // if (count == 0)
-    // {
-    //     Init();
-    //     ot::Cli::CliLatency::sRecvCount = 1;
-    // }
-    // else
-    // {
-        // record the receive packet timestamp
-        // if (count >= ot::Cli::CliLatency::sCount)
-        // {
-            mReceiveTimer[count] = timestamp;
-        // }
-    // }
-
-    // if (mTimestamp < timestamp)
-    // {
-    //     mTimeElapse = mTimeElapse + timestamp - mTimestamp;
-    //     // mTimeElapse = timestamp - mTimestamp;
-    //     mTimestamp = timestamp;
-    // }
-
-    // if (mAcceptTimestamp < sendTimestamp)
-    // {
-    //     mJitter = sendTimestamp - mAcceptTimestamp;
-    //     mAcceptTimestamp = sendTimestamp;
-    // }
-
-    // if (count != 0)
-    // {
+    mReceiveTimer[count] = timestamp;
     mInterpreter.mServer->OutputFormat("hoplimit %d, amuount %d, %u, %d, %d, %u, %u from ", aMessageInfo->mHopLimit, mInitialCount, timestamp, count, otMessageGetLength(aMessage) - otMessageGetOffset(aMessage), mTimeElapse, mJitter);
     mInterpreter.mServer->OutputFormat("%x:%x:%x:%x:%x:%x:%x:%x %d \r\n",
                                        HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[0]),
@@ -440,13 +375,6 @@ void CliLatency::HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMes
                                        HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[6]),
                                        HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[7]),
                                        aMessageInfo->mPeerPort);
-    // }
-    //TODO: count the maximum throughput after the following test
-
-    // if (count >= mAmount)
-    // {
-    //      mInterpreter.mServer->OutputFormat("Done");
-    // }
 }
 
 otError CliLatency::ProcessResult(int argc, char *argv[])
@@ -454,13 +382,11 @@ otError CliLatency::ProcessResult(int argc, char *argv[])
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
 
-    for (int i = 1; i < 1000; i++)
-    // for (int i = 1; i < ot::Cli::CliLatency::sCount + 1; i++)
+    for (int i = 1; i < ot::Cli::CliLatency::sCount + 1; i++)
     {
         if (sSendTimestamp[i] == 0)
             break;
         mInterpreter.mServer->OutputFormat("%d, %d \r\n", ot::Cli::CliLatency::sSendTimestamp[i], mReceiveTimer[i]);
-        // mInterpreter.mServer->OutputFormat("%d, %d \r\n", ot::Cli::CliLatency::sSendTimestamp[i], mReceiveTimer[i]);
     }
 
     return OT_ERROR_NONE;
@@ -621,20 +547,8 @@ exit:
 
 void CliLatency::platGpioResponse(void)
 {
-    //record timestamp
-//    otPlatGpioToggle(13);
-    // mInterpreter.mServer->OutputFormat("receive the packet %d gpio signal\r\n", ot::Cli::CliLatency::sCount);
-     // if (ot::Cli::CliLatency::sCount > 0)
-     // {
-     // ot::Cli::CliLatency::sCount++;
-
-     // if (ot::Cli::CliLatency::sSendTimestamp[ot::Cli::CliLatency::sCount] == 0)
-     // {
-     //     ot::Cli::CliLatency::sSendTimestamp[ot::Cli::CliLatency::sCount] = TimerMilli::GetNow();
-     // }
-     ot::Cli::CliLatency::sSendTimestamp[ot::Cli::CliLatency::sCount] = TimerMilli::GetNow();
-     ot::Cli::CliLatency::sCount++;
-     // }
+    ot::Cli::CliLatency::sSendTimestamp[ot::Cli::CliLatency::sCount] = TimerMilli::GetNow();
+    ot::Cli::CliLatency::sCount++;
 }
 
 }  // namespace Cli
