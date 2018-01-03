@@ -91,6 +91,27 @@ extern "C" {
  *
  */
 
+/**
+ * @def OT_TOOL_WEAK
+ *
+ * Compiler-specific weak symbol modifier.
+ *
+ */
+
+/**
+ * @def OT_CALL
+ *
+ * Compiler-specific function modifier, ie: Win DLL support
+ *
+ */
+
+/**
+ * @def OT_CDECL
+ *
+ * Compiler-specific function modifier, ie: Win DLL support
+ *
+ */
+
 // =========== TOOLCHAIN SELECTION : START ===========
 
 #if defined(__GNUC__) || defined(__clang__) || defined(__CC_ARM) || defined(__TI_ARM__)
@@ -212,6 +233,8 @@ extern "C" {
 
 #if defined(__ICCARM__)
 
+#include <stddef.h>
+
 #define OT_UNUSED_VARIABLE(VARIABLE)    \
     do                                  \
     {                                   \
@@ -222,6 +245,18 @@ extern "C" {
     _Pragma("diag_suppress=Pe111")      \
     CODE                                \
     _Pragma("diag_default=Pe111")
+
+#elif defined(__CC_ARM)
+
+#include <stddef.h>
+
+#define OT_UNUSED_VARIABLE(VARIABLE)    \
+    do                                  \
+    {                                   \
+        if (&VARIABLE == NULL) {}       \
+    } while (false)
+
+#define OT_UNREACHABLE_CODE(CODE)  CODE
 
 #else
 

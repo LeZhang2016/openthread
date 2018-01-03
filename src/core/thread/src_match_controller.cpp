@@ -33,8 +33,6 @@
 
 #define WPP_NAME "src_match_controller.tmh"
 
-#include <openthread/config.h>
-
 #include "src_match_controller.hpp"
 
 #include "common/code_utils.hpp"
@@ -45,8 +43,8 @@
 
 namespace ot {
 
-SourceMatchController::SourceMatchController(MeshForwarder &aMeshForwarder) :
-    MeshForwarderLocator(aMeshForwarder),
+SourceMatchController::SourceMatchController(otInstance &aInstance) :
+    InstanceLocator(aInstance),
     mEnabled(false)
 {
     ClearTable();
@@ -222,7 +220,7 @@ otError SourceMatchController::AddPendingEntries(void)
     uint8_t numChildren;
     Child *child;
 
-    child = GetMeshForwarder().GetNetif().GetMle().GetChildren(&numChildren);
+    child = GetNetif().GetMle().GetChildren(&numChildren);
 
     for (uint8_t i = 0; i < numChildren; i++, child++)
     {

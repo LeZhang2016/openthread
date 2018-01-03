@@ -47,15 +47,15 @@
  *
  * The base address of the pages to be used for non-volatile-settings storage.
  */
-#define SETTINGS_CONFIG_BASE_ADDRESS 		                (0x7B000)
+#define SETTINGS_CONFIG_BASE_ADDRESS 		                0x7B000
 
 /**
- * @def OPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT
+ * @def SETTINGS_CONFIG_PAGE_SIZE
  *
- * Define to 1 to enable default log output.
+ * The page size of settings.
  *
  */
-#define OPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT             1
+#define SETTINGS_CONFIG_PAGE_SIZE                               0x1000
 
 /**
  * @def OPENTHREAD_CONFIG_ENABLE_SOFTWARE_ACK_TIMEOUT
@@ -80,5 +80,22 @@
  *
  */
 #define OPENTHREAD_CONFIG_ENABLE_SOFTWARE_ENERGY_SCAN           1
+
+/**
+ * @def OPENTHREAD_CONFIG_LOG_OUTPUT
+ *
+ * The DA15000 platform provides an otPlatLog() function.
+ */
+#ifndef OPENTHREAD_CONFIG_LOG_OUTPUT /* allow command line override */
+#define OPENTHREAD_CONFIG_LOG_OUTPUT  OPENTHREAD_CONFIG_LOG_OUTPUT_APP
+#endif
+
+/**
+ * @def OPENTHREAD_CONFIG_MAX_STATECHANGE_HANDLERS
+ *
+ * The maximum number of state-changed callback handlers (set using `otSetStateChangedCallback()`).
+ *
+ */
+#define OPENTHREAD_CONFIG_MAX_STATECHANGE_HANDLERS              3
 
 #endif  // OPENTHREAD_CORE_DA15000_CONFIG_H_

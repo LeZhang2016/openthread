@@ -34,9 +34,10 @@
 #ifndef ENERGY_SCAN_CLIENT_HPP_
 #define ENERGY_SCAN_CLIENT_HPP_
 
+#include "openthread-core-config.h"
+
 #include <openthread/commissioner.h>
 
-#include "openthread-core-config.h"
 #include "coap/coap.hpp"
 #include "common/locator.hpp"
 #include "net/ip6_address.hpp"
@@ -50,14 +51,14 @@ class ThreadNetif;
  * This class implements handling PANID Query Requests.
  *
  */
-class EnergyScanClient: public ThreadNetifLocator
+class EnergyScanClient: public InstanceLocator
 {
 public:
     /**
      * This constructor initializes the object.
      *
      */
-    EnergyScanClient(ThreadNetif &aThreadNetif);
+    EnergyScanClient(otInstance &aInstance);
 
     /**
      * This method sends an Energy Scan Query message.

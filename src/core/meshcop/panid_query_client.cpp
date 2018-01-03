@@ -33,8 +33,6 @@
 
 #define WPP_NAME "panid_query_client.tmh"
 
-#include <openthread/config.h>
-
 #include "panid_query_client.hpp"
 
 #include <openthread/platform/random.h>
@@ -52,13 +50,13 @@
 
 namespace ot {
 
-PanIdQueryClient::PanIdQueryClient(ThreadNetif &aThreadNetif) :
-    ThreadNetifLocator(aThreadNetif),
+PanIdQueryClient::PanIdQueryClient(otInstance &aInstance) :
+    InstanceLocator(aInstance),
     mCallback(NULL),
     mContext(NULL),
     mPanIdQuery(OT_URI_PATH_PANID_CONFLICT, &PanIdQueryClient::HandleConflict, this)
 {
-    aThreadNetif.GetCoap().AddResource(mPanIdQuery);
+    GetNetif().GetCoap().AddResource(mPanIdQuery);
 }
 
 otError PanIdQueryClient::SendQuery(uint16_t aPanId, uint32_t aChannelMask, const Ip6::Address &aAddress,

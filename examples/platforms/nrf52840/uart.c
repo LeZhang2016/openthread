@@ -32,10 +32,14 @@
  *
  */
 
+#include <openthread/config.h>
+#include <openthread-core-config.h>
+
 #include <stddef.h>
 #include <stdint.h>
 
 #include <openthread/types.h>
+#include <openthread/platform/platform.h>
 #include <openthread/platform/toolchain.h>
 #include <openthread/platform/uart.h>
 #include <utils/code_utils.h>
@@ -44,6 +48,8 @@
 #include <hal/nrf_uart.h>
 #include <hal/nrf_gpio.h>
 #include "platform-nrf5.h"
+
+#if (USB_CDC_AS_SERIAL_TRANSPORT == 0)
 
 /**
  *  UART TX buffer variables.
@@ -260,6 +266,7 @@ void UARTE0_UART0_IRQHandler(void)
         {
             sReceiveBuffer[sReceiveHead] = byte;
             sReceiveHead = (sReceiveHead + 1) % UART_RX_BUFFER_SIZE;
+            PlatformEventSignalPending();
         }
     }
 
@@ -278,9 +285,12 @@ void UARTE0_UART0_IRQHandler(void)
         {
             sTransmitDone = true;
             nrf_uart_task_trigger(UART_INSTANCE, NRF_UART_TASK_STOPTX);
+            PlatformEventSignalPending();
         }
     }
 }
+
+#endif // USB_CDC_AS_SERIAL_TRANSPORT == 0
 
 /**
  * The UART driver weak functions definition.

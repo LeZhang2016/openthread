@@ -96,7 +96,6 @@ SOURCES_COMMON                      = \
     api/dataset_api.cpp               \
     api/dataset_ftd_api.cpp           \
     api/dhcp6_api.cpp                 \
-    api/dhcp6_api.cpp                 \
     api/dns_api.cpp                   \
     api/icmp6_api.cpp                 \
     api/instance_api.cpp              \
@@ -107,6 +106,7 @@ SOURCES_COMMON                      = \
     api/link_raw_api.cpp              \
     api/message_api.cpp               \
     api/netdata_api.cpp               \
+    api/server_api.cpp                \
     api/tasklet_api.cpp               \
     api/thread_api.cpp                \
     api/thread_ftd_api.cpp            \

@@ -31,8 +31,6 @@
  *   This file implements MPL.
  */
 
-#include <openthread/config.h>
-
 #include "ip6_mpl.hpp"
 
 #include <openthread/platform/random.h>
@@ -48,20 +46,20 @@ namespace Ip6 {
 void MplBufferedMessageMetadata::GenerateNextTransmissionTime(uint32_t aCurrentTime, uint8_t aInterval)
 {
     // Emulate Trickle timer behavior and set up the next retransmission within [0,I) range.
-    uint8_t t = otPlatRandomGet() % aInterval;
+    uint8_t t = aInterval == 0 ? aInterval : otPlatRandomGet() % aInterval;
 
     // Set transmission time at the beginning of the next interval.
     SetTransmissionTime(aCurrentTime + GetIntervalOffset() + t);
     SetIntervalOffset(aInterval - t);
 }
 
-Mpl::Mpl(Ip6 &aIp6):
-    Ip6Locator(aIp6),
-    mSeedSetTimer(aIp6.GetInstance(), &Mpl::HandleSeedSetTimer, this),
-    mRetransmissionTimer(aIp6.GetInstance(), &Mpl::HandleRetransmissionTimer, this),
+Mpl::Mpl(otInstance &aInstance):
+    InstanceLocator(aInstance),
     mTimerExpirations(0),
     mSequence(0),
     mSeedId(0),
+    mSeedSetTimer(aInstance, &Mpl::HandleSeedSetTimer, this),
+    mRetransmissionTimer(aInstance, &Mpl::HandleRetransmissionTimer, this),
     mMatchingAddress(NULL)
 {
     memset(mSeedSet, 0, sizeof(mSeedSet));
@@ -171,6 +169,14 @@ void Mpl::AddBufferedMessage(Message &aMessage, uint16_t aSeedId, uint8_t aSeque
     uint32_t nextTransmissionTime;
     uint8_t hopLimit = 0;
 
+#if OPENTHREAD_CONFIG_ENABLE_DYNAMIC_MPL_INTERVAL
+    // adjust the first MPL forward interval dynamically according to the network scale
+    uint8_t interval = (kDataMessageInterval / Mle::kMaxRouters) *
+                       GetInstance().mThreadNetif.GetMle().GetActiveNeighborRouterCount();
+#else
+    uint8_t interval = kDataMessageInterval;
+#endif
+
     VerifyOrExit(GetTimerExpirations() > 0);
     VerifyOrExit((messageCopy = aMessage.Clone()) != NULL, error = OT_ERROR_NO_BUFS);
 
@@ -184,7 +190,7 @@ void Mpl::AddBufferedMessage(Message &aMessage, uint16_t aSeedId, uint8_t aSeque
     messageMetadata.SetSeedId(aSeedId);
     messageMetadata.SetSequence(aSequence);
     messageMetadata.SetTransmissionCount(aIsOutbound ? 1 : 0);
-    messageMetadata.GenerateNextTransmissionTime(now, kDataMessageInterval);
+    messageMetadata.GenerateNextTransmissionTime(now, interval);
 
     // Append the message with MplBufferedMessageMetadata and add it to the queue.
     SuccessOrExit(error = messageMetadata.AppendTo(*messageCopy));
@@ -367,7 +373,7 @@ Mpl &Mpl::GetOwner(const Context &aContext)
 #if OPENTHREAD_ENABLE_MULTIPLE_INSTANCES
     Mpl &mpl = *static_cast<Mpl *>(aContext.GetContext());
 #else
-    Mpl &mpl = otGetIp6().mMpl;
+    Mpl &mpl = otGetIp6().GetMpl();
     OT_UNUSED_VARIABLE(aContext);
 #endif
     return mpl;

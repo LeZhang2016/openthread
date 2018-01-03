@@ -54,6 +54,24 @@ void nrf5UartInit(void);
 void nrf5UartDeinit(void);
 
 /**
+ * Initialization of GPIO task and event driver.
+ *
+ */
+void nrf5GpioteInit(void);
+
+/**
+ * Deinitialization of GPIO task and event driver.
+ *
+ */
+void nrf5GpioteDeinit(void);
+
+
+void nrf5GpioInit(void);
+
+void nrf5GpioProcess(otInstance *aInstance);
+
+
+/**
  * This function performs UART driver processing.
  *
  */
@@ -81,7 +99,7 @@ void nrf5AlarmProcess(otInstance *aInstance);
  * Function for geting current time in mircosecond.
  *
  */
-uint64_t nrf5AlarmGetCurrentTime();
+uint64_t nrf5AlarmGetCurrentTime(void);
 
 /**
  * Initialization of Random Number Generator.

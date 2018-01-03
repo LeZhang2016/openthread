@@ -47,6 +47,7 @@ from autothreadharness.harness_controller import HarnessController
 from autothreadharness.helpers import HistoryHelper
 from autothreadharness.open_thread_controller import OpenThreadController
 from autothreadharness.pdu_controller_factory import PduControllerFactory
+from autothreadharness.rf_shield_controller import get_rf_shield_controller
 
 logger = logging.getLogger(__name__)
 
@@ -161,6 +162,7 @@ class HarnessCase(unittest.TestCase):
         self._hc = None
         self.result_dir = '%s\\%s' % (settings.OUTPUT_PATH, self.__class__.__name__)
         self.history = HistoryHelper()
+        self.add_all_devices = False
 
         super(HarnessCase, self).__init__(*args, **kwargs)
 
@@ -280,6 +282,18 @@ class HarnessCase(unittest.TestCase):
         self._browser.close()
         self._browser = None
 
+    def _init_rf_shield(self):
+        if getattr(settings, 'SHIELD_CONTROLLER_TYPE', None) and getattr(settings, 'SHIELD_CONTROLLER_PARAMS', None):
+            self.rf_shield = get_rf_shield_controller(
+                shield_type=settings.SHIELD_CONTROLLER_TYPE,
+                params=settings.SHIELD_CONTROLLER_PARAMS
+            )
+        else:
+            self.rf_shield = None
+
+    def _destroy_rf_shield(self):
+        self.rf_shield = None
+
     def setUp(self):
         """Prepare to run test case.
 
@@ -306,6 +320,7 @@ class HarnessCase(unittest.TestCase):
         self._init_harness()
         self._init_devices()
         self._init_dut()
+        self._init_rf_shield()
 
     def tearDown(self):
         """Clean up after each case.
@@ -319,6 +334,7 @@ class HarnessCase(unittest.TestCase):
         self._destroy_harness()
         self._destroy_browser()
         self._destroy_dut()
+        self._destroy_rf_shield()
 
     def _setup_page(self):
         """Do sniffer settings and general settings
@@ -470,10 +486,11 @@ class HarnessCase(unittest.TestCase):
         if len(devices) < golden_devices_required:
             raise GoldenDeviceNotEnoughError()
 
+
         # add golden devices
-        while golden_devices_required:
+        number_of_devices_to_add = len(devices) if self.add_all_devices else golden_devices_required
+        for i in range(number_of_devices_to_add):
             self._add_device(*devices.pop())
-            golden_devices_required = golden_devices_required - 1
 
         # add DUT
         if settings.DUT_DEVICE:
@@ -496,7 +513,7 @@ class HarnessCase(unittest.TestCase):
                 self._connect_devices()
                 button_next = browser.find_element_by_id('nextBtn')
                 if not wait_until(lambda: 'disabled' not in button_next.get_attribute('class'),
-                                  times=(30 + 4 * self.golden_devices_required)):
+                                  times=(30 + 4 * number_of_devices_to_add)):
                     bad_ones = []
                     selected_hw_set = test_bed.find_elements_by_class_name('selected-hw')
                     for selected_hw in selected_hw_set:
@@ -791,14 +808,22 @@ class HarnessCase(unittest.TestCase):
             inp.send_keys(ml64)
 
         elif title.startswith('Shield Devices') or title.startswith('Sheild DUT'):
-            if self.dut and settings.SHIELD_SIMULATION:
+            if self.rf_shield:
+                logger.info('Shielding devices')
+                with self.rf_shield:
+                    self.rf_shield.shield()
+            elif self.dut and settings.SHIELD_SIMULATION:
                 self.dut.channel = (self.channel == THREAD_CHANNEL_MAX
                                     and THREAD_CHANNEL_MIN) or (self.channel + 1)
             else:
                 raw_input('Shield DUT and press enter to continue..')
 
         elif title.startswith('Unshield Devices') or title.startswith('Bring DUT Back to network'):
-            if self.dut and settings.SHIELD_SIMULATION:
+            if self.rf_shield:
+                logger.info('Unshielding devices')
+                with self.rf_shield:
+                    self.rf_shield.unshield()
+            elif self.dut and settings.SHIELD_SIMULATION:
                 self.dut.channel = self.channel
             else:
                 raw_input('Bring DUT and press enter to continue..')

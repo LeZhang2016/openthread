@@ -34,6 +34,8 @@
 #ifndef NETWORK_DATA_LEADER_MTD_HPP_
 #define NETWORK_DATA_LEADER_MTD_HPP_
 
+#include "openthread-core-config.h"
+
 #include "utils/wrap_stdint.h"
 
 namespace ot {
@@ -45,7 +47,7 @@ namespace NetworkData {
 class Leader: public LeaderBase
 {
 public:
-    explicit Leader(ThreadNetif &aThreadNetif) : LeaderBase(aThreadNetif) { }
+    explicit Leader(otInstance &aInstance) : LeaderBase(aInstance) { }
 
     void Start(void) { }
     void Stop(void) { }

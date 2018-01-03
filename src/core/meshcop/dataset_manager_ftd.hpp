@@ -35,9 +35,14 @@
 #ifndef MESHCOP_DATASET_MANAGER_FTD_HPP_
 #define MESHCOP_DATASET_MANAGER_FTD_HPP_
 
+#include "openthread-core-config.h"
+
+#if OPENTHREAD_FTD
+
 #include <openthread/types.h>
 
 #include "coap/coap.hpp"
+#include "meshcop/dataset_manager.hpp"
 
 namespace ot {
 
@@ -48,7 +53,7 @@ namespace MeshCoP {
 class ActiveDataset: public ActiveDatasetBase
 {
 public:
-    ActiveDataset(ThreadNetif &aThreadNetif);
+    ActiveDataset(otInstance &aInstance);
 
     otError GenerateLocal(void);
 
@@ -69,7 +74,7 @@ private:
 class PendingDataset: public PendingDatasetBase
 {
 public:
-    PendingDataset(ThreadNetif &aThreadNetif);
+    PendingDataset(otInstance &aInstance);
 
     void StartLeader(void);
 
@@ -87,5 +92,7 @@ private:
 
 }  // namespace MeshCoP
 }  // namespace ot
+
+#endif  // OPENTHREAD_FTD
 
 #endif  // MESHCOP_DATASET_MANAGER_HPP_

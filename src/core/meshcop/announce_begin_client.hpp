@@ -35,6 +35,7 @@
 #define ANNOUNCE_BEGIN_CLIENT_HPP_
 
 #include "openthread-core-config.h"
+
 #include "common/locator.hpp"
 #include "coap/coap.hpp"
 #include "net/ip6_address.hpp"
@@ -46,14 +47,14 @@ namespace ot {
  * This class implements handling Announce Begin Requests.
  *
  */
-class AnnounceBeginClient: public ThreadNetifLocator
+class AnnounceBeginClient: public InstanceLocator
 {
 public:
     /**
      * This constructor initializes the object.
      *
      */
-    AnnounceBeginClient(ThreadNetif &aThreadNetif);
+    AnnounceBeginClient(otInstance &aInstance);
 
     /**
      * This method sends a Announce Begin message.

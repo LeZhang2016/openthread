@@ -31,8 +31,6 @@
  *   This file implements the CLI interpreter.
  */
 
-#include <openthread/config.h>
-
 #include "cli_dataset.hpp"
 
 #include <stdio.h>
@@ -194,7 +192,7 @@ otError Dataset::Print(otOperationalDataset &aDataset)
 
 otError Dataset::Process(otInstance *aInstance, int argc, char *argv[], Server &aServer)
 {
-    otError error = OT_ERROR_NONE;
+    otError error = OT_ERROR_PARSE;
 
     sServer = &aServer;
 

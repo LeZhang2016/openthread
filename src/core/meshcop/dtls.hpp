@@ -34,6 +34,8 @@
 #ifndef DTLS_HPP_
 #define DTLS_HPP_
 
+#include "openthread-core-config.h"
+
 #include <openthread/types.h>
 
 #include <mbedtls/ssl.h>
@@ -55,7 +57,7 @@ class ThreadNetif;
 
 namespace MeshCoP {
 
-class Dtls: public ThreadNetifLocator
+class Dtls: public InstanceLocator
 {
 public:
     enum
@@ -70,7 +72,7 @@ public:
      * @param[in]  aNetif  A reference to the Thread network interface.
      *
      */
-    Dtls(ThreadNetif &aNetif);
+    Dtls(otInstance &aInstance);
 
     /**
      * This function pointer is called when a connection is established or torn down.
@@ -189,6 +191,15 @@ public:
     otError Receive(Message &aMessage, uint16_t aOffset, uint16_t aLength);
 
     /**
+     * This method sets the default message sub-type that will be used for all messages without defined
+     * sub-type.
+     *
+     * @param[in]  aMessageSubType  The default message sub-type.
+     *
+     */
+    void SetDefaultMessageSubType(uint8_t aMessageSubType) { mMessageDefaultSubType = aMessageSubType; }
+
+    /**
      * The provisioning URL is placed here so that both the Commissioner and Joiner can share the same object.
      *
      */
@@ -250,6 +261,7 @@ private:
     bool mClient;
 
     uint8_t mMessageSubType;
+    uint8_t mMessageDefaultSubType;
 };
 
 }  // namespace MeshCoP

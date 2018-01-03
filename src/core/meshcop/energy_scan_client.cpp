@@ -32,7 +32,6 @@
  */
 
 #define WPP_NAME "energy_scan_client.tmh"
-#include <openthread/config.h>
 
 #include "energy_scan_client.hpp"
 
@@ -55,13 +54,13 @@ using ot::Encoding::BigEndian::HostSwap32;
 
 namespace ot {
 
-EnergyScanClient::EnergyScanClient(ThreadNetif &aThreadNetif) :
-    ThreadNetifLocator(aThreadNetif),
+EnergyScanClient::EnergyScanClient(otInstance &aInstance) :
+    InstanceLocator(aInstance),
     mEnergyScan(OT_URI_PATH_ENERGY_REPORT, &EnergyScanClient::HandleReport, this)
 {
     mContext = NULL;
     mCallback = NULL;
-    aThreadNetif.GetCoap().AddResource(mEnergyScan);
+    GetNetif().GetCoap().AddResource(mEnergyScan);
 }
 
 otError EnergyScanClient::SendQuery(uint32_t aChannelMask, uint8_t aCount, uint16_t aPeriod,

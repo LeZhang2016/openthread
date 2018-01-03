@@ -88,6 +88,7 @@ check_PROGRAMS                                                      = \
     test-hmac-sha256                                                  \
     test-lowpan                                                       \
     test-link-quality                                                 \
+    test-network-data                                                 \
     test-mac-frame                                                    \
     test-message                                                      \
     test-message-queue                                                \
@@ -96,6 +97,8 @@ check_PROGRAMS                                                      = \
     test-strlcat                                                      \
     test-strlcpy                                                      \
     test-strnlen                                                      \
+    test-spinel-decoder                                               \
+    test-spinel-encoder                                               \
     test-timer                                                        \
     test-toolchain                                                    \
     $(NULL)
@@ -155,6 +158,9 @@ test_link_quality_SOURCES    = test_platform.cpp test_link_quality.cpp
 test_lowpan_LDADD            = $(COMMON_LDADD)
 test_lowpan_SOURCES          = test_platform.cpp test_lowpan.cpp test_util.cpp
 
+test_network_data_LDADD       = $(COMMON_LDADD)
+test_network_data_SOURCES     = test_platform.cpp test_network_data.cpp
+
 test_mac_frame_LDADD         = $(COMMON_LDADD)
 test_mac_frame_SOURCES       = test_platform.cpp test_mac_frame.cpp
 
@@ -181,6 +187,12 @@ test_strlcpy_SOURCES         = test_strlcpy.c
 
 test_strnlen_LDADD           = $(COMMON_LDADD)
 test_strnlen_SOURCES         = test_strnlen.c
+
+test_spinel_decoder_LDADD    = $(COMMON_LDADD)
+test_spinel_decoder_SOURCES  = test_platform.cpp test_spinel_decoder.cpp
+
+test_spinel_encoder_LDADD    = $(COMMON_LDADD)
+test_spinel_encoder_SOURCES  = test_platform.cpp test_spinel_encoder.cpp
 
 test_timer_LDADD             = $(COMMON_LDADD)
 test_timer_SOURCES           = test_platform.cpp test_timer.cpp

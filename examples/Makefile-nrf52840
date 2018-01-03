@@ -48,6 +48,7 @@ configure_OPTIONS                                 = \
     --enable-diag                                   \
     --with-examples=nrf52840                        \
     --enable-linker-map                             \
+    --enable-mac-filter                             \
     MBEDTLS_CPPFLAGS="$(NRF52840_MBEDTLS_CPPFLAGS)" \
     $(NULL)
 
@@ -80,7 +81,13 @@ COMMONCFLAGS                   := \
     $(NULL)
 
 ifeq ($(CERT_LOG),1)
-COMMONCFLAGS += -DOPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT=1
+COMMONCFLAGS += -DOPENTHREAD_CONFIG_LOG_OUTPUT=OPENTHREAD_CONFIG_LOG_OUTPUT_APP
+else
+COMMONCFLAGS += -DOPENTHREAD_CONFIG_LOG_OUTPUT=OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED
+endif
+
+ifeq ($(USB),1)
+COMMONCFLAGS += -DUSB_CDC_AS_SERIAL_TRANSPORT=1
 endif
 
 CPPFLAGS                       += \

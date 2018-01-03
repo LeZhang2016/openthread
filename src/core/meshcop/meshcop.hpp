@@ -35,6 +35,8 @@
 #ifndef MESHCOP_HPP_
 #define MESHCOP_HPP_
 
+#include "openthread-core-config.h"
+
 #include "coap/coap.hpp"
 #include "common/message.hpp"
 
@@ -50,7 +52,7 @@ enum
  * This function create Message for MeshCoP
  *
  */
-inline Message *NewMeshCoPMessage(Coap::Coap &aCoap, const Coap::Header &aHeader)
+inline Message *NewMeshCoPMessage(Coap::CoapBase &aCoap, const Coap::Header &aHeader)
 {
     return aCoap.NewMessage(aHeader, kMeshCoPMessagePriority);
 }

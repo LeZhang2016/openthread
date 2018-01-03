@@ -31,12 +31,11 @@
  *   This file implements MeshCoP Datasets manager to process commands.
  *
  */
-
-#if OPENTHREAD_FTD
-
 #define WPP_NAME "dataset_manager_ftd.tmh"
 
-#include <openthread/config.h>
+#include "dataset_manager_ftd.hpp"
+
+#if OPENTHREAD_FTD
 
 #include <stdio.h>
 
@@ -61,8 +60,8 @@
 namespace ot {
 namespace MeshCoP {
 
-ActiveDataset::ActiveDataset(ThreadNetif &aThreadNetif):
-    ActiveDatasetBase(aThreadNetif),
+ActiveDataset::ActiveDataset(otInstance &aInstance):
+    ActiveDatasetBase(aInstance),
     mResourceSet(OT_URI_PATH_ACTIVE_SET, &ActiveDataset::HandleSet, this)
 {
 }
@@ -208,8 +207,8 @@ exit:
     return;
 }
 
-PendingDataset::PendingDataset(ThreadNetif &aThreadNetif):
-    PendingDatasetBase(aThreadNetif),
+PendingDataset::PendingDataset(otInstance &aInstance):
+    PendingDatasetBase(aInstance),
     mResourceSet(OT_URI_PATH_PENDING_SET, &PendingDataset::HandleSet, this)
 {
 }

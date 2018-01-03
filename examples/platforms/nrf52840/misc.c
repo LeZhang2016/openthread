@@ -26,8 +26,10 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <openthread/types.h>
+#include <openthread/config.h>
+#include <openthread-core-config.h>
 #include <openthread/platform/misc.h>
+#include <openthread/platform/platform.h>
 
 #include <device/nrf.h>
 
@@ -68,6 +70,9 @@ void nrf5MiscDeinit(void)
 void otPlatReset(otInstance *aInstance)
 {
     (void)aInstance;
+
+    PlatformDeinit();
+
     NVIC_SystemReset();
 }
 

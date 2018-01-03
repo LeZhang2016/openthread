@@ -33,7 +33,7 @@
 #ifndef NCP_UART_HPP_
 #define NCP_UART_HPP_
 
-#include <openthread/config.h>
+#include "openthread-core-config.h"
 
 #include "ncp/hdlc.hpp"
 #include "ncp/ncp_base.hpp"
@@ -114,6 +114,7 @@ private:
     UartTxState     mState;
     uint8_t         mByte;
     uint8_t         mRxBuffer[kRxBufferSize];
+    bool            mUartSendImmediate;
     Tasklet         mUartSendTask;
 };
 

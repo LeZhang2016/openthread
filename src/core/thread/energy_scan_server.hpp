@@ -34,9 +34,10 @@
 #ifndef ENERGY_SCAN_SERVER_HPP_
 #define ENERGY_SCAN_SERVER_HPP_
 
+#include "openthread-core-config.h"
+
 #include <openthread/types.h>
 
-#include "openthread-core-config.h"
 #include "coap/coap.hpp"
 #include "common/locator.hpp"
 #include "common/timer.hpp"
@@ -55,14 +56,14 @@ class ThreadTargetTlv;
  * This class implements handling Energy Scan Requests.
  *
  */
-class EnergyScanServer: public ThreadNetifLocator
+class EnergyScanServer: public InstanceLocator
 {
 public:
     /**
      * This constructor initializes the object.
      *
      */
-    EnergyScanServer(ThreadNetif &aThreadNetif);
+    EnergyScanServer(otInstance &aInstance);
 
 private:
     enum

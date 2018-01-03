@@ -33,10 +33,9 @@
 
 #define WPP_NAME "message.tmh"
 
-#include <openthread/config.h>
-
 #include "message.hpp"
 
+#include "openthread-instance.h"
 #include "common/code_utils.hpp"
 #include "common/debug.hpp"
 #include "common/logging.hpp"
@@ -69,6 +68,8 @@ MessagePool::MessagePool(otInstance &aInstance) :
 Message *MessagePool::New(uint8_t aType, uint16_t aReserved)
 {
     Message *message = NULL;
+
+    SuccessOrExit(ReclaimBuffers(1));
 
     VerifyOrExit((message = static_cast<Message *>(NewBuffer())) != NULL);
 
@@ -146,18 +147,18 @@ void MessagePool::FreeBuffers(Buffer *aBuffer)
 
 otError MessagePool::ReclaimBuffers(int aNumBuffers)
 {
-    uint16_t numFreeBuffers;
+    while (aNumBuffers > GetFreeBufferCount())
+    {
+        MeshForwarder &meshForwarder = GetInstance().mThreadNetif.GetMeshForwarder();
+        SuccessOrExit(meshForwarder.EvictIndirectMessage());
+    }
 
-#if OPENTHREAD_CONFIG_PLATFORM_MESSAGE_MANAGEMENT
-    numFreeBuffers = otPlatMessagePoolNumFreeBuffers(&GetInstance());
-#else
-    numFreeBuffers = mNumFreeBuffers;
-#endif
+exit:
 
-    //First comparison is to get around issues with comparing
-    //signed and unsigned numbers, if aNumBuffers is negative then
-    //the second comparison wont be attempted.
-    if (aNumBuffers < 0 || aNumBuffers <= numFreeBuffers)
+    // First comparison is to get around issues with comparing
+    // signed and unsigned numbers, if aNumBuffers is negative then
+    // the second comparison wont be attempted.
+    if (aNumBuffers < 0 || aNumBuffers <= GetFreeBufferCount())
     {
         return OT_ERROR_NONE;
     }
@@ -808,29 +809,32 @@ MessageQueue::MessageQueue(void)
     SetTail(NULL);
 }
 
-void MessageQueue::AddToList(uint8_t aList, Message &aMessage)
+void MessageQueue::AddToList(uint8_t aList, Message &aMessage, QueuePosition aPosition)
 {
-    Message *head;
-
     assert((aMessage.Next(aList) == NULL) && (aMessage.Prev(aList) == NULL));
 
     if (GetTail() == NULL)
     {
         aMessage.Next(aList) = &aMessage;
         aMessage.Prev(aList) = &aMessage;
+
+        SetTail(&aMessage);
     }
     else
     {
-        head = GetTail()->Next(aList);
+        Message *head = GetTail()->Next(aList);
 
         aMessage.Next(aList) = head;
         aMessage.Prev(aList) = GetTail();
 
         head->Prev(aList) = &aMessage;
         GetTail()->Next(aList) = &aMessage;
-    }
 
-    SetTail(&aMessage);
+        if (aPosition == kQueuePositionTail)
+        {
+            SetTail(&aMessage);
+        }
+    }
 }
 
 void MessageQueue::RemoveFromList(uint8_t aList, Message &aMessage)
@@ -859,7 +863,7 @@ Message *MessageQueue::GetHead(void) const
     return (GetTail() == NULL) ? NULL : GetTail()->Next(MessageInfo::kListInterface);
 }
 
-otError MessageQueue::Enqueue(Message &aMessage)
+otError MessageQueue::Enqueue(Message &aMessage, QueuePosition aPosition)
 {
     otError error = OT_ERROR_NONE;
 
@@ -867,7 +871,9 @@ otError MessageQueue::Enqueue(Message &aMessage)
 
     aMessage.SetMessageQueue(this);
 
-    AddToList(MessageInfo::kListInterface, aMessage);
+    AddToList(MessageInfo::kListInterface, aMessage, aPosition);
+
+    // Any new message is always added to the end of the `AllMessageQueue` list.
     aMessage.GetMessagePool()->GetAllMessagesQueue()->AddToList(MessageInfo::kListAll, aMessage);
 
 exit:

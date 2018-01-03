@@ -86,12 +86,12 @@ struct otIcmp6Header
     uint8_t      mType;      ///< Type
     uint8_t      mCode;      ///< Code
     uint16_t     mChecksum;  ///< Checksum
-    union
+    union OT_TOOL_PACKED_FIELD
     {
         uint8_t  m8[OT_ICMP6_HEADER_DATA_SIZE / sizeof(uint8_t)];
         uint16_t m16[OT_ICMP6_HEADER_DATA_SIZE / sizeof(uint16_t)];
         uint32_t m32[OT_ICMP6_HEADER_DATA_SIZE / sizeof(uint32_t)];
-    } mData;                 ///< Message-specific data
+    } mData;  ///< Message-specific data
 } OT_TOOL_PACKED_END;
 
 /**
@@ -146,7 +146,7 @@ void otIcmp6SetEchoEnabled(otInstance *aInstance, bool aEnabled);
 /**
  * This function registers a handler to provide received ICMPv6 messages.
  *
- * @note A handler structure @p aHandler has to be stored in persistant (static) memory.
+ * @note A handler structure @p aHandler has to be stored in persistent (static) memory.
  *       OpenThread does not make a copy of handler structure.
  *
  * @param[in]  aInstance A pointer to an OpenThread instance.

@@ -35,6 +35,8 @@
 #ifndef MESHCOP_TLVS_HPP_
 #define MESHCOP_TLVS_HPP_
 
+#include "openthread-core-config.h"
+
 #include "utils/wrap_string.h"
 
 #include <openthread/types.h>
@@ -562,7 +564,7 @@ public:
      * @retval FALSE  If the TLV does not appear to be well-formed.
      *
      */
-    bool IsValid(void) const { return GetLength() <= sizeof(*this) - sizeof(Tlv); }
+    bool IsValid(void) const { return ((GetLength() != 0) && (GetLength() <= sizeof(*this) - sizeof(Tlv))); }
 
     /**
      * This method sets all bits in the Bloom Filter to zero.
@@ -646,7 +648,7 @@ public:
      * @param[in]  aExtAddress  Extended address
      *
      */
-    void ComputeBloomFilter(otExtAddress *aExtAddress);
+    void ComputeBloomFilter(const otExtAddress *aExtAddress);
 
 private:
     uint8_t mSteeringData[OT_STEERING_DATA_MAX_LENGTH];

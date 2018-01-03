@@ -34,9 +34,10 @@
 #ifndef ANNOUNCE_BEGIN_SERVER_HPP_
 #define ANNOUNCE_BEGIN_SERVER_HPP_
 
+#include "openthread-core-config.h"
+
 #include <openthread/types.h>
 
-#include "openthread-core-config.h"
 #include "coap/coap.hpp"
 #include "common/locator.hpp"
 #include "common/timer.hpp"
@@ -48,14 +49,14 @@ namespace ot {
  * This class implements handling Announce Begin Requests.
  *
  */
-class AnnounceBeginServer: public ThreadNetifLocator
+class AnnounceBeginServer: public InstanceLocator
 {
 public:
     /**
      * This constructor initializes the object.
      *
      */
-    AnnounceBeginServer(ThreadNetif &aThreadNetif);
+    AnnounceBeginServer(otInstance &aInstance);
 
     /**
      * This method begins the MLE Announce transmission process using Count=3 and Period=1s.

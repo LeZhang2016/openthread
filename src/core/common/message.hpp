@@ -34,7 +34,7 @@
 #ifndef MESSAGE_HPP_
 #define MESSAGE_HPP_
 
-#include <openthread/config.h>
+#include "openthread-core-config.h"
 
 #include "utils/wrap_stdint.h"
 #include "utils/wrap_string.h"
@@ -42,7 +42,6 @@
 #include <openthread/message.h>
 #include <openthread/platform/messagepool.h>
 
-#include "openthread-core-config.h"
 #include "common/code_utils.hpp"
 #include "common/locator.hpp"
 #include "mac/mac_frame.hpp"
@@ -97,7 +96,7 @@ struct MessageInfo
     uint16_t         mLength;            ///< Number of bytes within the message.
     uint16_t         mOffset;            ///< A byte offset within the message.
     uint16_t         mDatagramTag;       ///< The datagram tag used for 6LoWPAN fragmentation.
-    RssAverager      mRssAverager;       ///< The averager maininting the received signal strength (RSS) average.
+    RssAverager      mRssAverager;       ///< The averager maintaining the received signal strength (RSS) average.
 
     uint8_t          mChildMask[8];      ///< A bit-vector to indicate which sleepy children need to receive this.
     uint8_t          mTimeout;           ///< Seconds remaining before dropping the message.
@@ -783,7 +782,7 @@ private:
     /**
      * This method sets the number of reserved header bytes.
      *
-     * @pram[in]  aReservedHeader  The number of header bytes to reserve.
+     * @param[in] aReservedHeader  The number of header bytes to reserve.
      *
      */
     void SetReserved(uint16_t aReservedHeader) { mBuffer.mHead.mInfo.mReserved = aReservedHeader; }
@@ -810,6 +809,18 @@ class MessageQueue : public otMessageQueue
     friend class PriorityQueue;
 
 public:
+
+    /**
+     * This enumeration represents a position (head or tail) in the queue. This is used to specify where a new message
+     * should be added in the queue.
+     *
+     */
+    enum QueuePosition
+    {
+        kQueuePositionHead,    ///< Indicates the head (front) of the list.
+        kQueuePositionTail,    ///< Indicates the tail (end) of the list.
+    };
+
     /**
      * This constructor initializes the message queue.
      *
@@ -833,7 +844,19 @@ public:
      * @retval OT_ERROR_ALREADY  The message is already enqueued in a list.
      *
      */
-    otError Enqueue(Message &aMessage);
+    otError Enqueue(Message &aMessage) { return Enqueue(aMessage, kQueuePositionTail); }
+
+    /**
+     * This method adds a message at a given position (head/tail) of the list.
+     *
+     * @param[in]  aMessage  The message to add.
+     * @param[in]  aPosition The position (head or tail) where to add the message.
+     *
+     * @retval OT_ERROR_NONE     Successfully added the message to the list.
+     * @retval OT_ERROR_ALREADY  The message is already enqueued in a list.
+     *
+     */
+    otError Enqueue(Message &aMessage, QueuePosition aPosition);
 
     /**
      * This method removes a message from the list.
@@ -874,13 +897,23 @@ private:
     void SetTail(Message *aMessage) { mData = aMessage; }
 
     /**
-     * This method adds a message to a list.
+     * This method adds a message to the end of the list.
      *
      * @param[in]  aListId   The list to add @p aMessage to.
      * @param[in]  aMessage  The message to add to @p aListId.
      *
      */
-    void AddToList(uint8_t aListId, Message &aMessage);
+    void AddToList(uint8_t aListId, Message &aMessage) { AddToList(aListId, aMessage, kQueuePositionTail); }
+
+    /**
+     * This method adds a message at a give position (head or tail) of the list.
+     *
+     * @param[in]  aListId   The list to add @p aMessage to.
+     * @param[in]  aMessage  The message to add to @p aListId.
+     * @param[in]  aPosition The position where to add the message.
+     *
+     */
+    void AddToList(uint8_t aListId, Message &aMessage, QueuePosition aPosition);
 
     /**
      * This method removes a message from a list.

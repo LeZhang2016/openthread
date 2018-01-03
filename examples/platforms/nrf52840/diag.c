@@ -26,6 +26,9 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <openthread/config.h>
+#include <openthread-core-config.h>
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +36,8 @@
 #include <inttypes.h>
 
 #include "platform-nrf5.h"
+
+#include <hal/nrf_gpio.h>
 
 #include <openthread/cli.h>
 #include <openthread/platform/alarm-milli.h>
@@ -236,24 +241,98 @@ exit:
     appendErrorResult(error, aOutput, aOutputMaxLen);
 }
 
+static void processGpio(otInstance *aInstance, int argc, char *argv[],
+                        char *aOutput, size_t aOutputMaxLen)
+{
+    OT_UNUSED_VARIABLE(aInstance);
+
+    long pinnum;
+    otError error = OT_ERROR_NONE;
+
+    otEXPECT_ACTION(otPlatDiagModeGet(), error = OT_ERROR_INVALID_STATE);
+
+    if (argc == 1)
+    {
+        uint32_t value;
+
+        error = parseLong(argv[0], &pinnum);
+        otEXPECT(error == OT_ERROR_NONE);
+
+        value = nrf_gpio_pin_read(pinnum);
+
+        snprintf(aOutput, aOutputMaxLen, "gpio %d = %d\r\n",
+                 (uint8_t)pinnum, (uint8_t)value);
+    }
+    else if (strcmp(argv[0], "set") == 0)
+    {
+        otEXPECT_ACTION(argc == 2, error = OT_ERROR_INVALID_ARGS);
+        error = parseLong(argv[1], &pinnum);
+        otEXPECT(error == OT_ERROR_NONE);
+
+        nrf_gpio_pin_set(pinnum);
+
+        snprintf(aOutput, aOutputMaxLen, "gpio %d = 1\r\n", (uint8_t)pinnum);
+    }
+    else if (strcmp(argv[0], "clr") == 0)
+    {
+        otEXPECT_ACTION(argc == 2, error = OT_ERROR_INVALID_ARGS);
+        error = parseLong(argv[1], &pinnum);
+        otEXPECT(error == OT_ERROR_NONE);
+
+        nrf_gpio_pin_clear(pinnum);
+
+        snprintf(aOutput, aOutputMaxLen, "gpio %d = 0\r\n", (uint8_t)pinnum);
+    }
+    else if (strcmp(argv[0], "out") == 0)
+    {
+        otEXPECT_ACTION(argc == 2, error = OT_ERROR_INVALID_ARGS);
+        error = parseLong(argv[1], &pinnum);
+        otEXPECT(error == OT_ERROR_NONE);
+
+        nrf_gpio_cfg_output(pinnum);
+
+        snprintf(aOutput, aOutputMaxLen, "gpio %d: out\r\n", (uint8_t)pinnum);
+    }
+    else if (strcmp(argv[0], "in") == 0)
+    {
+        otEXPECT_ACTION(argc == 2, error = OT_ERROR_INVALID_ARGS);
+        error = parseLong(argv[1], &pinnum);
+        otEXPECT(error == OT_ERROR_NONE);
+
+        nrf_gpio_cfg_input(pinnum, NRF_GPIO_PIN_NOPULL);
+
+        snprintf(aOutput, aOutputMaxLen, "gpio %d: in no pull\r\n",
+                 (uint8_t)pinnum);
+    }
+    else
+    {
+        error = OT_ERROR_INVALID_ARGS;
+    }
+
+exit:
+    appendErrorResult(error, aOutput, aOutputMaxLen);
+}
+
+
 static void processTemp(otInstance *aInstance, int argc, char *argv[], char *aOutput, size_t aOutputMaxLen)
 {
     OT_UNUSED_VARIABLE(aInstance);
     OT_UNUSED_VARIABLE(argv);
 
     otError error = OT_ERROR_NONE;
+    int32_t temperature;
 
     otEXPECT_ACTION(otPlatDiagModeGet(), error = OT_ERROR_INVALID_STATE);
     otEXPECT_ACTION(argc == 0, error = OT_ERROR_INVALID_ARGS);
 
-    int32_t temperature = nrf5TempGet();
+    temperature = nrf5TempGet();
 
     // Measurement resolution is 0.25 degrees Celsius
     // Convert the temperature measurement to a decimal value, in degrees Celsius
     snprintf(aOutput, aOutputMaxLen, "%" PRId32 ".%02" PRId32 "\r\n", temperature / 4, 25 * (temperature % 4));
 
-    exit:
-        appendErrorResult(error, aOutput, aOutputMaxLen);
+exit:
+    appendErrorResult(error, aOutput, aOutputMaxLen);
 }
 
 static void processCcaThreshold(otInstance *aInstance, int argc, char *argv[], char *aOutput, size_t aOutputMaxLen)
@@ -293,11 +372,12 @@ exit:
 
 const struct PlatformDiagCommand sCommands[] =
 {
-    { "listen", &processListen },
-    { "transmit", &processTransmit },
+    { "ccathreshold", &processCcaThreshold },
+    { "gpio", &processGpio },
     { "id", &processID },
+    { "listen", &processListen },
     { "temp", &processTemp },
-    { "ccathreshold", &processCcaThreshold }
+    { "transmit", &processTransmit },
 };
 
 void otPlatDiagProcess(otInstance *aInstance, int argc, char *argv[], char *aOutput, size_t aOutputMaxLen)

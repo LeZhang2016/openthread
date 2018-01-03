@@ -33,8 +33,6 @@
 
 #define WPP_NAME "icmp6.tmh"
 
-#include <openthread/config.h>
-
 #include "icmp6.hpp"
 
 #include "utils/wrap_string.h"
@@ -50,8 +48,8 @@ using ot::Encoding::BigEndian::HostSwap16;
 namespace ot {
 namespace Ip6 {
 
-Icmp::Icmp(Ip6 &aIp6):
-    Ip6Locator(aIp6),
+Icmp::Icmp(otInstance &aInstance):
+    InstanceLocator(aInstance),
     mHandlers(NULL),
     mEchoSequence(1),
     mIsEchoEnabled(true)

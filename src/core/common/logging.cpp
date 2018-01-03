@@ -33,11 +33,18 @@
 
 #define WPP_NAME "logging.tmh"
 
-#include <openthread/config.h>
-
 #include "logging.hpp"
 
 #include <openthread/openthread.h>
+
+/*
+ * Verify debug uart dependency.
+ *
+ * It is reasonable to only enable the debug uart and not enable logs to the DEBUG uart.
+ */
+#if (OPENTHREAD_CONFIG_LOG_OUTPUT == OPENTHREAD_CONFIG_LOG_OUTPUT_DEBUG_UART) && (!OPENTHREAD_CONFIG_ENABLE_DEBUG_UART)
+#error OPENTHREAD_CONFIG_ENABLE_DEBUG_UART_LOG requires OPENTHREAD_CONFIG_ENABLE_DEBUG_UART
+#endif
 
 #ifndef WINDOWS_LOGGING
 #define otLogDump(aFormat, ...)                                             \
@@ -349,8 +356,8 @@ const char *otThreadErrorToString(otError aError)
         retval = "InvalidSourceAddress";
         break;
 
-    case OT_ERROR_WHITELIST_FILTERED:
-        retval = "WhitelistFiltered";
+    case OT_ERROR_ADDRESS_FILTERED:
+        retval = "AddressFiltered";
         break;
 
     case OT_ERROR_DESTINATION_ADDRESS_FILTERED:
@@ -363,10 +370,6 @@ const char *otThreadErrorToString(otError aError)
 
     case OT_ERROR_ALREADY:
         retval = "Already";
-        break;
-
-    case OT_ERROR_BLACKLIST_FILTERED:
-        retval = "BlacklistFiltered";
         break;
 
     case OT_ERROR_IP6_ADDRESS_CREATION_FAILURE:
@@ -412,6 +415,16 @@ const char *otThreadErrorToString(otError aError)
 
     return retval;
 }
+
+#if OPENTHREAD_CONFIG_LOG_OUTPUT == OPENTHREAD_CONFIG_LOG_OUTPUT_NONE
+/* this provides a stub, incase something uses the function */
+void otPlatLog(otLogLevel aLogLevel, otLogRegion aLogRegion, const char *aFormat, ...)
+{
+    OT_UNUSED_VARIABLE(aLogLevel);
+    OT_UNUSED_VARIABLE(aLogRegion);
+    OT_UNUSED_VARIABLE(aFormat);
+}
+#endif
 
 #ifdef __cplusplus
 };

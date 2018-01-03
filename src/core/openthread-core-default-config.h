@@ -43,7 +43,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_STACK_VENDOR_OUI
 #define OPENTHREAD_CONFIG_STACK_VENDOR_OUI                      0x18b430
-#endif  // OPENTHREAD_CONFIG_STACK_VENDOR_OUI
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_STACK_VERSION_REV
@@ -53,7 +53,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_STACK_VERSION_REV
 #define OPENTHREAD_CONFIG_STACK_VERSION_REV                     0
-#endif  // OPENTHREAD_CONFIG_STACK_VERSION_REV
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_STACK_VERSION_MAJOR
@@ -63,7 +63,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_STACK_VERSION_MAJOR
 #define OPENTHREAD_CONFIG_STACK_VERSION_MAJOR                   0
-#endif  // OPENTHREAD_CONFIG_STACK_VERSION_MAJOR
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_STACK_VERSION_MINOR
@@ -73,7 +73,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_STACK_VERSION_MINOR
 #define OPENTHREAD_CONFIG_STACK_VERSION_MINOR                   1
-#endif  // OPENTHREAD_CONFIG_STACK_VERSION_MINOR
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_PLATFORM_INFO
@@ -83,7 +83,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_PLATFORM_INFO
 #define OPENTHREAD_CONFIG_PLATFORM_INFO                         "NONE"
-#endif  // OPENTHREAD_CONFIG_PLATFORM_INFO
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_NUM_MESSAGE_BUFFERS
@@ -93,7 +93,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_NUM_MESSAGE_BUFFERS
 #define OPENTHREAD_CONFIG_NUM_MESSAGE_BUFFERS                   40
-#endif  // OPENTHREAD_CONFIG_NUM_MESSAGE_BUFFERS
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_MESSAGE_BUFFER_SIZE
@@ -103,7 +103,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_MESSAGE_BUFFER_SIZE
 #define OPENTHREAD_CONFIG_MESSAGE_BUFFER_SIZE                   128
-#endif  // OPENTHREAD_CONFIG_MESSAGE_BUFFER_SIZE
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_DEFAULT_CHANNEL
@@ -113,7 +113,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_DEFAULT_CHANNEL
 #define OPENTHREAD_CONFIG_DEFAULT_CHANNEL                       11
-#endif  // OPENTHREAD_CONFIG_DEFAULT_CHANNEL
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_DEFAULT_MAX_TRANSMIT_POWER
@@ -123,7 +123,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_DEFAULT_MAX_TRANSMIT_POWER
 #define OPENTHREAD_CONFIG_DEFAULT_MAX_TRANSMIT_POWER            0
-#endif  // OPENTHREAD_CONFIG_DEFAULT_MAX_TRANSMIT_POWER
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_MAX_TX_ATTEMPTS_DIRECT
@@ -134,7 +134,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_MAX_TX_ATTEMPTS_DIRECT
 #define OPENTHREAD_CONFIG_MAX_TX_ATTEMPTS_DIRECT                4
-#endif // OPENTHREAD_CONFIG_MAX_TX_ATTEMPTS_DIRECT
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_MAX_TX_ATTEMPTS_INDIRECT_PER_POLL
@@ -145,7 +145,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_MAX_TX_ATTEMPTS_INDIRECT_PER_POLL
 #define OPENTHREAD_CONFIG_MAX_TX_ATTEMPTS_INDIRECT_PER_POLL     1
-#endif // OPENTHREAD_CONFIG_MAX_TX_ATTEMPTS_INDIRECT_PER_POLL
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_MAX_TX_ATTEMPTS_INDIRECT_POLLS
@@ -157,7 +157,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_MAX_TX_ATTEMPTS_INDIRECT_POLLS
 #define OPENTHREAD_CONFIG_MAX_TX_ATTEMPTS_INDIRECT_POLLS        4
-#endif // OPENTHREAD_CONFIG_MAX_TX_ATTEMPTS_INDIRECT_POLLS
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_DROP_MESSAGE_ON_FRAGMENT_TX_FAILURE
@@ -173,7 +173,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_DROP_MESSAGE_ON_FRAGMENT_TX_FAILURE
 #define OPENTHREAD_CONFIG_DROP_MESSAGE_ON_FRAGMENT_TX_FAILURE   1
-#endif // OPENTHREAD_CONFIG_DROP_MESSAGE_ON_FRAGMENT_TX_FAILURE
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_ATTACH_DATA_POLL_PERIOD
@@ -183,7 +183,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_ATTACH_DATA_POLL_PERIOD
 #define OPENTHREAD_CONFIG_ATTACH_DATA_POLL_PERIOD               100
-#endif  // OPENTHREAD_CONFIG_ATTACH_DATA_POLL_PERIOD
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_ADDRESS_CACHE_ENTRIES
@@ -193,7 +193,43 @@
  */
 #ifndef OPENTHREAD_CONFIG_ADDRESS_CACHE_ENTRIES
 #define OPENTHREAD_CONFIG_ADDRESS_CACHE_ENTRIES                 10
-#endif  // OPENTHREAD_CONFIG_ADDRESS_CACHE_ENTRIES
+#endif
+
+/**
+ * @def OPENTHREAD_CONFIG_ADDRESS_QUERY_TIMEOUT
+ *
+ * The timeout value (in seconds) waiting for a address notification response after sending an address query.
+ *
+ * Default: 3 seconds
+ *
+ */
+#ifndef OPENTHREAD_CONFIG_ADDRESS_QUERY_TIMEOUT
+#define OPENTHREAD_CONFIG_ADDRESS_QUERY_TIMEOUT                 3
+#endif
+
+/**
+ * @def OPENTHREAD_CONFIG_ADDRESS_QUERY_INITIAL_RETRY_DELAY
+ *
+ * Initial retry delay for address query (in seconds).
+ *
+ * Default: 15 seconds
+ *
+ */
+#ifndef OPENTHREAD_CONFIG_ADDRESS_QUERY_INITIAL_RETRY_DELAY
+#define OPENTHREAD_CONFIG_ADDRESS_QUERY_INITIAL_RETRY_DELAY     15
+#endif
+
+/**
+ * @def OPENTHREAD_CONFIG_ADDRESS_QUERY_MAX_RETRY_DELAY
+ *
+ * Maximum retry delay for address query (in seconds).
+ *
+ * Default: 28800 seconds (480 minutes or 8 hours)
+ *
+ */
+#ifndef OPENTHREAD_CONFIG_ADDRESS_QUERY_MAX_RETRY_DELAY
+#define OPENTHREAD_CONFIG_ADDRESS_QUERY_MAX_RETRY_DELAY         28800
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_MAX_CHILDREN
@@ -203,7 +239,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_MAX_CHILDREN
 #define OPENTHREAD_CONFIG_MAX_CHILDREN                          10
-#endif  // OPENTHREAD_CONFIG_MAX_CHILDREN
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_DEFAULT_CHILD_TIMEOUT
@@ -213,7 +249,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_DEFAULT_CHILD_TIMEOUT
 #define OPENTHREAD_CONFIG_DEFAULT_CHILD_TIMEOUT                 240
-#endif // OPENTHREAD_CONFIG_DEFAULT_CHILD_TIMEOUT
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_IP_ADDRS_PER_CHILD
@@ -223,7 +259,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_IP_ADDRS_PER_CHILD
 #define OPENTHREAD_CONFIG_IP_ADDRS_PER_CHILD                    4
-#endif  // OPENTHREAD_CONFIG_IP_ADDRS_PER_CHILD
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_MAX_EXT_IP_ADDRS
@@ -233,7 +269,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_MAX_EXT_IP_ADDRS
 #define OPENTHREAD_CONFIG_MAX_EXT_IP_ADDRS                      4
-#endif  // OPENTHREAD_CONFIG_MAX_EXT_IP_ADDRS
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_MAX_EXT_MULTICAST_IP_ADDRS
@@ -243,7 +279,17 @@
  */
 #ifndef OPENTHREAD_CONFIG_MAX_EXT_MULTICAST_IP_ADDRS
 #define OPENTHREAD_CONFIG_MAX_EXT_MULTICAST_IP_ADDRS            2
-#endif  // OPENTHREAD_CONFIG_MAX_EXT_MULTICAST_IP_ADDRS
+#endif
+
+/**
+ * @def OPENTHREAD_CONFIG_MAX_SERVER_ALOCS
+ *
+ * The maximum number of supported Service ALOCs registrations for this device.
+ *
+ */
+#ifndef OPENTHREAD_CONFIG_MAX_SERVER_ALOCS
+#define OPENTHREAD_CONFIG_MAX_SERVER_ALOCS                      1
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_6LOWPAN_REASSEMBLY_TIMEOUT
@@ -253,7 +299,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_6LOWPAN_REASSEMBLY_TIMEOUT
 #define OPENTHREAD_CONFIG_6LOWPAN_REASSEMBLY_TIMEOUT            5
-#endif  // OPENTHREAD_CONFIG_6LOWPAN_REASSEMBLY_TIMEOUT
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_MPL_SEED_SET_ENTRIES
@@ -263,7 +309,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_MPL_SEED_SET_ENTRIES
 #define OPENTHREAD_CONFIG_MPL_SEED_SET_ENTRIES                  32
-#endif  // OPENTHREAD_CONFIG_MPL_SEED_SET_ENTRIES
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_MPL_SEED_SET_ENTRY_LIFETIME
@@ -273,17 +319,17 @@
  */
 #ifndef OPENTHREAD_CONFIG_MPL_SEED_SET_ENTRY_LIFETIME
 #define OPENTHREAD_CONFIG_MPL_SEED_SET_ENTRY_LIFETIME           5
-#endif  // OPENTHREAD_CONFIG_MPL_SEED_SET_ENTRY_LIFETIME
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_JOINER_UDP_PORT
  *
- * The MPL cache entry lifetime in seconds.
+ * The default Joiner UDP port.
  *
  */
 #ifndef OPENTHREAD_CONFIG_JOINER_UDP_PORT
 #define OPENTHREAD_CONFIG_JOINER_UDP_PORT                       1000
-#endif  // OPENTHREAD_CONFIG_JOINER_UDP_PORT
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_MAX_ENERGY_RESULTS
@@ -293,7 +339,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_MAX_ENERGY_RESULTS
 #define OPENTHREAD_CONFIG_MAX_ENERGY_RESULTS                    64
-#endif  // OPENTHREAD_CONFIG_MAX_ENERGY_RESULTS
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_MAX_JOINER_ENTRIES
@@ -303,7 +349,17 @@
  */
 #ifndef OPENTHREAD_CONFIG_MAX_JOINER_ENTRIES
 #define OPENTHREAD_CONFIG_MAX_JOINER_ENTRIES                    2
-#endif  // OPENTHREAD_CONFIG_MAX_JOINER_ENTRIES
+#endif
+
+/**
+ * @def OPENTHREAD_CONFIG_MAX_JOINER_ENTRIES
+ *
+ * The maximum number of Joiner Router entries that can be queued by the Joiner.
+ *
+ */
+#ifndef OPENTHREAD_CONFIG_MAX_JOINER_ROUTER_ENTRIES
+#define OPENTHREAD_CONFIG_MAX_JOINER_ROUTER_ENTRIES             2
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_MAX_STATECHANGE_HANDLERS
@@ -313,7 +369,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_MAX_STATECHANGE_HANDLERS
 #define OPENTHREAD_CONFIG_MAX_STATECHANGE_HANDLERS              1
-#endif  // OPENTHREAD_CONFIG_MAX_STATECHANGE_HANDLERS
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_COAP_ACK_TIMEOUT
@@ -323,7 +379,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_COAP_ACK_TIMEOUT
 #define OPENTHREAD_CONFIG_COAP_ACK_TIMEOUT                      2
-#endif  // OPENTHREAD_CONFIG_COAP_ACK_TIMEOUT
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_COAP_ACK_RANDOM_FACTOR_NUMERATOR
@@ -334,7 +390,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_COAP_ACK_RANDOM_FACTOR_NUMERATOR
 #define OPENTHREAD_CONFIG_COAP_ACK_RANDOM_FACTOR_NUMERATOR      3
-#endif  // OPENTHREAD_CONFIG_COAP_ACK_RANDOM_FACTOR_NUMERATOR
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_COAP_ACK_RANDOM_FACTOR_DENOMINATOR
@@ -345,7 +401,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_COAP_ACK_RANDOM_FACTOR_DENOMINATOR
 #define OPENTHREAD_CONFIG_COAP_ACK_RANDOM_FACTOR_DENOMINATOR    2
-#endif  // OPENTHREAD_CONFIG_COAP_ACK_RANDOM_FACTOR_DENOMINATOR
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_COAP_MAX_RETRANSMIT
@@ -355,7 +411,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_COAP_MAX_RETRANSMIT
 #define OPENTHREAD_CONFIG_COAP_MAX_RETRANSMIT                   4
-#endif  // OPENTHREAD_CONFIG_COAP_MAX_RETRANSMIT
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_COAP_SERVER_MAX_CACHED_RESPONSES
@@ -367,7 +423,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_COAP_SERVER_MAX_CACHED_RESPONSES
 #define OPENTHREAD_CONFIG_COAP_SERVER_MAX_CACHED_RESPONSES      10
-#endif  // OPENTHREAD_CONFIG_COAP_SERVER_MAX_CACHED_RESPONSES
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_DNS_RESPONSE_TIMEOUT
@@ -377,7 +433,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_DNS_RESPONSE_TIMEOUT
 #define OPENTHREAD_CONFIG_DNS_RESPONSE_TIMEOUT                  3000
-#endif  // OPENTHREAD_CONFIG_DNS_RESPONSE_TIMEOUT
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_DNS_MAX_RETRANSMIT
@@ -387,7 +443,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_DNS_MAX_RETRANSMIT
 #define OPENTHREAD_CONFIG_DNS_MAX_RETRANSMIT                    2
-#endif  // OPENTHREAD_CONFIG_DNS_MAX_RETRANSMIT
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_JOIN_BEACON_VERSION
@@ -397,7 +453,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_JOIN_BEACON_VERSION
 #define OPENTHREAD_CONFIG_JOIN_BEACON_VERSION                   kProtocolVersion
-#endif  // OPENTHREAD_CONFIG_JOIN_BEACON_VERSION
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_PLATFORM_MESSAGE_MANAGEMENT
@@ -409,7 +465,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_PLATFORM_MESSAGE_MANAGEMENT
 #define OPENTHREAD_CONFIG_PLATFORM_MESSAGE_MANAGEMENT           0
-#endif  // OPENTHREAD_CONFIG_PLATFORM_MESSAGE_MANAGEMENT
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_MAC_FILTER_SIZE
@@ -419,7 +475,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_MAC_FILTER_SIZE
 #define OPENTHREAD_CONFIG_MAC_FILTER_SIZE                       32
-#endif  // OPENTHREAD_CONFIG_MAC_FILTER_SIZE
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_STORE_FRAME_COUNTER_AHEAD
@@ -429,7 +485,39 @@
  */
 #ifndef OPENTHREAD_CONFIG_STORE_FRAME_COUNTER_AHEAD
 #define OPENTHREAD_CONFIG_STORE_FRAME_COUNTER_AHEAD             1000
-#endif  // OPENTHREAD_CONFIG_STORE_FRAME_COUNTER_AHEAD
+#endif
+
+/**
+ * @def OPENTHREAD_CONFIG_LOG_OUTPUT
+ *
+ * Selects if, and where the LOG output goes to.
+ *
+ * There are several options available
+ * - @sa OPENTHREAD_CONFIG_LOG_OUTPUT_NONE
+ * - @sa OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED
+ * - @sa OPENTHREAD_CONFIG_LOG_OUTPUT_DEBUG_UART
+ * - and others
+ *
+ * Note:
+ *
+ * 1) Because the default is: OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED
+ *    The platform is expected to provide at least a stub for `otPlatLog()`
+ *
+ * 2) This is effectively an ENUM so it can be if/else/endif at compile time.
+ *
+ */
+#ifndef OPENTHREAD_CONFIG_LOG_OUTPUT
+#define OPENTHREAD_CONFIG_LOG_OUTPUT    OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED
+#endif
+
+/** Log output goes to the bit bucket (disabled) */
+#define OPENTHREAD_CONFIG_LOG_OUTPUT_NONE                       0
+/** Log output goes to the debug uart - requires OPENTHREAD_CONFIG_ENABLE_DEBUG_UART to be enabled */
+#define OPENTHREAD_CONFIG_LOG_OUTPUT_DEBUG_UART                 1
+/** Log output goes to the "application" provided otPlatLog() in NCP and CLI code */
+#define OPENTHREAD_CONFIG_LOG_OUTPUT_APP                        2
+/** Log output is handled by a platform defined function */
+#define OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED           3
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_LEVEL
@@ -439,7 +527,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_LOG_LEVEL
 #define OPENTHREAD_CONFIG_LOG_LEVEL                             OT_LOG_LEVEL_CRIT
-#endif  // OPENTHREAD_CONFIG_LOG_LEVEL
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_ENABLE_DYNAMIC_LOG_LEVEL
@@ -453,7 +541,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_ENABLE_DYNAMIC_LOG_LEVEL
 #define OPENTHREAD_CONFIG_ENABLE_DYNAMIC_LOG_LEVEL              0
-#endif // OPENTHREAD_CONFIG_ENABLE_DYNAMIC_LOG_LEVEL
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_API
@@ -463,7 +551,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_LOG_API
 #define OPENTHREAD_CONFIG_LOG_API                               1
-#endif  // OPENTHREAD_CONFIG_LOG_API
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_MLE
@@ -473,7 +561,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_LOG_MLE
 #define OPENTHREAD_CONFIG_LOG_MLE                               1
-#endif  // OPENTHREAD_CONFIG_LOG_MLE
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_ARP
@@ -483,7 +571,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_LOG_ARP
 #define OPENTHREAD_CONFIG_LOG_ARP                               1
-#endif  // OPENTHREAD_CONFIG_LOG_ARP
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_NETDATA
@@ -493,7 +581,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_LOG_NETDATA
 #define OPENTHREAD_CONFIG_LOG_NETDATA                           1
-#endif  // OPENTHREAD_CONFIG_LOG_NETDATA
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_ICMP
@@ -503,7 +591,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_LOG_ICMP
 #define OPENTHREAD_CONFIG_LOG_ICMP                              1
-#endif  // OPENTHREAD_CONFIG_LOG_ICMP
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_IP6
@@ -513,7 +601,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_LOG_IP6
 #define OPENTHREAD_CONFIG_LOG_IP6                               1
-#endif  // OPENTHREAD_CONFIG_LOG_IP6
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_MAC
@@ -523,7 +611,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_LOG_MAC
 #define OPENTHREAD_CONFIG_LOG_MAC                               1
-#endif  // OPENTHREAD_CONFIG_LOG_MAC
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_MEM
@@ -533,7 +621,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_LOG_MEM
 #define OPENTHREAD_CONFIG_LOG_MEM                               1
-#endif  // OPENTHREAD_CONFIG_LOG_MEM
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_PKT_DUMP
@@ -543,7 +631,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_LOG_PKT_DUMP
 #define OPENTHREAD_CONFIG_LOG_PKT_DUMP                          1
-#endif  // OPENTHREAD_CONFIG_LOG_PKT_DUMP
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_NETDIAG
@@ -553,7 +641,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_LOG_NETDIAG
 #define OPENTHREAD_CONFIG_LOG_NETDIAG                           1
-#endif  // OPENTHREAD_CONFIG_LOG_NETDIAG
+#endif
 
 /**
 * @def OPENTHREAD_CONFIG_LOG_PLATFORM
@@ -563,7 +651,17 @@
 */
 #ifndef OPENTHREAD_CONFIG_LOG_PLATFORM
 #define OPENTHREAD_CONFIG_LOG_PLATFORM                          0
-#endif  // OPENTHREAD_CONFIG_LOG_PLATFORM
+#endif
+
+/**
+ * @def OPENTHREAD_CONFIG_LOG_CLI
+ *
+ * Define to enable CLI logging.
+ *
+ */
+#ifndef OPENTHREAD_CONFIG_LOG_CLI
+#define OPENTHREAD_CONFIG_LOG_CLI                               1
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_COAP
@@ -573,7 +671,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_LOG_COAP
 #define OPENTHREAD_CONFIG_LOG_COAP                              1
-#endif  // OPENTHREAD_CONFIG_LOG_COAP
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_PREPEND_LEVEL
@@ -583,7 +681,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_LOG_PREPEND_LEVEL
 #define OPENTHREAD_CONFIG_LOG_PREPEND_LEVEL                     1
-#endif  // OPENTHREAD_CONFIG_LOG_PREPEND_LEVEL
+#endif
 
 /**
 * @def OPENTHREAD_CONFIG_LOG_PREPEND_REGION
@@ -593,7 +691,7 @@
 */
 #ifndef OPENTHREAD_CONFIG_LOG_PREPEND_REGION
 #define OPENTHREAD_CONFIG_LOG_PREPEND_REGION                    1
-#endif  // OPENTHREAD_CONFIG_LOG_PREPEND_REGION
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_SUFFIX
@@ -603,29 +701,16 @@
  */
 #ifndef OPENTHREAD_CONFIG_LOG_SUFFIX
 #define OPENTHREAD_CONFIG_LOG_SUFFIX                            ""
-#endif  // OPENTHREAD_CONFIG_LOG_SUFFIX
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_PLAT_LOG_FUNCTION
  *
- * Defines the name of function/macro used for logging inside OpenThread, by default is set to `otPlatLog()`.
+ * Defines the name of function/macro used for logging inside OpenThread, by default it is set to `otPlatLog()`.
  *
  */
 #ifndef OPENTHREAD_CONFIG_PLAT_LOG_FUNCTION
 #define OPENTHREAD_CONFIG_PLAT_LOG_FUNCTION                     otPlatLog
-#endif
-
-/**
- * @def OPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT
- *
- * Define to 1 to enable default log output.
- *
- * When enabled OpenThread provides a default implementation for `otPlatLog()` which is tied to either NCP or CLI
- * stream writes.
- *
- */
-#ifndef OPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT
-#define OPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT             0
 #endif
 
 /**
@@ -636,7 +721,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_NUM_DHCP_PREFIXES
 #define OPENTHREAD_CONFIG_NUM_DHCP_PREFIXES                     4
-#endif  // OPENTHREAD_CONFIG_NUM_DHCP_PREFIXES
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_NUM_SLAAC_ADDRESSES
@@ -646,7 +731,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_NUM_SLAAC_ADDRESSES
 #define OPENTHREAD_CONFIG_NUM_SLAAC_ADDRESSES                   4
-#endif  // OPENTHREAD_CONFIG_NUM_SLAAC_ADDRESSES
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_NCP_TX_BUFFER_SIZE
@@ -656,7 +741,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_NCP_TX_BUFFER_SIZE
 #define OPENTHREAD_CONFIG_NCP_TX_BUFFER_SIZE                    512
-#endif  // OPENTHREAD_CONFIG_NCP_TX_BUFFER_SIZE
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_NCP_UART_TX_CHUNK_SIZE
@@ -666,7 +751,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_NCP_UART_TX_CHUNK_SIZE
 #define OPENTHREAD_CONFIG_NCP_UART_TX_CHUNK_SIZE                128
-#endif  // OPENTHREAD_CONFIG_NCP_UART_TX_CHUNK_SIZE
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_NCP_UART_RX_BUFFER_SIZE
@@ -676,7 +761,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_NCP_UART_RX_BUFFER_SIZE
 #define OPENTHREAD_CONFIG_NCP_UART_RX_BUFFER_SIZE               1300
-#endif  // OPENTHREAD_CONFIG_NCP_UART_RX_BUFFER_SIZE
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_NCP_SPI_BUFFER_SIZE
@@ -686,7 +771,7 @@
  */
 #ifndef OPENTHREAD_CONFIG_NCP_SPI_BUFFER_SIZE
 #define OPENTHREAD_CONFIG_NCP_SPI_BUFFER_SIZE                   1300
-#endif  // OPENTHREAD_CONFIG_NCP_SPI_BUFFER_SIZE
+#endif
 
 /**
  * @def OPENTHREAD_CONFIG_PLATFORM_ASSERT_MANAGEMENT
@@ -755,13 +840,16 @@
 #endif
 
 /**
- * @def OPENTHREAD_CONFIG_ENABLE_BEACON_RSP_IF_JOINABLE
+ * @def OPENTHREAD_CONFIG_ENABLE_BEACON_RSP_WHEN_JOINABLE
  *
- * Define to 1 if you want to enable beacon response for joinable networks.
+ * Define to 1 to enable IEEE 802.15.4 Beacons when joining is enabled.
+ *
+ * @note When this feature is enabled, the device will transmit IEEE 802.15.4 Beacons in response to IEEE 802.15.4
+ * Beacon Requests even while the device is not router capable and detached.
  *
  */
-#ifndef OPENTHREAD_CONFIG_ENABLE_BEACON_RSP_IF_JOINABLE
-#define OPENTHREAD_CONFIG_ENABLE_BEACON_RSP_IF_JOINABLE         0
+#ifndef OPENTHREAD_CONFIG_ENABLE_BEACON_RSP_WHEN_JOINABLE
+#define OPENTHREAD_CONFIG_ENABLE_BEACON_RSP_WHEN_JOINABLE       0
 #endif
 
 /**
@@ -840,6 +928,19 @@
 #endif
 
 /**
+ * @def OPENTHREAD_CONFIG_INFORM_PREVIOUS_PARENT_ON_REATTACH
+ *
+ * Define as 1 for a child to inform its previous parent when it attaches to a new parent.
+ *
+ * If this feature is enabled, when a device attaches to a new parent, it will send an IP message (with empty payload
+ * and mesh-local IP address as the source address) to its previous parent.
+ *
+ */
+#ifndef OPENTHREAD_CONFIG_INFORM_PREVIOUS_PARENT_ON_REATTACH
+#define OPENTHREAD_CONFIG_INFORM_PREVIOUS_PARENT_ON_REATTACH    0
+#endif
+
+/**
  * @def OPENTHREAD_CONFIG_NCP_ENABLE_PEEK_POKE
  *
  * Define as 1 to enable peek/poke functionality on NCP.
@@ -851,7 +952,7 @@
 #define OPENTHREAD_CONFIG_NCP_ENABLE_PEEK_POKE                  0
 #endif
 
-/*
+/**
  * @def OPENTHREAD_CONFIG_STAY_AWAKE_BETWEEN_FRAGMENTS
  *
  * Define as 1 to stay awake between fragments while transmitting a large packet,
@@ -860,6 +961,51 @@
  */
 #ifndef OPENTHREAD_CONFIG_STAY_AWAKE_BETWEEN_FRAGMENTS
 #define OPENTHREAD_CONFIG_STAY_AWAKE_BETWEEN_FRAGMENTS          0
+#endif
+
+/**
+ * @def OPENTHREAD_CONFIG_MLE_SEND_LINK_REQUEST_ON_ADV_TIMEOUT
+ *
+ * Define to 1 to send an MLE Link Request when MAX_NEIGHBOR_AGE is reached for a neighboring router.
+ *
+ */
+#ifndef OPENTHREAD_CONFIG_MLE_SEND_LINK_REQUEST_ON_ADV_TIMEOUT
+#define OPENTHREAD_CONFIG_MLE_SEND_LINK_REQUEST_ON_ADV_TIMEOUT  0
+#endif
+
+/*
+ * @def OPENTHREAD_CONFIG_ENABLE_DEBUG_UART
+ *
+ * Enable the "Debug Uart" platform feature.
+ *
+ * In the embedded world, the CLI application uses a UART as a console
+ * and the NCP application can be configured to use either a UART or
+ * a SPI type device to transfer data to the host.
+ *
+ * The Debug UART is or requires a second uart on the platform.
+ *
+ * The Debug Uart has two uses:
+ *
+ * Use #1 - for random 'debug printf' type messages a developer may need
+ * Use #2 (selected via DEBUG_LOG_OUTPUT) is a log output.
+ *
+ * See #include <openthread/platform/debug_uart.h> for more details
+ */
+#ifndef OPENTHREAD_CONFIG_ENABLE_DEBUG_UART
+#define OPENTHREAD_CONFIG_ENABLE_DEBUG_UART                     0
+#endif
+
+/**
+ * @def OPENTHREAD_CONFIG_ENABLE_DYNAMIC_MPL_INTERVAL
+ *
+ * Define as 1 to enable dynamic MPL interval feature.
+ *
+ * If this feature is enabled, the MPL forward interval will be adjusted dynamically according to
+ * the network scale, which helps to reduce multicast latency.
+ *
+ */
+#ifndef OPENTHREAD_CONFIG_ENABLE_DYNAMIC_MPL_INTERVAL
+#define OPENTHREAD_CONFIG_ENABLE_DYNAMIC_MPL_INTERVAL           1
 #endif
 
 #endif  // OPENTHREAD_CORE_DEFAULT_CONFIG_H_

@@ -34,9 +34,10 @@
 #ifndef PANID_QUERY_CLIENT_HPP_
 #define PANID_QUERY_CLIENT_HPP_
 
+#include "openthread-core-config.h"
+
 #include <openthread/commissioner.h>
 
-#include "openthread-core-config.h"
 #include "coap/coap.hpp"
 #include "common/locator.hpp"
 #include "net/ip6_address.hpp"
@@ -50,14 +51,14 @@ class ThreadNetif;
  * This class implements handling PANID Query Requests.
  *
  */
-class PanIdQueryClient: public ThreadNetifLocator
+class PanIdQueryClient: public InstanceLocator
 {
 public:
     /**
      * This constructor initializes the object.
      *
      */
-    PanIdQueryClient(ThreadNetif &aThreadNetif);
+    PanIdQueryClient(otInstance &aInstance);
 
     /**
      * This method sends a PAN ID Query message.

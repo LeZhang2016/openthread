@@ -30,7 +30,8 @@
  * @file
  *   This file implements the OpenThread Network Data API.
  */
-#include <openthread/config.h>
+
+#include "openthread-core-config.h"
 
 #include <openthread/netdata.h>
 
@@ -44,7 +45,7 @@ otError otNetDataGet(otInstance *aInstance, bool aStable, uint8_t *aData, uint8_
 
     VerifyOrExit(aData != NULL && aDataLength != NULL, error = OT_ERROR_INVALID_ARGS);
 
-    aInstance->mThreadNetif.GetNetworkDataLeader().GetNetworkData(aStable, aData, *aDataLength);
+    error = aInstance->mThreadNetif.GetNetworkDataLeader().GetNetworkData(aStable, aData, *aDataLength);
 
 exit:
     return error;

@@ -34,6 +34,8 @@
 #ifndef ICMP6_HPP_
 #define ICMP6_HPP_
 
+#include "openthread-core-config.h"
+
 #include <openthread/icmp6.h>
 
 #include "common/encoding.hpp"
@@ -209,8 +211,8 @@ public:
     }
 
 private:
-    void HandleReceiveMessage(Message &message, const MessageInfo &messageInfo, const IcmpHeader &icmp6Header) {
-        mReceiveCallback(mContext, &message, &messageInfo, &icmp6Header);
+    void HandleReceiveMessage(Message &aMessage, const MessageInfo &aMessageInfo, const IcmpHeader &aIcmp6Header) {
+        mReceiveCallback(mContext, &aMessage, &aMessageInfo, &aIcmp6Header);
     }
 
     IcmpHandler *GetNext(void) { return static_cast<IcmpHandler *>(mNext); }
@@ -220,16 +222,16 @@ private:
  * This class implements ICMPv6.
  *
  */
-class Icmp: public Ip6Locator
+class Icmp: public InstanceLocator
 {
 public:
     /**
      * This constructor initializes the object.
      *
-     * @param[in]  aIp6  A reference to the IPv6 network object.
+     * @param[in]  aInstance A reference to the OpenThread instance.
      *
      */
-    Icmp(Ip6 &aIp6);
+    Icmp(otInstance &aInstance);
 
     /**
      * This method returns a new ICMP message with sufficient header space reserved.

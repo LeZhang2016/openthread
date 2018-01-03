@@ -45,11 +45,13 @@ LEADER_ACTIVE_TIMESTAMP = 10
 COMMISSIONER_PENDING_CHANNEL = 20
 COMMISSIONER_PENDING_PANID = 0xafce
 
+MTDS = [ED, SED]
+
 class Cert_9_2_8_PersistentDatasets(unittest.TestCase):
     def setUp(self):
         self.nodes = {}
         for i in range(1,6):
-            self.nodes[i] = node.Node(i)
+            self.nodes[i] = node.Node(i, (i in MTDS))
 
         self.nodes[COMMISSIONER].set_active_dataset(LEADER_ACTIVE_TIMESTAMP, panid=PANID_INIT, channel=CHANNEL_INIT)
         self.nodes[COMMISSIONER].set_mode('rsdn')
@@ -69,11 +71,13 @@ class Cert_9_2_8_PersistentDatasets(unittest.TestCase):
         self.nodes[ROUTER].set_mode('rsdn')
         self._setUpRouter()
 
-        self.nodes[ED].set_active_dataset(LEADER_ACTIVE_TIMESTAMP, panid=PANID_INIT, channel=CHANNEL_INIT)
+        self.nodes[ED].set_channel(CHANNEL_INIT)
+        self.nodes[ED].set_panid(PANID_INIT)
         self.nodes[ED].set_mode('rsn')
         self._setUpEd()
 
-        self.nodes[SED].set_active_dataset(LEADER_ACTIVE_TIMESTAMP, panid=PANID_INIT, channel=CHANNEL_INIT)
+        self.nodes[SED].set_channel(CHANNEL_INIT)
+        self.nodes[SED].set_panid(PANID_INIT)
         self.nodes[SED].set_mode('s')
         self._setUpSed()
 
@@ -159,7 +163,7 @@ class Cert_9_2_8_PersistentDatasets(unittest.TestCase):
         self.assertEqual(self.nodes[ED].get_channel(), CHANNEL_INIT)
         self.assertEqual(self.nodes[SED].get_channel(), CHANNEL_INIT)
 
-        time.sleep(5)
+        time.sleep(10)
 
         self.assertEqual(self.nodes[ROUTER].get_panid(), COMMISSIONER_PENDING_PANID)
         self.assertEqual(self.nodes[ED].get_panid(), COMMISSIONER_PENDING_PANID)

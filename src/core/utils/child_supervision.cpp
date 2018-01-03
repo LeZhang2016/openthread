@@ -31,8 +31,6 @@
  *   This file implements the child supervision feature.
  */
 
-#include <openthread/config.h>
-
 #include "child_supervision.hpp"
 
 #include <openthread/openthread.h>
@@ -50,10 +48,10 @@ namespace Utils {
 
 #if OPENTHREAD_FTD
 
-ChildSupervisor::ChildSupervisor(ThreadNetif &aThreadNetif) :
-    ThreadNetifLocator(aThreadNetif),
-    mTimer(aThreadNetif.GetInstance(), &ChildSupervisor::HandleTimer, this),
-    mSupervisionInterval(kDefaultSupervisionInterval)
+ChildSupervisor::ChildSupervisor(otInstance &aInstance) :
+    InstanceLocator(aInstance),
+    mSupervisionInterval(kDefaultSupervisionInterval),
+    mTimer(aInstance, &ChildSupervisor::HandleTimer, this)
 {
 }
 
@@ -99,7 +97,6 @@ void ChildSupervisor::SendMessage(Child &aChild)
 {
     ThreadNetif &netif = GetNetif();
     Message *message = NULL;
-    otError error = OT_ERROR_NONE;
     uint8_t childIndex;
 
     VerifyOrExit(aChild.GetIndirectMessageCount() == 0);
@@ -113,9 +110,9 @@ void ChildSupervisor::SendMessage(Child &aChild)
     // `ChildSupervisor::GetDestination(message)`.
 
     childIndex = netif.GetMle().GetChildIndex(aChild);
-    SuccessOrExit(error = message->Append(&childIndex, sizeof(childIndex)));
+    SuccessOrExit(message->Append(&childIndex, sizeof(childIndex)));
 
-    SuccessOrExit(error = netif.SendMessage(*message));
+    SuccessOrExit(netif.SendMessage(*message));
     message = NULL;
 
     otLogInfoMle(GetInstance(), "Sending supervision message to child 0x%04x", aChild.GetRloc16());
@@ -181,10 +178,10 @@ ChildSupervisor &ChildSupervisor::GetOwner(const Context &aContext)
 
 #endif // #if OPENTHREAD_FTD
 
-SupervisionListener::SupervisionListener(ThreadNetif &aThreadNetif) :
-    ThreadNetifLocator(aThreadNetif),
-    mTimer(aThreadNetif.GetInstance(), &SupervisionListener::HandleTimer, this),
-    mTimeout(0)
+SupervisionListener::SupervisionListener(otInstance &aInstance) :
+    InstanceLocator(aInstance),
+    mTimeout(0),
+    mTimer(aInstance, &SupervisionListener::HandleTimer, this)
 {
     SetTimeout(kDefaultTimeout);
 }

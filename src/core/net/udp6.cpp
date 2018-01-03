@@ -31,8 +31,6 @@
  *   This file implements UDP/IPv6 sockets.
  */
 
-#include <openthread/config.h>
-
 #include "udp6.hpp"
 
 #include <stdio.h>
@@ -140,8 +138,8 @@ exit:
     return error;
 }
 
-Udp::Udp(Ip6 &aIp6):
-    Ip6Locator(aIp6),
+Udp::Udp(otInstance &aInstance):
+    InstanceLocator(aInstance),
     mEphemeralPort(kDynamicPortMin),
     mSockets(NULL)
 {

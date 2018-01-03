@@ -33,8 +33,6 @@
 
 #define WPP_NAME "network_data_leader.tmh"
 
-#include <openthread/config.h>
-
 #include "network_data_leader.hpp"
 
 #include <openthread/platform/random.h>
@@ -58,8 +56,8 @@ using ot::Encoding::BigEndian::HostSwap16;
 namespace ot {
 namespace NetworkData {
 
-LeaderBase::LeaderBase(ThreadNetif &aThreadNetif):
-    NetworkData(aThreadNetif, false)
+LeaderBase::LeaderBase(otInstance &aInstance):
+    NetworkData(aInstance, false)
 {
     Reset();
 }
@@ -327,7 +325,9 @@ otError LeaderBase::ExternalRouteLookup(uint8_t aDomainId, const Ip6::Address &a
                     if (rvalRoute == NULL ||
                         entry->GetPreference() > rvalRoute->GetPreference() ||
                         (entry->GetPreference() == rvalRoute->GetPreference() &&
-                         netif.GetMle().GetCost(entry->GetRloc()) < netif.GetMle().GetCost(rvalRoute->GetRloc())))
+                         (entry->GetRloc() == netif.GetMle().GetRloc16() ||
+                          (rvalRoute->GetRloc() != netif.GetMle().GetRloc16() &&
+                           netif.GetMle().GetCost(entry->GetRloc()) < netif.GetMle().GetCost(rvalRoute->GetRloc())))))
                     {
                         rvalRoute = entry;
                         rval_plen = static_cast<uint8_t>(plen);

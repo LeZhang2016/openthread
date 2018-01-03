@@ -37,10 +37,13 @@ OpenThread test scripts use the CLI to execute test cases.
 * [leaderpartitionid](#leaderpartitionid)
 * [leaderweight](#leaderweight)
 * [linkquality](#linkquality-extaddr)
+* [logfilename](#logfilename)
 * [macfilter](#macfilter)
 * [masterkey](#masterkey)
 * [mode](#mode)
+* [neighbor](#neighbor-list)
 * [netdataregister](#netdataregister)
+* [netdatashow](#netdatashow)
 * [networkdiagnostic](#networkdiagnostic-get-addr-type-)
 * [networkidtimeout](#networkidtimeout)
 * [networkname](#networkname)
@@ -67,6 +70,7 @@ OpenThread test scripts use the CLI to execute test cases.
 * [txpowermax](#txpowermax)
 * [version](#version)
 * [diag](#diag)
+* [service](#service)
 
 ## OpenThread Command Details
 
@@ -425,7 +429,7 @@ RxTotal: 2
     RxBeacon: 0
     RxBeaconRequest: 0
     RxOther: 0
-    RxWhitelistFiltered: 0
+    RxAddressFiltered: 0
     RxDestAddrFiltered: 0
     RxDuplicated: 0
     RxErrNoFrame: 0
@@ -1033,6 +1037,15 @@ Set the link quality on the link to a given extended address.
 Done
 ```
 
+### logfilename FILENAME
+
+- Note: POSIX Platform Only, ie: `OPENTHREAD_EXAMPLES_POSIX`
+- Requires `OPENTHREAD_CONFIG_LOG_OUTPUT == OPENTHREAD_CONFIG_LOG_OUTPUT_DEBUG_UART`
+
+Specifies filename to capture otPlatLog() messages, useful when
+debugging automated test scripts on Linux when logging disrupts
+the automated test scripts.
+
 ### masterkey
 
 Get the Thread Master Key value.
@@ -1081,12 +1094,46 @@ Set the Thread Device Mode value.
 Done
 ```
 
+### neighbor list
+
+List RLOC16 of neighbors.
+
+```bash
+> neighbor list
+0xcc01 0xc800 0xf000
+Done
+```
+
+### neighbor table
+
+Print table of neighbors.
+
+```bash
+> neighbor table
+| Role | RLOC16 | Age | Avg RSSI | Last RSSI |R|S|D|N| Extended MAC     |
++------+--------+-----+----------+-----------+-+-+-+-+------------------+
+|   C  | 0xcc01 |  96 |      -46 |       -46 |1|1|1|1| 1eb9ba8a6522636b |
+|   R  | 0xc800 |   2 |      -29 |       -29 |1|0|1|1| 9a91556102c39ddb |
+|   R  | 0xf000 |   3 |      -28 |       -28 |1|0|1|1| 0ad7ed6beaa6016d |
+Done
+```
+
 ### netdataregister
 
 Register local network data with Thread Leader.
 
 ```bash
 > netdataregister
+Done
+```
+
+### netdatashow
+
+Show Thread Leader network data.
+
+```bash
+> netdatashow
+08040b020000
 Done
 ```
 
@@ -1731,5 +1778,36 @@ Done
 
 Diagnostics module is enabled only when building OpenThread with --enable-diag option.
 Go [diagnostics module][1] for more information.
+
+### service
+
+Module for controlling service registration in Network Data.
+Each change in service registration must be sent to leader by `netdataregister` command
+before taking effect.
+
+### service add \<enterpriseNumber\> \<serviceData\> \<serverData\>
+
+Add service to the Network Data.
+
+```bash
+> service add 44970 foo bar
+Done
+> ipaddr
+fdde:ad00:beef:0:0:ff:fe00:fc10
+fdde:ad00:beef:0:0:ff:fe00:fc00
+fdde:ad00:beef:0:0:ff:fe00:7c00
+fe80:0:0:0:1486:2f57:3c:6e10
+fdde:ad00:beef:0:8ca4:19ed:217a:eff9
+Done
+```
+
+### service remove \<enterpriseNumber\> \<serviceData\>
+
+Remove service from Network Data.
+
+```bash
+> service remove 44970 foo
+Done
+```
 
 [1]:../diag/README.md

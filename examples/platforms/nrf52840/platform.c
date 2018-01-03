@@ -32,6 +32,9 @@
  *
  */
 
+#include <openthread/config.h>
+#include <openthread-core-config.h>
+
 #include <openthread/platform/logging.h>
 
 #include <device/nrf.h>
@@ -54,7 +57,7 @@ void PlatformInit(int argc, char *argv[])
 
     nrf_drv_clock_init();
 
-#if (OPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT == 0)
+#if (OPENTHREAD_CONFIG_LOG_OUTPUT == OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED)
     nrf5LogInit();
 #endif
     nrf5AlarmInit();
@@ -75,8 +78,10 @@ void PlatformDeinit(void)
     nrf5UartDeinit();
     nrf5RandomDeinit();
     nrf5AlarmDeinit();
-#if (OPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT == 0)
+#if (OPENTHREAD_CONFIG_LOG_OUTPUT == OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED)
     nrf5LogDeinit();
+    // nrf5GpioteInit();
+    nrf5GpioInit();
 #endif
 }
 
@@ -85,4 +90,21 @@ void PlatformProcessDrivers(otInstance *aInstance)
     nrf5AlarmProcess(aInstance);
     nrf5RadioProcess(aInstance);
     nrf5UartProcess();
+    // nrf5GpioProcess(aInstance);
 }
+
+__WEAK void PlatformEventSignalPending(void)
+{
+    // Intentionally empty
+}
+
+#if defined(__CC_ARM)
+__WEAK void __aeabi_assert(const char *aExpr, const char *aFile, int aLine)
+{
+    (void) aExpr;
+    (void) aFile;
+    (void) aLine;
+
+    while (1);
+}
+#endif

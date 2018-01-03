@@ -34,6 +34,8 @@
 #ifndef JOINER_ROUTER_HPP_
 #define JOINER_ROUTER_HPP_
 
+#include "openthread-core-config.h"
+
 #include <openthread/types.h>
 
 #include "coap/coap.hpp"
@@ -52,16 +54,16 @@ class ThreadNetif;
 
 namespace MeshCoP {
 
-class JoinerRouter: public ThreadNetifLocator
+class JoinerRouter: public InstanceLocator
 {
 public:
     /**
      * This constructor initializes the Joiner Router object.
      *
-     * @param[in]  aThreadNetif  A reference to the Thread network interface.
+     * @param[in]  aInstance     A reference to the OpenThread instance.
      *
      */
-    JoinerRouter(ThreadNetif &aNetif);
+    JoinerRouter(otInstance &aInstance);
 
     /**
      * This method returns the Joiner UDP Port.

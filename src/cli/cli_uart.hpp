@@ -34,6 +34,8 @@
 #ifndef CLI_UART_HPP_
 #define CLI_UART_HPP_
 
+#include "openthread-core-config.h"
+
 #include <openthread/types.h>
 
 #include "cli/cli.hpp"
@@ -107,9 +109,9 @@ public:
 private:
     enum
     {
-        kRxBufferSize = 512,
-        kTxBufferSize = 1024,
-        kMaxLineLength = 128,
+        kRxBufferSize = 1024,
+        kTxBufferSize = 4096,
+        kMaxLineLength = 512,
     };
 
     otError ProcessCommand(void);

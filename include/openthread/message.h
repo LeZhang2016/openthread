@@ -155,8 +155,8 @@ bool otMessageIsLinkSecurityEnabled(otMessage *aMessage);
  * Default setting for a new message is `false`.
  *
  * @param[in]  aMessage  A pointer to a message buffer.
- * @param[in]  aEnabled  If `true` message will be forced to use direct transmission. If `false` message will
- *                       follow the normal procedure.
+ * @param[in]  aEnabled  If `true`, the message is forced to use direct transmission. If `false`, the
+ *                       message follows the normal procedure.
  *
  */
 void otMessageSetDirectTransmission(otMessage *aMessage, bool aEnabled);
@@ -238,7 +238,6 @@ typedef struct
 } otMessageQueue;
 
 /**
- *
  * Initialize the message queue.
  *
  * This function MUST be called once and only once for a `otMessageQueue` instance before any other `otMessageQueue`
@@ -261,6 +260,18 @@ void otMessageQueueInit(otMessageQueue *aQueue);
  *
  */
 otError otMessageQueueEnqueue(otMessageQueue *aQueue, otMessage *aMessage);
+
+/**
+ * This function adds a message at the head/front of the given message queue.
+ *
+ * @param[in]  aQueue    A pointer to the message queue.
+ * @param[in]  aMessage  The message to add.
+ *
+ * @retval OT_ERROR_NONE     Successfully added the message to the queue.
+ * @retval OT_ERROR_ALREADY  The message is already enqueued in a queue.
+ *
+ */
+otError otMessageQueueEnqueueAtHead(otMessageQueue *aQueue, otMessage *aMessage);
 
 /**
  * This function removes a message from the given message queue.

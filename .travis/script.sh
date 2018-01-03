@@ -63,6 +63,7 @@ set -x
         --enable-mac-filter               \
         --enable-mtd-network-diagnostic   \
         --enable-raw-link-api             \
+        --enable-service                  \
         --enable-tmf-proxy || die
     scan-build --status-bugs -analyze-headers -v make || die
 }
@@ -180,6 +181,60 @@ set -x
 }
 
 [ $BUILD_TARGET != arm-gcc63 ] || {
+    export PATH=/tmp/gcc-arm-none-eabi-6-2017-q2-update/bin:$PATH || die
+
+    git checkout -- . || die
+    git clean -xfd || die
+    ./bootstrap || die
+    COMMISSIONER=1 JOINER=1 DHCP6_CLIENT=1 DHCP6_SERVER=1 DNS_CLIENT=1 make -f examples/Makefile-cc2538 || die
+    arm-none-eabi-size  output/cc2538/bin/ot-cli-ftd || die
+    arm-none-eabi-size  output/cc2538/bin/ot-cli-mtd || die
+    arm-none-eabi-size  output/cc2538/bin/ot-ncp-ftd || die
+    arm-none-eabi-size  output/cc2538/bin/ot-ncp-mtd || die
+
+    # git checkout -- . || die
+    # git clean -xfd || die
+    # ./bootstrap || die
+    # COMMISSIONER=1 JOINER=1 DHCP6_CLIENT=1 DHCP6_SERVER=1 DNS_CLIENT=1 make -f examples/Makefile-da15000 || die
+    # arm-none-eabi-size  output/da15000/bin/ot-cli-ftd || die
+    # arm-none-eabi-size  output/da15000/bin/ot-cli-mtd || die
+    # arm-none-eabi-size  output/da15000/bin/ot-ncp-ftd || die
+    # arm-none-eabi-size  output/da15000/bin/ot-ncp-mtd || die
+
+    git checkout -- . || die
+    git clean -xfd || die
+    ./bootstrap || die
+    COMMISSIONER=1 JOINER=1 DHCP6_CLIENT=1 DHCP6_SERVER=1 DNS_CLIENT=1 make -f examples/Makefile-kw41z || die
+    arm-none-eabi-size  output/kw41z/bin/ot-cli-ftd || die
+    arm-none-eabi-size  output/kw41z/bin/ot-cli-mtd || die
+    arm-none-eabi-size  output/kw41z/bin/ot-ncp-ftd || die
+    arm-none-eabi-size  output/kw41z/bin/ot-ncp-mtd || die
+
+    git checkout -- . || die
+    git clean -xfd || die
+    ./bootstrap || die
+    COMMISSIONER=1 JOINER=1 DHCP6_CLIENT=1 DHCP6_SERVER=1 DNS_CLIENT=1 make -f examples/Makefile-nrf52840 || die
+    arm-none-eabi-size  output/nrf52840/bin/ot-cli-ftd || die
+    arm-none-eabi-size  output/nrf52840/bin/ot-cli-mtd || die
+    arm-none-eabi-size  output/nrf52840/bin/ot-ncp-ftd || die
+    arm-none-eabi-size  output/nrf52840/bin/ot-ncp-mtd || die
+
+    # git checkout -- . || die
+    # git clean -xfd || die
+    # ./bootstrap || die
+    # make -f examples/Makefile-cc2650 || die
+    # arm-none-eabi-size  output/cc2650/bin/ot-cli-mtd || die
+    # arm-none-eabi-size  output/cc2650/bin/ot-ncp-mtd || die
+
+    # git checkout -- . || die
+    # git clean -xfd || die
+    # ./bootstrap || die
+    # COMMISSIONER=1 JOINER=1 DHCP6_CLIENT=1 DHCP6_SERVER=1 DNS_CLIENT=1 make -f examples/Makefile-cc2652 || die
+    # arm-none-eabi-size  output/cc2652/bin/ot-cli-ftd || die
+    # arm-none-eabi-size  output/cc2652/bin/ot-cli-mtd || die
+    # arm-none-eabi-size  output/cc2652/bin/ot-ncp-ftd || die
+    # arm-none-eabi-size  output/cc2652/bin/ot-ncp-mtd || die
+
     export PATH=/tmp/arc_gnu_2017.03-rc2_prebuilt_elf32_le_linux_install/bin:$PATH || die
 
     git checkout -- . || die
@@ -205,6 +260,50 @@ set -x
     git clean -xfd || die
     ./bootstrap || die
     CPPFLAGS=-DOPENTHREAD_CONFIG_LOG_LEVEL=OT_LOG_LEVEL_DEBG make -f examples/Makefile-posix || die
+
+    git checkout -- . || die
+    git clean -xfd || die
+    ./bootstrap || die
+    ./configure                             \
+        --enable-ncp-app=all                \
+        --with-ncp-bus=spi                  \
+        --with-examples=posix               \
+        --enable-border-router              \
+        --enable-child-supervision          \
+        --enable-diag                       \
+        --enable-jam-detection              \
+        --enable-legacy                     \
+        --enable-mac-filter                 \
+        --enable-service                    \
+        --disable-docs                      \
+        --disable-test || die
+    make -j 8 || die
+
+    git checkout -- . || die
+    git clean -xfd || die
+    ./bootstrap || die
+    ./configure                             \
+        --enable-cli-app=mtd                \
+        --with-ncp-bus=spi                  \
+        --with-examples=posix               \
+        --enable-border-router              \
+        --enable-child-supervision          \
+        --enable-legacy                     \
+        --enable-mac-filter                 \
+        --enable-service                    \
+        --disable-docs                      \
+        --disable-test || die
+    make -j 8 || die
+
+    git checkout -- . || die
+    git clean -xfd || die
+    ./bootstrap || die
+    ./configure                             \
+        --enable-cli-app=all                \
+        --enable-ncp-app=all                \
+        --with-ncp-bus=uart                 \
+        --with-examples=posix || die
+    make -j 8 || die
 }
 
 [ $BUILD_TARGET != posix-distcheck ] || {
@@ -217,6 +316,11 @@ set -x
 [ $BUILD_TARGET != posix-32-bit ] || {
     ./bootstrap || die
     COVERAGE=1 CFLAGS=-m32 CXXFLAGS=-m32 LDFLAGS=-m32 make -f examples/Makefile-posix check || die
+}
+
+[ $BUILD_TARGET != posix-mtd ] || {
+    ./bootstrap || die
+    COVERAGE=1 CFLAGS=-m32 CXXFLAGS=-m32 LDFLAGS=-m32 USE_MTD=1 make -f examples/Makefile-posix check || die
 }
 
 [ $BUILD_TARGET != posix-ncp-spi ] || {

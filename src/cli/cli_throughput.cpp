@@ -1,0 +1,535 @@
+/*
+ *  Copyright (c) 2017, The OpenThread Authors.
+ *  All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are met:
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *  2. Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ *  3. Neither the name of the copyright holder nor the
+ *     names of its contributors may be used to endorse or promote products
+ *     derived from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ *  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/**
+ * @file
+ *   This file implements a simple CLI for the CoAP service.
+ */
+
+#include "cli_throughput.hpp"
+
+// #include <openthread/config.h>
+#include <openthread/message.h>
+#include <openthread/udp.h>
+
+#include "cli/cli.hpp"
+#include "cli_uart.hpp"
+#include "common/encoding.hpp"
+
+#define MONITOR_PIN 3
+#define CLEAR_PIN_INTERVAL 2
+
+using ot::Encoding::BigEndian::HostSwap16;
+
+namespace ot {
+namespace Cli {
+
+CliThroughput *CliThroughput::sCliThroughput;
+uint16_t ot::Cli::CliThroughput::sCount = 0;
+uint16_t ot::Cli::CliThroughput::sRecvCount = 0;
+// uint32_t ot::Cli::CliThroughput::sSendTimestamp[1000], ot::Cli::CliThroughput::sReceiveTimestamp[1000];
+uint32_t ot::Cli::CliThroughput::sBeginTimestamp = 0,  ot::Cli::CliThroughput::sEndTimestamp = 0;
+
+const struct CliThroughput::Command CliThroughput::sCommands[] =
+{
+    { "help", &CliThroughput::ProcessHelp },
+    { "bind", &CliThroughput::ProcessBind },
+    { "close", &CliThroughput::ProcessClose },
+    { "connect", &CliThroughput::ProcessConnect },
+    { "open",  &CliThroughput::ProcessOpen },
+    { "start", &CliThroughput::ProcessStart },
+    { "send", &CliThroughput::ProcessSend },
+    { "test", &CliThroughput::ProcessTest },
+    { "result", &CliThroughput::ProcessResult },
+    { "gpio", &CliThroughput::ProcessGpio }
+};
+
+otError CliThroughput::ProcessHelp(int argc, char *argv[])
+{
+    for (unsigned int i = 0; i < sizeof(sCommands) / sizeof(sCommands[0]); i++)
+    {
+        mInterpreter.mServer->OutputFormat("%s\r\n", sCommands[i].mName);
+    }
+
+    OT_UNUSED_VARIABLE(argc);
+    OT_UNUSED_VARIABLE(argv);
+
+    return OT_ERROR_NONE;
+}
+
+CliThroughput::CliThroughput(Interpreter &aInterpreter):
+    mInterpreter(aInterpreter),
+    mLength(1232),
+    mCount(0),
+    mInterval(1),
+    mPingTimer(*aInterpreter.mInstance, &CliThroughput::s_HandlePingTimer, this),
+    mGpioTimer(*aInterpreter.mInstance, &CliThroughput::s_HandleGpioTimer, this)
+{
+}
+
+void CliThroughput::Init(void)
+{
+    ot::Cli::CliThroughput::sCount = 0;
+    ot::Cli::CliThroughput::sBeginTimestamp = 0;
+    ot::Cli::CliThroughput::sEndTimestamp = 0;
+    mLossNum = 0;
+    mLatency = 0;
+    mTimestamp = 0;
+    mTimeElapse = 0;
+    mJitter = 0;
+    mAcceptTimestamp = 0;
+    mIsRun = true;
+
+    otPlatGpioEnableInterrupt(MONITOR_PIN);
+}
+
+otError CliThroughput::SendUdpPacket(void)
+{
+    otError error;
+    uint32_t timestamp = 0;
+    otMessage *message;
+
+    timestamp = TimerMilli::GetNow();
+    memset(mPayload, 0, sizeof(mPayload));
+    
+    mPayload[0] = timestamp >> 24;
+    mPayload[1] = timestamp >> 16;
+    mPayload[2] = timestamp >> 8;
+    mPayload[3] = timestamp;
+    mPayload[4] = ot::Cli::CliThroughput::sCount >> 24;
+    mPayload[5] = ot::Cli::CliThroughput::sCount >> 16;
+    mPayload[6] = ot::Cli::CliThroughput::sCount >> 8;
+    mPayload[7] = ot::Cli::CliThroughput::sCount;
+
+    for (uint16_t i = 8; i < mLength; i++)
+    {
+        mPayload[i] = 'T';
+    }
+
+    message = otUdpNewMessage(mInterpreter.mInstance, true);
+
+    VerifyOrExit(message != NULL, error = OT_ERROR_NO_BUFS);
+
+    error = otMessageAppend(message, mPayload, static_cast<uint16_t>(mLength));
+
+    SuccessOrExit(error);
+    
+    // if ( ot::Cli::CliThroughput::sCount == 0)
+    // {
+    //     otPlatGpioWrite(MONITOR_PIN, 1);
+    //     mGpioTimer.Start(CLEAR_PIN_INTERVAL);
+    // }
+
+    error = otUdpSend(&mSocket, message, &mMessageInfo);
+
+    SuccessOrExit(error);
+
+    ot::Cli::CliThroughput::sCount++;
+
+exit:
+
+    if (error != OT_ERROR_NONE && message != NULL)
+    {
+        otMessageFree(message);
+    }
+
+    return error;
+
+}
+
+uint32_t CliThroughput::GetAcceptedTimestamp(otMessage *aMessage)
+{
+    uint8_t buf[1500];
+    int length;
+    uint32_t timestamp;
+
+    length = otMessageRead(aMessage, otMessageGetOffset(aMessage), buf, sizeof(buf) - 1);
+    buf[length] = '\0';
+    timestamp = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
+    return timestamp;
+}
+
+uint32_t CliThroughput::GetAcceptedCount(otMessage *aMessage)
+{
+    uint8_t buf[1500];
+    int length;
+    uint32_t count;
+
+    length = otMessageRead(aMessage, otMessageGetOffset(aMessage), buf, sizeof(buf) - 1);
+    buf[length] = '\0';
+    count = buf[4] << 24 | buf[5] << 16 | buf[6] << 8 | buf[7];
+    return count;
+}
+
+uint32_t CliThroughput::GetAcceptedAmount(otMessage *aMessage)
+{
+    uint8_t buf[1500];
+    int length;
+    uint32_t count;
+
+    length = otMessageRead(aMessage, otMessageGetOffset(aMessage), buf, sizeof(buf) - 1);
+    buf[length] = '\0';
+    count = buf[8] << 24 | buf[9] << 16 | buf[10] << 8 | buf[11];
+    return count;
+}
+
+otError CliThroughput::ProcessBind(int argc, char *argv[])
+{
+    otError error;
+    otSockAddr sockaddr;
+    long value;
+
+    VerifyOrExit(argc == 2, error = OT_ERROR_PARSE);
+
+    memset(&sockaddr, 0, sizeof(sockaddr));
+
+    error = otIp6AddressFromString(argv[0], &sockaddr.mAddress);
+    SuccessOrExit(error);
+
+    error = Interpreter::ParseLong(argv[1], value);
+    SuccessOrExit(error);
+
+    sockaddr.mPort = static_cast<uint16_t>(value);
+
+    error = otUdpBind(&mSocket, &sockaddr);
+
+exit:
+    return error;
+}
+
+otError CliThroughput::ProcessConnect(int argc, char *argv[])
+{
+    otError error;
+    otSockAddr sockaddr;
+    long value;
+
+    VerifyOrExit(argc == 2, error = OT_ERROR_PARSE);
+
+    memset(&sockaddr, 0, sizeof(sockaddr));
+
+    error = otIp6AddressFromString(argv[0], &sockaddr.mAddress);
+    SuccessOrExit(error);
+
+    error = Interpreter::ParseLong(argv[1], value);
+    SuccessOrExit(error);
+
+    sockaddr.mPort = static_cast<uint16_t>(value);
+
+    error = otUdpConnect(&mSocket, &sockaddr);
+
+exit:
+    return error;
+}
+
+otError CliThroughput::ProcessClose(int argc, char *argv[])
+{
+    mIsRun = false;
+    OT_UNUSED_VARIABLE(argc);
+    OT_UNUSED_VARIABLE(argv);
+    
+    return otUdpClose(&mSocket);
+}
+
+otError CliThroughput::ProcessStart(int argc, char *argv[])
+{
+    otError error = OT_ERROR_NONE;
+    OT_UNUSED_VARIABLE(argc);
+    OT_UNUSED_VARIABLE(argv);
+    Init();
+
+    return error;
+}
+
+otError CliThroughput::ProcessOpen(int argc, char *argv[])
+{
+    OT_UNUSED_VARIABLE(argc);
+    OT_UNUSED_VARIABLE(argv);
+    Init();
+    return otUdpOpen(mInterpreter.mInstance, &mSocket, HandleUdpReceive, this);
+}
+
+otError CliThroughput::ProcessSend(int argc, char *argv[])
+{
+    otError error;
+    otMessageInfo messageInfo;
+    otMessage *message = NULL;
+    int curArg = 0;
+
+    memset(&messageInfo, 0, sizeof(messageInfo));
+
+    VerifyOrExit(argc == 1 || argc == 3, error = OT_ERROR_PARSE);
+
+    if (argc == 3)
+    {
+        long value;
+
+        error = otIp6AddressFromString(argv[curArg++], &messageInfo.mPeerAddr);
+        SuccessOrExit(error);
+
+        error = Interpreter::ParseLong(argv[curArg++], value);
+        SuccessOrExit(error);
+
+        messageInfo.mPeerPort = static_cast<uint16_t>(value);
+        messageInfo.mInterfaceId = OT_NETIF_INTERFACE_ID_THREAD;
+
+    }
+
+    message = otUdpNewMessage(mInterpreter.mInstance, true);
+    VerifyOrExit(message != NULL, error = OT_ERROR_NO_BUFS);
+
+    error = otMessageAppend(message, argv[curArg], static_cast<uint16_t>(strlen(argv[curArg])));
+    SuccessOrExit(error);
+
+    error = otUdpSend(&mSocket, message, &messageInfo);
+
+exit:
+
+    if (error != OT_ERROR_NONE && message != NULL)
+    {
+        otMessageFree(message);
+    }
+
+    return error;
+}
+
+otError CliThroughput::Process(int argc, char *argv[])
+{
+    otError error = OT_ERROR_PARSE;
+
+    for (size_t i = 0; i < sizeof(sCommands) / sizeof(sCommands[0]); i++)
+    {
+        if (strcmp(argv[0], sCommands[i].mName) == 0)
+        {
+            error = (this->*sCommands[i].mCommand)(argc - 1, argv + 1);
+            break;
+        }
+    }
+
+    return error;
+}
+
+void CliThroughput::HandleUdpReceive(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo)
+{
+    static_cast<CliThroughput *>(aContext)->HandleUdpReceive(aMessage, aMessageInfo);
+}
+
+void CliThroughput::HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMessageInfo)
+{
+    otMessageInfo messageInfo;
+    otMessage *message;
+    uint32_t timestamp = 0;
+    uint16_t count;
+
+    timestamp = TimerMilli::GetNow();
+    memset(&messageInfo, 0, sizeof(messageInfo));
+    memset(&message, 0, sizeof(message));
+    
+    //Get sequence number from the packet
+    count = GetAcceptedCount(aMessage);
+
+    if (ot::Cli::CliThroughput::sBeginTimestamp == 0)
+    {
+        ot::Cli::CliThroughput::sBeginTimestamp = timestamp;
+    }
+    ot::Cli::CliThroughput::sEndTimestamp = timestamp;
+
+    mReceiveTimer[count] = timestamp;
+
+    ot::Cli::CliThroughput::sCount++;
+
+    mInterpreter.mServer->OutputFormat("hoplimit %d, amuount %d, %u, %d, %d, %u, %u from ", aMessageInfo->mHopLimit, mInitialCount, timestamp, count, otMessageGetLength(aMessage) - otMessageGetOffset(aMessage), mTimeElapse, mJitter);
+    mInterpreter.mServer->OutputFormat("%x:%x:%x:%x:%x:%x:%x:%x %d \r\n",
+                                       HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[0]),
+                                       HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[1]),
+                                       HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[2]),
+                                       HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[3]),
+                                       HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[4]),
+                                       HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[5]),
+                                       HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[6]),
+                                       HostSwap16(aMessageInfo->mPeerAddr.mFields.m16[7]),
+                                       aMessageInfo->mPeerPort);
+}
+
+otError CliThroughput::ProcessResult(int argc, char *argv[])
+{
+    OT_UNUSED_VARIABLE(argc);
+    OT_UNUSED_VARIABLE(argv);
+
+    mInterpreter.mServer->OutputFormat("%d, %d, %d\r\n",
+        ot::Cli::CliThroughput::sBeginTimestamp,
+        ot::Cli::CliThroughput::sEndTimestamp,
+        ot::Cli::CliThroughput::sCount);
+
+    return OT_ERROR_NONE;
+} 
+
+
+otError CliThroughput::ProcessGpio(int argc, char *argv[])
+{
+    OT_UNUSED_VARIABLE(argc);
+    OT_UNUSED_VARIABLE(argv);
+
+    return OT_ERROR_NONE;
+
+}
+
+CliThroughput &CliThroughput::GetOwner(const Context &aContext)
+{
+#if OPENTHREAD_ENABLE_MULTIPLE_INSTANCES
+    CliThroughput &udp = *static_cast<CliThroughput *>(aContext.GetContext());
+#else
+    CliThroughput &udp = Uart::sUartServer->GetInterpreter().mCliThroughput;
+    OT_UNUSED_VARIABLE(aContext);
+#endif
+    return udp;
+}
+
+void CliThroughput::s_HandlePingTimer(Timer &aTimer)
+{
+    GetOwner(aTimer).HandlePingTimer();
+}
+
+void CliThroughput::s_HandleGpioTimer(Timer &aTimer)
+{
+    GetOwner(aTimer).HandleGpioTimer();
+}
+
+void CliThroughput::HandleGpioTimer()
+{
+    otPlatGpioWrite(MONITOR_PIN, 0);
+}
+
+void CliThroughput::HandlePingTimer()
+{
+    otError error = OT_ERROR_NONE;
+
+    if (mIsRun)
+    {
+        error = SendUdpPacket();
+        SuccessOrExit(error);
+    }
+    else
+    {
+        ExitNow();
+    }
+exit:
+
+    if (ot::Cli::CliThroughput::sCount <= mInitialCount)
+    {
+        mPingTimer.Start(1);
+    }
+    else
+    {
+        // otPlatGpioWrite(MONITOR_PIN, 1);
+        // mGpioTimer.Start(CLEAR_PIN_INTERVAL);
+        Init();
+    }   
+}
+
+otError CliThroughput::ProcessTest(int argc, char *argv[])
+{
+    otError error = OT_ERROR_NONE;
+    int curArg = 0;
+
+    memset(&mMessageInfo, 0, sizeof(mMessageInfo));
+
+    VerifyOrExit(argc == 2 || argc == 5, error = OT_ERROR_PARSE);
+
+    long value;
+
+
+    if (argc == 5)
+    {
+
+        error = otIp6AddressFromString(argv[curArg++], &mMessageInfo.mPeerAddr);
+        SuccessOrExit(error);
+
+        error = Interpreter::ParseLong(argv[curArg++], value);
+        SuccessOrExit(error);
+
+        mMessageInfo.mPeerPort = static_cast<uint16_t>(value);
+
+        error = Interpreter::ParseLong(argv[curArg++], value);
+        SuccessOrExit(error);
+
+        mLength = value;
+
+        error = Interpreter::ParseLong(argv[curArg++], value);
+        SuccessOrExit(error);
+             
+        mInitialCount = value;
+
+        error = Interpreter::ParseLong(argv[curArg++], value);
+        SuccessOrExit(error);
+
+        mInterval = value;
+
+        mMessageInfo.mInterfaceId = OT_NETIF_INTERFACE_ID_THREAD;
+
+        //disable the monitor pin due to the pin is set to output
+        otPlatGpioDisableInterrupt(MONITOR_PIN);
+
+        //set the pin to output pin
+        otPlatGpioCfgOutput(MONITOR_PIN);
+
+        // set the gpio to low level
+        otPlatGpioWrite(MONITOR_PIN, 0);
+
+        HandlePingTimer();
+    }
+    else if (argc == 2)
+    {
+        Init();
+    }
+
+exit:
+
+    if (error != OT_ERROR_NONE && mMessage != NULL)
+    {
+        otMessageFree(mMessage);
+    }
+
+    return error;
+}
+
+void CliThroughput::platGpioResponse(void)
+{
+    mInterpreter.mServer->OutputFormat("receive gpio signal\n");
+    if (ot::Cli::CliThroughput::sBeginTimestamp == 0)
+    {
+        ot::Cli::CliThroughput::sBeginTimestamp = TimerMilli::GetNow();
+    }
+    else if (ot::Cli::CliThroughput::sEndTimestamp == 0)
+    {
+        ot::Cli::CliThroughput::sEndTimestamp = TimerMilli::GetNow();
+    }
+}
+
+
+}  // namespace Cli
+}  // namespace ot

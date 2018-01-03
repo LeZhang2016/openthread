@@ -42,6 +42,10 @@
 #include "nrf_drv_radio802154_config.h"
 #include "hal/nrf_radio.h"
 
+#if ENABLE_FEM
+#include "fem/nrf_fem_control_api.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -49,26 +53,46 @@ extern "C" {
 /**
  * @brief States of the driver.
  */
-typedef enum
-{
-    NRF_DRV_RADIO802154_STATE_INVALID,
-    NRF_DRV_RADIO802154_STATE_SLEEP,
-    NRF_DRV_RADIO802154_STATE_RECEIVE,
-    NRF_DRV_RADIO802154_STATE_TRANSMIT,
-    NRF_DRV_RADIO802154_STATE_ENERGY_DETECTION,
-    NRF_DRV_RADIO802154_STATE_CCA,
-    NRF_DRV_RADIO802154_STATE_CONTINUOUS_CARRIER,
-} nrf_drv_radio802154_state_t;
+typedef uint8_t nrf_drv_radio802154_state_t;
+
+#define NRF_DRV_RADIO802154_STATE_INVALID              0x01 /**< Radio in an invalid state. */
+#define NRF_DRV_RADIO802154_STATE_SLEEP                0x02 /**< Radio in Sleep state. */
+#define NRF_DRV_RADIO802154_STATE_RECEIVE              0x03 /**< Radio in Receive state. */
+#define NRF_DRV_RADIO802154_STATE_TRANSMIT             0x04 /**< Radio in Transmit state. */
+#define NRF_DRV_RADIO802154_STATE_ENERGY_DETECTION     0x05 /**< Radio in Energy Detection state. */
+#define NRF_DRV_RADIO802154_STATE_CCA                  0x06 /**< Radio in CCA state. */
+#define NRF_DRV_RADIO802154_STATE_CONTINUOUS_CARRIER   0x07 /**< Radio in Continuous Carrier state. */
+
+/**
+ * @brief Errors reported during frame transmission.
+ */
+typedef uint8_t nrf_drv_radio802154_tx_error_t;
+
+#define NRF_DRV_RADIO802154_TX_ERROR_BUSY_CHANNEL      0x01 /**< CCA reported busy channel prior to transmission. */
+#define NRF_DRV_RADIO802154_TX_ERROR_INVALID_ACK       0x02 /**< Received ACK frame is other than expected. */
+#define NRF_DRV_RADIO802154_TX_ERROR_NO_MEM            0x03 /**< No receive buffer are available to receive an ACK. */
+#define NRF_DRV_RADIO802154_TX_ERROR_TIMESLOT_ENDED    0x04 /**< Radio timeslot ended during transmission procedure. */
+
+/**
+ * @brief Possible errors during frame reception.
+ */
+typedef uint8_t nrf_drv_radio802154_rx_error_t;
+
+#define NRF_DRV_RADIO802154_RX_ERROR_INVALID_FRAME     0x01 /**< Received a malformed frame */
+#define NRF_DRV_RADIO802154_RX_ERROR_INVALID_FCS       0x02 /**< Received a frame with invalid checksum. */
+#define NRF_DRV_RADIO802154_RX_ERROR_INVALID_DEST_ADDR 0x03 /**< Received a frame with mismatched destination address. */
+#define NRF_DRV_RADIO802154_RX_ERROR_RUNTIME           0x04 /**< A runtime error occured (e.g. CPU was hold for too long.) */
+#define NRF_DRV_RADIO802154_RX_ERROR_TIMESLOT_ENDED    0x05 /**< Radio timeslot ended during frame reception. */
 
 /**
  * @brief Structure for configuring CCA.
  */
 typedef struct
 {
-    nrf_radio_cca_mode_t mode;           ///< CCA mode.
-    uint8_t              ed_threshold;   ///< CCA Energy Busy Threshold. Not used in NRF_RADIO_CCA_MODE_CARRIER.
-    uint8_t              corr_threshold; ///< CCA Correlator Busy Threshold. Not used in NRF_RADIO_CCA_MODE_ED.
-    uint8_t              corr_limit;     ///< Limit of occurrences above CCA Correlator Busy Threshold. Not used in NRF_RADIO_CCA_MODE_ED.
+    nrf_radio_cca_mode_t mode;           /**< CCA mode. */
+    uint8_t              ed_threshold;   /**< CCA Energy Busy Threshold. Not used in NRF_RADIO_CCA_MODE_CARRIER. */
+    uint8_t              corr_threshold; /**< CCA Correlator Busy Threshold. Not used in NRF_RADIO_CCA_MODE_ED. */
+    uint8_t              corr_limit;     /**< Limit of occurrences above CCA Correlator Busy Threshold. Not used in NRF_RADIO_CCA_MODE_ED. */
 } nrf_drv_radio802154_cca_cfg_t;
 
 /**
@@ -131,6 +155,54 @@ void nrf_drv_radio802154_tx_power_set(int8_t power);
  * @return Currently used transmit power [dBm].
  */
 int8_t nrf_drv_radio802154_tx_power_get(void);
+
+/**
+ * @section Front-end module management.
+ */
+
+#if ENABLE_FEM
+
+typedef nrf_fem_control_cfg_t nrf_drv_radio802154_fem_control_cfg_t;
+
+#define NRF_DRV_RADIO802154_FEM_DEFAULT_SETTINGS                                                   \
+    ((nrf_drv_radio802154_fem_control_cfg_t) {                                                     \
+        .pa_cfg = {                                                                                \
+                .enable      = 1,                                                                  \
+                .active_high = 1,                                                                  \
+                .gpio_pin    = NRF_FEM_CONTROL_DEFAULT_PA_PIN,                                     \
+        },                                                                                         \
+        .lna_cfg = {                                                                               \
+                .enable      = 1,                                                                  \
+                .active_high = 1,                                                                  \
+                .gpio_pin    = NRF_FEM_CONTROL_DEFAULT_LNA_PIN,                                    \
+        },                                                                                         \
+        .ppi_ch_id_clr = NRF_FEM_CONTROL_DEFAULT_CLR_PPI_CHANNEL,                                  \
+        .ppi_ch_id_set = NRF_FEM_CONTROL_DEFAULT_SET_PPI_CHANNEL,                                  \
+        .radio_ppi_grp = NRF_FEM_CONTROL_DEFAULT_TIMER_MATCH_PPI_GROUP,                            \
+        .timer_ppi_grp = NRF_FEM_CONTROL_DEFAULT_RADIO_DISABLED_PPI_GROUP,                         \
+        .gpiote_ch_id  = NRF_FEM_CONTROL_DEFAULT_GPIOTE_CHANNEL,                                   \
+    })
+
+/**
+ * @brief Set PA & LNA GPIO toggle configuration.
+ *
+ * @note This function shall not be called when radio is in use.
+ *
+ * @param[in] p_cfg A pointer to the PA & LNA GPIO toggle configuration.
+ *
+ */
+void nrf_drv_radio802154_fem_control_cfg_set(const nrf_drv_radio802154_fem_control_cfg_t * p_cfg);
+
+/**
+ * @brief Get PA & LNA GPIO toggle configuration.
+ *
+ * @param[out] p_cfg A pointer to the structure for the PA & LNA GPIO toggle configuration.
+ *
+ */
+void nrf_drv_radio802154_fem_control_cfg_get(nrf_drv_radio802154_fem_control_cfg_t * p_cfg);
+
+#endif // ENABLE_FEM
+
 
 /**
  * @section Setting addresses and Pan Id of this device.
@@ -210,7 +282,7 @@ void nrf_drv_radio802154_receive(void);
  * @note This function should be called in Receive state. In other states transmission will not be
  *       scheduled.
  * @note If the CPU was halted or interrupted during performing this function
- *       @sa nrf_drv_radio802154_transmitted() or @sa nrf_drv_radio802154_busy_channel() may be
+ *       @sa nrf_drv_radio802154_transmitted() or @sa nrf_drv_radio802154_transmit_failed() may be
  *       called before nrf_drv_radio802154_transmit_raw() returns result.
  * @note This function is implemented in zero-copy fashion. It passes given buffer pointer to
  *       the RADIO peripheral.
@@ -219,7 +291,7 @@ void nrf_drv_radio802154_receive(void);
  * Radio driver waits infinitely for ACK frame. Higher layer is responsible to call
  * @sa nrf_radio802154_receive() after ACK timeout.
  * Transmission result is reported to higher layer by @sa nrf_radio802154_transmitted() or
- * @sa nrf_radio802154_busy_channel() calls.
+ * @sa nrf_radio802154_transmit_failed() calls.
  *
  * p_data
  * v
@@ -246,7 +318,7 @@ bool nrf_drv_radio802154_transmit_raw(const uint8_t *p_data, bool cca);
  * @note This function should be called in Receive state. In other states transmission will not be
  *       scheduled.
  * @note If the CPU was halted or interrupted during performing this function
- *       @sa nrf_drv_radio802154_transmitted() or @sa nrf_drv_radio802154_busy_channel() may be
+ *       @sa nrf_drv_radio802154_transmitted() or @sa nrf_drv_radio802154_transmit_failed() may be
  *       called before nrf_drv_radio802154_transmit() returns result.
  * @note This function makes copy of given buffer. There is an internal buffer maintained by this
  *       function. It is used to make a frame copy. To prevent unnecessary memory consumption and
@@ -257,7 +329,7 @@ bool nrf_drv_radio802154_transmit_raw(const uint8_t *p_data, bool cca);
  * Radio driver waits infinitely for ACK frame. Higher layer is responsible to call
  * @sa nrf_radio802154_receive() after ACK timeout.
  * Transmission result is reported to higher layer by @sa nrf_radio802154_transmitted() or
- * @sa nrf_radio802154_busy_channel() calls.
+ * @sa nrf_radio802154_transmit_failed() calls.
  *
  *       p_data
  *       v
@@ -339,6 +411,13 @@ bool nrf_drv_radio802154_continuous_carrier(void);
 extern void nrf_drv_radio802154_rx_started(void);
 
 /**
+ * @brief Notify that transmitting ACK frame has started.
+ *
+ * @note This function should be very short to prevent dropping frames by the driver.
+ */
+extern void nrf_drv_radio802154_tx_ack_started(void);
+
+/**
  * @brief Notify that frame was received.
  *
  * @note Buffer pointed by the p_data pointer is not modified by the radio driver (and can't
@@ -391,6 +470,13 @@ extern void nrf_drv_radio802154_received_raw(uint8_t * p_data, int8_t power, int
 extern void nrf_drv_radio802154_received(uint8_t * p_data, uint8_t length, int8_t power, int8_t lqi);
 
 /**
+ * @brief Notify that reception of a frame failed.
+ *
+ * @param[in]  error  An error code that indicates reason of the failure.
+ */
+extern void nrf_drv_radio802154_receive_failed(nrf_drv_radio802154_rx_error_t error);
+
+/**
  * @brief Notify that transmitting frame has started.
  *
  * @note It is possible that transmit procedure is interrupted and
@@ -398,6 +484,15 @@ extern void nrf_drv_radio802154_received(uint8_t * p_data, uint8_t length, int8_
  * @note This function should be very short to prevent dropping frames by the driver.
  */
 extern void nrf_drv_radio802154_tx_started(void);
+
+/**
+ * @brief Notify that receiving ACK frame has started.
+ *
+ * @note It is possible that the frame being received is not expected ACK and
+ *       @sa nrf_drv_radio802154_transmitted won't be called.
+ * @note This function should be very short to prevent dropping frames by the driver.
+ */
+extern void nrf_drv_radio802154_rx_ack_started(void);
 
 /**
  * @brief Notify that frame was transmitted.
@@ -449,9 +544,11 @@ extern void nrf_drv_radio802154_transmitted(uint8_t * p_ack, uint8_t length, int
 /**
  * @brief Notify that frame was not transmitted due to busy channel.
  *
- * This function is called if CCA procedure (performed just before transmission) fails.
+ * This function is called if transmission procedure fails.
+ *
+ * @param[in]  error  Reason of the failure.
  */
-extern void nrf_drv_radio802154_busy_channel(void);
+extern void nrf_drv_radio802154_transmit_failed(nrf_drv_radio802154_tx_error_t error);
 
 /**
  * @brief Notify that Energy Detection procedure finished.
@@ -525,6 +622,16 @@ void nrf_drv_radio802154_rssi_measure(void);
  * @returns RSSI measurement result [dBm].
  */
 int8_t nrf_drv_radio802154_rssi_last_get(void);
+
+/**
+ * @brief Adjust given RSSI measurement using a temperature correction factor.
+ *
+ * @param[in]  rssi  Measured RSSI value [dBm].
+ * @param[in]  temp  Temperature value when RSSI sample took place [C].
+ *
+ * @returns RSSI [dBm] corrected by a temperature factor (Errata 153).
+ */
+int8_t nrf_drv_radio802154_rssi_corrected_get(int8_t rssi, int8_t temp);
 
 
 /**

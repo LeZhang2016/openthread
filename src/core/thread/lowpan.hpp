@@ -34,6 +34,8 @@
 #ifndef LOWPAN_HPP_
 #define LOWPAN_HPP_
 
+#include "openthread-core-config.h"
+
 #include "common/locator.hpp"
 #include "common/message.hpp"
 #include "mac/mac_frame.hpp"
@@ -76,16 +78,16 @@ struct Context
  * This class implements LOWPAN_IPHC header compression.
  *
  */
-class Lowpan: public ThreadNetifLocator
+class Lowpan: public InstanceLocator
 {
 public:
     /**
      * This constructor initializes the object.
      *
-     * @param[in]  aThreadNetif  A reference to the Thread network interface.
+     * @param[in]  aInstance     A reference to the OpenThread instance.
      *
      */
-    explicit Lowpan(ThreadNetif &aThreadNetif);
+    explicit Lowpan(otInstance &aInstance);
 
     /**
      * This method indicates whether or not the header is a LOWPAN_IPHC header.
@@ -192,17 +194,17 @@ private:
         kUdpPortMask        = 3 << 0,
     };
 
-    int CompressExtensionHeader(Message &message, uint8_t *aBuf, uint8_t &nextHeader);
-    int CompressSourceIid(const Mac::Address &macaddr, const Ip6::Address &ipaddr, const Context &aContext,
-                          uint16_t &hcCtl, uint8_t *aBuf);
-    int CompressDestinationIid(const Mac::Address &macaddr, const Ip6::Address &ipaddr, const Context &aContext,
-                               uint16_t &hcCtl, uint8_t *aBuf);
-    int CompressMulticast(const Ip6::Address &ipaddr, uint16_t &hcCtl, uint8_t *aBuf);
-    int CompressUdp(Message &message, uint8_t *aBuf);
+    int CompressExtensionHeader(Message &aMessage, uint8_t *aBuf, uint8_t &aNextHeader);
+    int CompressSourceIid(const Mac::Address &aMacAddr, const Ip6::Address &aIpAddr, const Context &aContext,
+                          uint16_t &aHcCtl, uint8_t *aBuf);
+    int CompressDestinationIid(const Mac::Address &aMacAddr, const Ip6::Address &aIpAddr, const Context &aContext,
+                               uint16_t &aHcCtl, uint8_t *aBuf);
+    int CompressMulticast(const Ip6::Address &aIpAddr, uint16_t &aHcCtl, uint8_t *aBuf);
+    int CompressUdp(Message &aMessage, uint8_t *aBuf);
 
-    int DecompressExtensionHeader(Message &message, const uint8_t *aBuf, uint16_t aBufLength);
-    int DecompressUdpHeader(Message &message, const uint8_t *aBuf, uint16_t aBufLength, uint16_t datagramLength);
-    otError DispatchToNextHeader(uint8_t dispatch, Ip6::IpProto &nextHeader);
+    int DecompressExtensionHeader(Message &aMessage, const uint8_t *aBuf, uint16_t aBufLength);
+    int DecompressUdpHeader(Message &aMessage, const uint8_t *aBuf, uint16_t aBufLength, uint16_t aDatagramLength);
+    otError DispatchToNextHeader(uint8_t aDispatch, Ip6::IpProto &aNextHeader);
 
     static otError CopyContext(const Context &aContext, Ip6::Address &aAddress);
     static otError ComputeIid(const Mac::Address &aMacAddr, const Context &aContext, Ip6::Address &aIpAddress);
@@ -376,11 +378,11 @@ private:
 
     uint8_t  mDispatchHopsLeft;
     uint8_t  mDeepHopsLeft;
-    struct
+    struct OT_TOOL_PACKED_FIELD
     {
         uint16_t mSource;
         uint16_t mDestination;
-    } mAddress OT_TOOL_PACKED_FIELD;
+    } mAddress;
 } OT_TOOL_PACKED_END;
 
 /**
@@ -391,6 +393,12 @@ OT_TOOL_PACKED_BEGIN
 class FragmentHeader
 {
 public:
+    /**
+     * This constructor initializes the Fragment Header.
+     *
+     */
+    FragmentHeader(void) { mDispatchSize = HostSwap16(kDispatch); mTag = 0; mOffset = 0; }
+
     /**
      * This method initializes the Fragment Header.
      *

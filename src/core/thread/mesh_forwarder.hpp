@@ -34,9 +34,10 @@
 #ifndef MESH_FORWARDER_HPP_
 #define MESH_FORWARDER_HPP_
 
+#include "openthread-core-config.h"
+
 #include <openthread/types.h>
 
-#include "openthread-core-config.h"
 #include "common/locator.hpp"
 #include "common/tasklet.hpp"
 #include "mac/mac.hpp"
@@ -70,16 +71,16 @@ class MleRouter;
  * This class implements mesh forwarding within Thread.
  *
  */
-class MeshForwarder: public ThreadNetifLocator
+class MeshForwarder: public InstanceLocator
 {
 public:
     /**
      * This constructor initializes the object.
      *
-     * @param[in]  aThreadNetif  A reference to the Thread network interface.
+     * @param[in]  aInstance     A reference to the OpenThread instance.
      *
      */
-    explicit MeshForwarder(ThreadNetif &aThreadNetif);
+    explicit MeshForwarder(otInstance &aInstance);
 
     /**
      * This method enables mesh forwarding and the IEEE 802.15.4 MAC layer.
@@ -174,6 +175,15 @@ public:
     void RemoveMessages(Child &aChild, uint8_t aSubType);
 
     /**
+     * This method evicts the first indirect message in the indirect send queue.
+     *
+     * @retval OT_ERROR_NONE       Successfully evicted an indirect message.
+     * @retval OT_ERROR_NOT_FOUND  No indirect messages available to evict.
+     *
+     */
+    otError EvictIndirectMessage(void);
+
+    /**
      * This method returns a reference to the send queue.
      *
      * @returns  A reference to the send queue.
@@ -249,11 +259,15 @@ private:
         kMessageReceive,                 ///< Indicates that the message was received.
         kMessageTransmit,                ///< Indicates that the message was sent.
         kMessagePrepareIndirect,         ///< Indicates that the message is being prepared for indirect tx.
-        kMessageDrop,                    ///< Indicates that the message is being dropped from reassembly list.
+        kMessageDrop,                    ///< Indicates that the outbound message is being dropped (e.g., dst unknown).
+        kMessageReassemblyDrop,          ///< Indicates that the message is being dropped from reassembly list.
+        kMessageEvict,                   ///< Indicates that the message was evicted.
     };
 
     otError CheckReachability(uint8_t *aFrame, uint8_t aFrameLength,
                               const Mac::Address &aMeshSource, const Mac::Address &aMeshDest);
+    void UpdateRoutes(uint8_t *aFrame, uint8_t aFrameLength,
+                      const Mac::Address &aMeshSource, const Mac::Address &aMeshDest);
 
     otError GetMacDestinationAddress(const Ip6::Address &aIp6Addr, Mac::Address &aMacAddr);
     otError GetMacSourceAddress(const Ip6::Address &aIp6Addr, Mac::Address &aMacAddr);
@@ -279,6 +293,8 @@ private:
     otError HandleDatagram(Message &aMessage, const otThreadLinkInfo &aLinkInfo,
                            const Mac::Address &aMacSource);
     void ClearReassemblyList(void);
+    otError RemoveMessageFromSleepyChild(Message &aMessage, Child &aChild);
+    void RemoveMessage(Message &aMessage);
 
     static void HandleReceivedFrame(Mac::Receiver &aReceiver, Mac::Frame &aFrame);
     void HandleReceivedFrame(Mac::Frame &aFrame);
@@ -294,9 +310,11 @@ private:
     void ScheduleTransmissionTask(void);
     static void HandleDataPollTimeout(Mac::Receiver &aReceiver);
 
-    otError AddPendingSrcMatchEntries(void);
-    otError AddSrcMatchEntry(Child &aChild);
-    void ClearSrcMatchEntry(Child &aChild);
+#if OPENTHREAD_FTD
+#if OPENTHREAD_ENABLE_SERVICE
+    otError GetDestinationRlocByServiceAloc(uint16_t aServiceAloc, uint16_t &aMeshDest);
+#endif // OPENTHREAD_ENABLE_SERVICE
+#endif // OPENTHREAD_FTD
 
     static MeshForwarder &GetOwner(const Context &aContext);
 

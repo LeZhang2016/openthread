@@ -33,8 +33,6 @@
 
 #define WPP_NAME "announce_begin_client.tmh"
 
-#include <openthread/config.h>
-
 #include "announce_begin_client.hpp"
 
 #include <openthread/platform/random.h>
@@ -53,8 +51,8 @@
 
 namespace ot {
 
-AnnounceBeginClient::AnnounceBeginClient(ThreadNetif &aThreadNetif):
-    ThreadNetifLocator(aThreadNetif)
+AnnounceBeginClient::AnnounceBeginClient(otInstance &aInstance):
+    InstanceLocator(aInstance)
 {
 }
 

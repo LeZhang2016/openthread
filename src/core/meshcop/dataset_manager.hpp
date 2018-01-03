@@ -35,6 +35,8 @@
 #ifndef MESHCOP_DATASET_MANAGER_HPP_
 #define MESHCOP_DATASET_MANAGER_HPP_
 
+#include "openthread-core-config.h"
+
 #include <openthread/types.h>
 
 #include "coap/coap.hpp"
@@ -52,7 +54,7 @@ class ThreadNetif;
 
 namespace MeshCoP {
 
-class DatasetManager: public ThreadNetifLocator
+class DatasetManager: public InstanceLocator
 {
 public:
     /**
@@ -123,15 +125,15 @@ protected:
     /**
      * This constructor initializes the object.
      *
-     * @param[in]  aThreadNetif   A reference to the Thread network interface.
+     * @param[in]  aInstance      A reference to the OpenThread instance.
      * @param[in]  aType          Identifies Active or Pending Operational Dataset.
      * @param[in]  aUriSet        The URI-PATH for setting the Operational Dataset.
      * @param[in]  aUriGet        The URI-PATH for getting the Operational Dataset.
      * @param[in]  aTimerHandler  The registration timer handler.
      *
      */
-    DatasetManager(ThreadNetif &aThreadNetif, const Tlv::Type aType, const char *aUriSet, const char *aUriGet,
-                   TimerMilli::Handler aTimerHander);
+    DatasetManager(otInstance &aInstance, const Tlv::Type aType, const char *aUriSet, const char *aUriGet,
+                   TimerMilli::Handler aTimerHandler);
 
     /**
      * This method restores the Operational Dataset from non-volatile memory.
@@ -182,7 +184,7 @@ protected:
      *
      * @param[in]  aHeader       The CoAP header.
      * @param[in]  aMessage      The CoAP message buffer.
-     * @parma[in]  aMessageInfo  The message info.
+     * @param[in]  aMessageInfo  The message info.
      *
      */
     void Get(const Coap::Header &aHeader, const Message &aMessage, const Ip6::MessageInfo &aMessageInfo) const;
@@ -202,8 +204,8 @@ protected:
      */
     void HandleTimer(void);
 
-    DatasetLocal mLocal;
     Dataset mNetwork;
+    DatasetLocal mLocal;
 
 private:
     static void HandleUdpReceive(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo);
@@ -223,7 +225,7 @@ public:
     /**
      * This method sends a MGMT_SET request to the Leader.
      *
-     * @parma[in]  aDataset  The Operational Datset.
+     * @param[in]  aDataset  The Operational Datset.
      * @param[in]  aTlvs     Any additional raw TLVs to include.
      * @param[in]  aLength   Number of bytes in @p aTlvs.
      *
@@ -237,7 +239,7 @@ public:
      *
      * @param[in]  aTlvTypes  The list of TLV types to request.
      * @param[in]  aLength    Number of bytes in @p aTlvTypes.
-     * @parma[in]  aAddress   The IPv6 destination address for the MGMT_GET request.
+     * @param[in]  aAddress   The IPv6 destination address for the MGMT_GET request.
      *
      * @retval OT_ERROR_NONE on success.
      *
@@ -248,7 +250,7 @@ protected:
     /**
      * This method sets the Operational Dataset in non-volatile memory.
      *
-     * @parma[in]  aDataset  The Operational Dataset.
+     * @param[in]  aDataset  The Operational Dataset.
      *
      */
     otError Set(const otOperationalDataset &aDataset);
@@ -258,7 +260,7 @@ protected:
      *
      * @param[in]  aHeader       The CoAP header.
      * @param[in]  aMessage      The CoAP message buffer.
-     * @parma[in]  aMessageInfo  The message info.
+     * @param[in]  aMessageInfo  The message info.
      *
      * @retval OT_ERROR_NONE  The MGMT_SET request message was handled successfully.
      * @retval OT_ERROR_DROP  The MGMT_SET request message was dropped.
@@ -277,10 +279,10 @@ public:
     /**
      * Constructor.
      *
-     * @param[in]  aThreadNetif  The Thread network interface.
+     * @param[in]  aInstance      A reference to the OpenThread instance.
      *
      */
-    ActiveDatasetBase(ThreadNetif &aThreadNetif);
+    ActiveDatasetBase(otInstance &aInstance);
 
     /**
      * This method restores the Active Operational Dataset from non-volatile memory.
@@ -312,7 +314,7 @@ public:
     /**
      * This method sets the Operational Dataset in non-volatile memory.
      *
-     * @parma[in]  aDataset  The Operational Dataset.
+     * @param[in]  aDataset  The Operational Dataset.
      *
      */
     otError Set(const otOperationalDataset &aDataset);
@@ -362,7 +364,7 @@ public:
      * @param[in]  The Thread network interface.
      *
      */
-    PendingDatasetBase(ThreadNetif &aThreadNetif);
+    PendingDatasetBase(otInstance &aInstance);
 
     /**
      * This method restores the Operational Dataset from non-volatile memory.
@@ -405,7 +407,7 @@ public:
      *
      * This method also starts the Delay Timer.
      *
-     * @parma[in]  aDataset  The Operational Dataset.
+     * @param[in]  aDataset  The Operational Dataset.
      *
      */
     otError Set(const otOperationalDataset &aDataset);

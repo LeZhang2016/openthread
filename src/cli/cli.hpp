@@ -34,16 +34,19 @@
 #ifndef CLI_HPP_
 #define CLI_HPP_
 
-#include <openthread/config.h>
+#include "openthread-core-config.h"
 
 #include <stdarg.h>
 
 #include <openthread/openthread.h>
 #include <openthread/ip6.h>
 #include <openthread/udp.h>
+#include <openthread/cli.h>
 
 #include "cli/cli_server.hpp"
 #include "cli/cli_udp_example.hpp"
+#include "cli/cli_latency.hpp"
+#include "cli/cli_throughput.hpp"
 
 #if OPENTHREAD_ENABLE_APPLICATION_COAP
 #include <coap/coap_header.hpp>
@@ -94,7 +97,9 @@ struct Command
 class Interpreter
 {
     friend class Coap;
-    friend class Udp;
+    friend class UdpExample;
+    friend class CliLatency;
+    friend class CliThroughput;
 
 public:
 
@@ -150,6 +155,34 @@ public:
      */
     static int Hex2Bin(const char *aHex, uint8_t *aBin, uint16_t aBinLength);
 
+    /**
+     * Write error code the CLI console
+     *
+     * @param[in]  aError Error code value.
+     */
+    void AppendResult(otError error) const;
+
+    /**
+     * Write a number of bytes to the CLI console as a hex string.
+     *
+     * @param[in]  aBytes   A pointer to data which should be printed.
+     * @param[in]  aLength  @p aBytes length.
+     */
+    void OutputBytes(const uint8_t *aBytes, uint8_t aLength) const;
+
+    /**
+     * Set a user command table.
+     *
+     * @param[in]  aUserCommands  A pointer to an array with user commands.
+     * @param[in]  aLength        @p aUserCommands length.
+     */
+    void SetUserCommands(const otCliCommand *aCommands, uint8_t aLength);
+
+    CliLatency GetCliLatency() {return mCliLatency; };
+    CliThroughput GetCliThroughput() {return mCliThroughput; };
+
+    static uint8_t sTestChoice;
+
 private:
     enum
     {
@@ -158,8 +191,6 @@ private:
         kDefaultJoinerTimeout = 120,    ///< Default timeout for Joiners, in seconds.
     };
 
-    void AppendResult(otError error) const;
-    void OutputBytes(const uint8_t *aBytes, uint8_t aLength) const;
 
     void ProcessHelp(int argc, char *argv[]);
     void ProcessAutoStart(int argc, char *argv[]);
@@ -198,6 +229,9 @@ private:
 #ifdef OPENTHREAD_EXAMPLES_POSIX
     void ProcessExit(int argc, char *argv[]);
 #endif
+#if (OPENTHREAD_CONFIG_LOG_OUTPUT == OPENTHREAD_CONFIG_LOG_OUTPUT_DEBUG_UART) && OPENTHREAD_EXAMPLES_POSIX
+    void ProcessLogFilename(int argc, char *argv[]);
+#endif
     void ProcessExtAddress(int argc, char *argv[]);
     void ProcessExtPanId(int argc, char *argv[]);
     void ProcessFactoryReset(int argc, char *argv[]);
@@ -224,11 +258,17 @@ private:
     void ProcessLeaderPartitionId(int argc, char *argv[]);
     void ProcessLeaderWeight(int argc, char *argv[]);
 #endif
-    void ProcessLinkQuality(int argc, char *argv[]);
     void ProcessMasterKey(int argc, char *argv[]);
     void ProcessMode(int argc, char *argv[]);
-#if OPENTHREAD_ENABLE_BORDER_ROUTER
+#if OPENTHREAD_FTD
+    void ProcessNeighbor(int argc, char *argv[]);
+#endif
+#if OPENTHREAD_ENABLE_BORDER_ROUTER || OPENTHREAD_ENABLE_SERVICE
     void ProcessNetworkDataRegister(int argc, char *argv[]);
+#endif
+#if OPENTHREAD_ENABLE_SERVICE
+    void ProcessNetworkDataShow(int argc, char *argv[]);
+    void ProcessService(int argc, char *argv[]);
 #endif
 #if OPENTHREAD_FTD || OPENTHREAD_ENABLE_MTD_NETWORK_DIAGNOSTIC
     void ProcessNetworkDiagnostic(int argc, char *argv[]);
@@ -291,6 +331,8 @@ private:
 
 #ifndef OTDLL
     void ProcessUdp(int argc, char *argv[]);
+    void ProcessLatency(int argc, char *argv[]);
+    void ProcessThroughput(int argc, char *argv[]);
 #endif
 
 #ifndef OTDLL
@@ -352,6 +394,9 @@ private:
 
     static const struct Command sCommands[];
 
+    const otCliCommand *mUserCommands;
+    uint8_t mUserCommandsLength;
+
     Server *mServer;
 
 #ifdef OTDLL
@@ -389,7 +434,9 @@ private:
     char mResolvingHostname[OT_DNS_MAX_HOSTNAME_LENGTH];
 #endif
 
-    Udp mUdp;
+    UdpExample mUdp;
+    CliLatency mCliLatency;
+    CliThroughput mCliThroughput;
 
 #endif
 

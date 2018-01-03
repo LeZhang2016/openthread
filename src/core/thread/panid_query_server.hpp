@@ -34,9 +34,10 @@
 #ifndef PANID_QUERY_SERVER_HPP_
 #define PANID_QUERY_SERVER_HPP_
 
+#include "openthread-core-config.h"
+
 #include <openthread/types.h>
 
-#include "openthread-core-config.h"
 #include "coap/coap.hpp"
 #include "common/locator.hpp"
 #include "common/timer.hpp"
@@ -55,14 +56,14 @@ class ThreadTargetTlv;
  * This class implements handling PANID Query Requests.
  *
  */
-class PanIdQueryServer: public ThreadNetifLocator
+class PanIdQueryServer: public InstanceLocator
 {
 public:
     /**
      * This constructor initializes the object.
      *
      */
-    PanIdQueryServer(ThreadNetif &aThreadNetif);
+    PanIdQueryServer(otInstance &aInstance);
 
 private:
     enum

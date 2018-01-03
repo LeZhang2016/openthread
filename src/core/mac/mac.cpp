@@ -33,8 +33,6 @@
 
 #define WPP_NAME "mac.tmh"
 
-#include <openthread/config.h>
-
 #include "mac.hpp"
 
 #include "utils/wrap_string.h"
@@ -138,19 +136,8 @@ void Mac::StartCsmaBackoff(void)
     }
 }
 
-Mac::Mac(ThreadNetif &aThreadNetif):
-    ThreadNetifLocator(aThreadNetif),
-    mMacTimer(aThreadNetif.GetInstance(), &Mac::HandleMacTimer, this),
-    mBackoffTimer(aThreadNetif.GetInstance(), &Mac::HandleBeginTransmit, this),
-    mReceiveTimer(aThreadNetif.GetInstance(), &Mac::HandleReceiveTimer, this),
-    mShortAddress(kShortAddrInvalid),
-    mPanId(kPanIdBroadcast),
-    mChannel(OPENTHREAD_CONFIG_DEFAULT_CHANNEL),
-    mMaxTransmitPower(OPENTHREAD_CONFIG_DEFAULT_MAX_TRANSMIT_POWER),
-    mSendHead(NULL),
-    mSendTail(NULL),
-    mReceiveHead(NULL),
-    mReceiveTail(NULL),
+Mac::Mac(otInstance &aInstance):
+    InstanceLocator(aInstance),
     mOperation(kOperationIdle),
     mPendingActiveScan(false),
     mPendingEnergyScan(false),
@@ -162,6 +149,17 @@ Mac::Mac(ThreadNetif &aThreadNetif):
 #if OPENTHREAD_CONFIG_STAY_AWAKE_BETWEEN_FRAGMENTS
     mDelaySleep(false),
 #endif
+    mMacTimer(aInstance, &Mac::HandleMacTimer, this),
+    mBackoffTimer(aInstance, &Mac::HandleBeginTransmit, this),
+    mReceiveTimer(aInstance, &Mac::HandleReceiveTimer, this),
+    mShortAddress(kShortAddrInvalid),
+    mPanId(kPanIdBroadcast),
+    mChannel(OPENTHREAD_CONFIG_DEFAULT_CHANNEL),
+    mMaxTransmitPower(OPENTHREAD_CONFIG_DEFAULT_MAX_TRANSMIT_POWER),
+    mSendHead(NULL),
+    mSendTail(NULL),
+    mReceiveHead(NULL),
+    mReceiveTail(NULL),
     mBeaconSequence(static_cast<uint8_t>(otPlatRandomGet())),
     mDataSequence(static_cast<uint8_t>(otPlatRandomGet())),
     mCsmaAttempts(0),
@@ -172,13 +170,13 @@ Mac::Mac(ThreadNetif &aThreadNetif):
     mEnergyScanCurrentMaxRssi(kInvalidRssiValue),
     mScanContext(NULL),
     mActiveScanHandler(NULL), // Initialize `mActiveScanHandler` and `mEnergyScanHandler` union
-    mEnergyScanSampleRssiTask(aThreadNetif.GetInstance(), &Mac::HandleEnergyScanSampleRssi, this),
+    mEnergyScanSampleRssiTask(aInstance, &Mac::HandleEnergyScanSampleRssi, this),
     mPcapCallback(NULL),
     mPcapCallbackContext(NULL),
 #if OPENTHREAD_ENABLE_MAC_FILTER
     mFilter(),
 #endif  // OPENTHREAD_ENABLE_MAC_FILTER
-    mTxFrame(static_cast<Frame *>(otPlatRadioGetTransmitBuffer(&aThreadNetif.GetInstance()))),
+    mTxFrame(static_cast<Frame *>(otPlatRadioGetTransmitBuffer(&aInstance))),
     mKeyIdMode2FrameCounter(0)
 {
     GenerateExtAddress(&mExtAddress);
@@ -198,10 +196,16 @@ otError Mac::ActiveScan(uint32_t aScanChannels, uint16_t aScanDuration, ActiveSc
 {
     otError error;
 
-    SuccessOrExit(error = Scan(kOperationActiveScan, aScanChannels, aScanDuration, aContext));
     mActiveScanHandler = aHandler;
+    SuccessOrExit(error = Scan(kOperationActiveScan, aScanChannels, aScanDuration, aContext));
 
 exit:
+
+    if (OT_ERROR_NONE != error)
+    {
+        mActiveScanHandler = NULL;
+    }
+
     return error;
 }
 
@@ -209,10 +213,16 @@ otError Mac::EnergyScan(uint32_t aScanChannels, uint16_t aScanDuration, EnergySc
 {
     otError error;
 
-    SuccessOrExit(error = Scan(kOperationEnergyScan, aScanChannels, aScanDuration, aContext));
     mEnergyScanHandler = aHandler;
+    SuccessOrExit(error = Scan(kOperationEnergyScan, aScanChannels, aScanDuration, aContext));
 
 exit:
+
+    if (OT_ERROR_NONE != error)
+    {
+        mEnergyScanHandler = NULL;
+    }
+
     return error;
 }
 
@@ -991,8 +1001,6 @@ void Mac::TransmitDoneTask(otRadioFrame *aFrame, otRadioFrame *aAckFrame, otErro
 
     mMacTimer.Stop();
 
-    mCounters.mTxTotal++;
-
     txFrame->GetDstAddr(addr);
 
     if (aError == OT_ERROR_NONE && txFrame->GetAckRequest() && aAckFrame != NULL)
@@ -1007,17 +1015,6 @@ void Mac::TransmitDoneTask(otRadioFrame *aFrame, otRadioFrame *aAckFrame, otErro
         {
             neighbor->GetLinkInfo().AddRss(GetNoiseFloor(), ackFrame->GetPower());
         }
-    }
-
-    if (addr.mShortAddress == kShortAddrBroadcast)
-    {
-        // Broadcast frame
-        mCounters.mTxBroadcast++;
-    }
-    else
-    {
-        // Unicast frame
-        mCounters.mTxUnicast++;
     }
 
     if (aError == OT_ERROR_ABORT)
@@ -1155,15 +1152,12 @@ otError Mac::RadioSleep(void)
 
 #endif
 
-    SuccessOrExit(error = otPlatRadioSleep(&GetInstance()));
+    error = otPlatRadioSleep(&GetInstance());
+    VerifyOrExit(error != OT_ERROR_NONE);
+
+    otLogWarnMac(GetInstance(), "otPlatRadioSleep() failed with error %s", otThreadErrorToString(error));
 
 exit:
-
-    if (error != OT_ERROR_NONE)
-    {
-        otLogWarnMac(GetInstance(), "otPlatRadioSleep() failed with error %s", otThreadErrorToString(error));
-    }
-
     return error;
 }
 
@@ -1174,8 +1168,6 @@ void Mac::HandleMacTimer(Timer &aTimer)
 
 void Mac::HandleMacTimer(void)
 {
-    Address addr;
-
     switch (mOperation)
     {
     case kOperationActiveScan:
@@ -1203,21 +1195,6 @@ void Mac::HandleMacTimer(void)
 
     case kOperationTransmitData:
         otLogDebgMac(GetInstance(), "Ack timer fired");
-        mCounters.mTxTotal++;
-
-        mTxFrame->GetDstAddr(addr);
-
-        if (addr.mShortAddress == kShortAddrBroadcast)
-        {
-            // Broadcast frame
-            mCounters.mTxBroadcast++;
-        }
-        else
-        {
-            // Unicast Frame
-            mCounters.mTxUnicast++;
-        }
-
         SentFrame(OT_ERROR_NO_ACK);
         break;
 
@@ -1266,6 +1243,7 @@ void Mac::SentFrame(otError aError)
 {
     Frame &sendFrame(*mTxFrame);
     Sender *sender;
+    Address addr;
 
     mTransmitAttempts++;
 
@@ -1304,6 +1282,26 @@ void Mac::SentFrame(otError aError)
 
     mTransmitAttempts = 0;
     mCsmaAttempts = 0;
+
+    mCounters.mTxTotal++;
+
+    if (aError == OT_ERROR_CHANNEL_ACCESS_FAILURE)
+    {
+        mCounters.mTxErrBusyChannel++;
+    }
+
+    mTxFrame->GetDstAddr(addr);
+
+    if (addr.mShortAddress == kShortAddrBroadcast)
+    {
+        // Broadcast frame
+        mCounters.mTxBroadcast++;
+    }
+    else
+    {
+        // Unicast Frame
+        mCounters.mTxUnicast++;
+    }
 
     if (sendFrame.GetAckRequest())
     {
@@ -1807,8 +1805,8 @@ exit:
             mCounters.mRxErrInvalidSrcAddr++;
             break;
 
-        case OT_ERROR_WHITELIST_FILTERED:
-            mCounters.mRxWhitelistFiltered++;
+        case OT_ERROR_ADDRESS_FILTERED:
+            mCounters.mRxAddressFiltered++;
             break;
 
         case OT_ERROR_DESTINATION_ADDRESS_FILTERED:
@@ -1839,10 +1837,10 @@ otError Mac::HandleMacCommand(Frame &aFrame)
         mCounters.mRxBeaconRequest++;
         otLogInfoMac(GetInstance(), "Received Beacon Request");
 
-        if ((mBeaconsEnabled)
-#if OPENTHREAD_CONFIG_ENABLE_BEACON_RSP_IF_JOINABLE
-            && (IsBeaconJoinable())
-#endif // OPENTHREAD_CONFIG_ENABLE_BEACON_RSP_IF_JOINABLE
+        if (mBeaconsEnabled
+#if OPENTHREAD_CONFIG_ENABLE_BEACON_RSP_WHEN_JOINABLE
+            || IsBeaconJoinable()
+#endif // OPENTHREAD_CONFIG_ENABLE_BEACON_RSP_WHEN_JOINABLE
            )
         {
             StartOperation(kOperationTransmitBeacon);
@@ -1905,10 +1903,10 @@ void Mac::FillMacCountersTlv(NetworkDiagnostic::MacCountersTlv &aMacCounters) co
     aMacCounters.SetIfOutErrors(mCounters.mTxErrCca);
     aMacCounters.SetIfInUcastPkts(mCounters.mRxUnicast);
     aMacCounters.SetIfInBroadcastPkts(mCounters.mRxBroadcast);
-    aMacCounters.SetIfInDiscards(mCounters.mRxWhitelistFiltered + mCounters.mRxDestAddrFiltered + mCounters.mRxDuplicated);
+    aMacCounters.SetIfInDiscards(mCounters.mRxAddressFiltered + mCounters.mRxDestAddrFiltered + mCounters.mRxDuplicated);
     aMacCounters.SetIfOutUcastPkts(mCounters.mTxUnicast);
     aMacCounters.SetIfOutBroadcastPkts(mCounters.mTxBroadcast);
-    aMacCounters.SetIfOutDiscards(0);
+    aMacCounters.SetIfOutDiscards(mCounters.mTxErrBusyChannel);
 }
 
 void Mac::ResetCounters(void)
@@ -1916,7 +1914,7 @@ void Mac::ResetCounters(void)
     memset(&mCounters, 0, sizeof(mCounters));
 }
 
-#if OPENTHREAD_CONFIG_ENABLE_BEACON_RSP_IF_JOINABLE
+#if OPENTHREAD_CONFIG_ENABLE_BEACON_RSP_WHEN_JOINABLE
 bool Mac::IsBeaconJoinable(void)
 {
     uint8_t numUnsecurePorts;
@@ -1935,7 +1933,7 @@ bool Mac::IsBeaconJoinable(void)
 
     return joinable;
 }
-#endif // OPENTHREAD_CONFIG_ENABLE_BEACON_RSP_IF_JOINABLE
+#endif // OPENTHREAD_CONFIG_ENABLE_BEACON_RSP_WHEN_JOINABLE
 
 Mac &Mac::GetOwner(const Context &aContext)
 {

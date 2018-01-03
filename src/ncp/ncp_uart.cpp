@@ -30,8 +30,6 @@
  *   This file contains definitions for a UART based NCP interface to the OpenThread stack.
  */
 
-#include <openthread/config.h>
-
 #include "ncp_uart.hpp"
 
 #include <stdio.h>
@@ -99,6 +97,7 @@ NcpUart::NcpUart(otInstance *aInstance):
     mUartBuffer(),
     mState(kStartingFrame),
     mByte(0),
+    mUartSendImmediate(false),
     mUartSendTask(*aInstance, EncodeAndSendToUart, this)
 {
     mTxFrameBuffer.SetFrameAddedCallback(HandleFrameAddedToNcpBuffer, this);
@@ -136,8 +135,9 @@ void NcpUart::EncodeAndSendToUart(Tasklet &aTasklet)
 void NcpUart::EncodeAndSendToUart(void)
 {
     uint16_t len;
+    bool prevHostPowerState;
 
-    while (!mTxFrameBuffer.IsEmpty())
+    while (!mTxFrameBuffer.IsEmpty() || (mState == kFinalizingFrame))
     {
         switch (mState)
         {
@@ -159,12 +159,26 @@ void NcpUart::EncodeAndSendToUart(void)
             {
                 mByte = mTxFrameBuffer.OutFrameReadByte();
 
-            case kEncodingFrame:
+        case kEncodingFrame:
 
                 SuccessOrExit(mFrameEncoder.Encode(mByte, mUartBuffer));
             }
 
+            // track the change of mHostPowerStateInProgress by the
+            // call to OutFrameRemove.
+            prevHostPowerState = mHostPowerStateInProgress;
+
             mTxFrameBuffer.OutFrameRemove();
+
+            if (prevHostPowerState && !mHostPowerStateInProgress)
+            {
+                // If mHostPowerStateInProgress transitioned from true -> false
+                // in the call to OutFrameRemove, then the frame should be sent
+                // out the UART without attempting to push any new frames into
+                // the mUartBuffer. This is necessary to avoid prematurely calling
+                // otPlatWakeHost.
+                mUartSendImmediate = true;
+            }
 
             mState = kFinalizingFrame;
 
@@ -175,6 +189,13 @@ void NcpUart::EncodeAndSendToUart(void)
             SuccessOrExit(mFrameEncoder.Finalize(mUartBuffer));
 
             mState = kStartingFrame;
+
+            if (mUartSendImmediate)
+            {
+                // clear state and break;
+                mUartSendImmediate = false;
+                break;
+            }
         }
     }
 
@@ -269,38 +290,6 @@ void NcpUart::HandleError(otError aError, uint8_t *aBuf, uint16_t aBufLength)
     // We skip the first byte since it has a space in it.
     otNcpStreamWrite(0, reinterpret_cast<uint8_t *>(hexbuf + 1), static_cast<int>(strlen(hexbuf) - 1));
 }
-
-#if OPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT
-#ifdef __cplusplus
-extern "C" {
-#endif
-void otPlatLog(otLogLevel aLogLevel, otLogRegion aLogRegion, const char *aFormat, ...)
-{
-    char logString[128];
-    int charsWritten;
-    va_list args;
-
-    va_start(args, aFormat);
-
-    if ((charsWritten = vsnprintf(logString, sizeof(logString), aFormat, args)) > 0)
-    {
-        if (charsWritten > static_cast<int>(sizeof(logString) - 1))
-        {
-            charsWritten = static_cast<int>(sizeof(logString) - 1);
-        }
-
-        otNcpStreamWrite(0, reinterpret_cast<uint8_t *>(logString), charsWritten);
-    }
-
-    va_end(args);
-
-    OT_UNUSED_VARIABLE(aLogLevel);
-    OT_UNUSED_VARIABLE(aLogRegion);
-}
-#ifdef __cplusplus
-}  // extern "C"
-#endif
-#endif // OPENTHREAD_ENABLE_CLI_LOGGING
 
 }  // namespace Ncp
 }  // namespace ot

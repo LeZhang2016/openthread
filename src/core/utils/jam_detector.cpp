@@ -31,8 +31,6 @@
  *   This file implements the jam detector feature.
  */
 
-#include <openthread/config.h>
-
 #include "jam_detector.hpp"
 
 #include <openthread/openthread.h>
@@ -47,12 +45,12 @@
 namespace ot {
 namespace Utils {
 
-JamDetector::JamDetector(ThreadNetif &aNetif) :
-    ThreadNetifLocator(aNetif),
+JamDetector::JamDetector(otInstance &aInstance) :
+    InstanceLocator(aInstance),
     mHandler(NULL),
     mContext(NULL),
     mRssiThreshold(kDefaultRssiThreshold),
-    mTimer(aNetif.GetInstance(), &JamDetector::HandleTimer, this),
+    mTimer(aInstance, &JamDetector::HandleTimer, this),
     mHistoryBitmap(0),
     mCurSecondStartTime(0),
     mSampleInterval(0),

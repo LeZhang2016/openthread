@@ -34,6 +34,8 @@
 #ifndef MLE_HPP_
 #define MLE_HPP_
 
+#include "openthread-core-config.h"
+
 #include <openthread/openthread.h>
 
 #include "common/encoding.hpp"
@@ -112,13 +114,23 @@ enum AlocAllocation
     kAloc16Leader                       = 0xfc00,
     kAloc16DhcpAgentStart               = 0xfc01,
     kAloc16DhcpAgentEnd                 = 0xfc0f,
-    kAloc16DhcpAgentMask                = 0x03ff,
+    kAloc16DhcpAgentMask                = 0x000f,
     kAloc16ServiceStart                 = 0xfc10,
     kAloc16ServiceEnd                   = 0xfc2f,
     kAloc16CommissionerStart            = 0xfc30,
     kAloc16CommissionerEnd              = 0xfc37,
     kAloc16NeighborDiscoveryAgentStart  = 0xfc40,
     kAloc16NeighborDiscoveryAgentEnd    = 0xfc4e,
+};
+
+/**
+ * Service IDs
+ *
+ */
+enum ServiceID
+{
+    kServiceMinId = 0x00,  ///< Minimal Service ID.
+    kServiceMaxId = 0x0f,  ///< Maximal Service ID.
 };
 
 /**
@@ -447,16 +459,16 @@ private:
  * This class implements MLE functionality required by the Thread EndDevices, Router, and Leader roles.
  *
  */
-class Mle: public ThreadNetifLocator
+class Mle: public InstanceLocator
 {
 public:
     /**
      * This constructor initializes the MLE object.
      *
-     * @param[in]  aThreadNetif  A reference to the Thread network interface.
+     * @param[in]  aInstance     A reference to the OpenThread instance.
      *
      */
-    explicit Mle(ThreadNetif &aThreadNetif);
+    explicit Mle(otInstance &aInstance);
 
     /**
      * This method enables MLE.
@@ -793,6 +805,20 @@ public:
      */
     otError GetLeaderAloc(Ip6::Address &aAddress) const;
 
+#if OPENTHREAD_ENABLE_SERVICE
+    /**
+     * This method retrieves the Service ALOC for given Service ID.
+     *
+     * @param[in]   aServiceID Service ID to get ALOC for.
+     * @param[out]  aAddress   A reference to the Service ALOC.
+     *
+     * @retval OT_ERROR_NONE      Successfully retrieved the Service ALOC.
+     * @retval OT_ERROR_DETACHED  The Thread interface is not currently attached to a Thread Partition.
+     *
+     */
+    otError GetServiceAloc(uint8_t aServiceId, Ip6::Address &aAddress) const;
+#endif
+
     /**
      * This method adds Leader's ALOC to its Thread interface.
      *
@@ -841,6 +867,26 @@ public:
      *
      */
     static uint8_t GetRouterId(uint16_t aRloc16) { return aRloc16 >> kRouterIdOffset; }
+
+    /**
+     * This method returns the Service ID corresponding to a Service ALOC16.
+     *
+     * @param[in]  aAloc16  The Servicer ALOC16 value.
+     *
+     * @returns The Service ID corresponding to given ALOC16.
+     *
+     */
+    static uint8_t GetServiceIdFromAloc(uint16_t aAloc16) { return static_cast<uint8_t>(aAloc16 - kAloc16ServiceStart); }
+
+    /**
+     * This method returns the Service Aloc corresponding to a Service ID.
+     *
+     * @param[in]  aAloc16  The Servicer ID value.
+     *
+     * @returns The Service ALOC16 corresponding to given ID.
+     *
+     */
+    static uint16_t GetServiceAlocFromId(uint8_t aServiceId) { return static_cast<uint16_t>(aServiceId + kAloc16ServiceStart); }
 
     /**
      * This method returns the RLOC16 of a given Router ID.
@@ -1118,17 +1164,6 @@ protected:
     otError AppendPendingTimestamp(Message &aMessage);
 
     /**
-     * This method appends a Thread Discovery TLV to a message.
-     *
-     * @param[in]  aMessage  A reference to the message.
-     *
-     * @retval OT_ERROR_NONE     Successfully appended the Thread Discovery TLV.
-     * @retval OT_ERROR_NO_BUFS  Insufficient buffers available to append the Address Registration TLV.
-     *
-     */
-    otError AppendDiscovery(Message &aMessage);
-
-    /**
      * This method checks if the destination is reachable.
      *
      * @param[in]  aMeshSource  The RLOC16 of the source.
@@ -1289,6 +1324,25 @@ protected:
      */
     otError AddDelayedResponse(Message &aMessage, const Ip6::Address &aDestination, uint16_t aDelay);
 
+    /**
+     * This method prints an MLE log message with an IPv6 address.
+     *
+     * @param[in]  aLogMessage  The log message string.
+     * @param[in]  aAddress     The IPv6 address of the peer.
+     *
+     */
+    void LogMleMessage(const char *aLogMessage, const Ip6::Address &aAddress) const;
+
+    /**
+     * This method prints an MLE log message with an IPv6 address and RLOC16.
+     *
+     * @param[in]  aLogMessage  The log message string.
+     * @param[in]  aAddress     The IPv6 address of the peer.
+     * @param[in]  aRloc        The RLOC16.
+     *
+     */
+    void LogMleMessage(const char *aLogMessage, const Ip6::Address &aAddress, uint16_t aRloc) const;
+
     LeaderDataTlv mLeaderData;              ///< Last received Leader Data TLV.
     bool mRetrieveNewNetworkData;           ///< Indicating new Network Data is needed if set.
 
@@ -1324,18 +1378,19 @@ protected:
     };
     ReattachState mReattachState;
 
-    TimerMilli mParentRequestTimer;    ///< The timer for driving the Parent Request process.
-    TimerMilli mDelayedResponseTimer;  ///< The timer to delay MLE responses.
-    uint8_t mLastPartitionRouterIdSequence;
-    uint32_t mLastPartitionId;
+    TimerMilli mParentRequestTimer;          ///< The timer for driving the Parent Request process.
+    TimerMilli mDelayedResponseTimer;        ///< The timer to delay MLE responses.
+    uint32_t mLastPartitionId;               ///< The partition ID of the previous Thread partition
+    uint8_t mLastPartitionRouterIdSequence;  ///< The router ID sequence from the previous Thread partition
+    uint8_t mLastPartitionIdTimeout;         ///< The time remaining to avoid the previous Thread partition
 
-protected:
     uint8_t mParentLeaderCost;
 
 private:
     enum
     {
         kMleMessagePriority = Message::kPriorityHigh,
+        kMleHopLimit        = 255,
     };
 
     void GenerateNonce(const Mac::ExtAddress &aMacAddr, uint32_t aFrameCounter, uint8_t aSecurityLevel,
@@ -1367,8 +1422,21 @@ private:
     otError SendChildIdRequest(void);
     void SendOrphanAnnounce(void);
 
-    bool IsBetterParent(uint16_t aRloc16, uint8_t aLinkQuality, ConnectivityTlv &aConnectivityTlv);
+    bool IsBetterParent(uint16_t aRloc16, uint8_t aLinkQuality, uint8_t aLinkMargin,
+                        ConnectivityTlv &aConnectivityTlv);
     void ResetParentCandidate(void);
+
+#if OPENTHREAD_ENABLE_SERVICE
+    /**
+     * This method scans for network data from the leader and updates ip addresses assigned to this
+     * interface to make sure that all Service ALOCs (0xfc10-0xfc1f) are properly set.
+     */
+    void UpdateServiceAlocs(void);
+#endif
+
+#if OPENTHREAD_CONFIG_INFORM_PREVIOUS_PARENT_ON_REATTACH
+    otError InformPreviousParent(void);
+#endif
 
     static Mle &GetOwner(const Context &aContext);
 
@@ -1392,6 +1460,7 @@ private:
     uint8_t mParentLinkQuality1;
     uint8_t mChildUpdateAttempts;
     LeaderDataTlv mParentLeaderData;
+    uint8_t mParentLinkMargin;
     bool mParentIsSingleton;
 
     Router mParentCandidate;
@@ -1406,11 +1475,19 @@ private:
     bool mIsDiscoverInProgress;
     bool mEnableEui64Filtering;
 
+#if OPENTHREAD_CONFIG_INFORM_PREVIOUS_PARENT_ON_REATTACH
+    uint16_t mPreviousParentRloc;
+#endif
+
     uint8_t mAnnounceChannel;
     uint8_t mPreviousChannel;
     uint16_t mPreviousPanId;
 
     Ip6::NetifUnicastAddress mLeaderAloc;
+
+#if OPENTHREAD_ENABLE_SERVICE
+    Ip6::NetifUnicastAddress mServiceAlocs[OPENTHREAD_CONFIG_MAX_SERVER_ALOCS];
+#endif
 
     Ip6::NetifUnicastAddress mLinkLocal64;
     Ip6::NetifUnicastAddress mMeshLocal64;

@@ -35,6 +35,23 @@
 #ifndef OPENTHREAD_CORE_NRF52840_CONFIG_H_
 #define OPENTHREAD_CORE_NRF52840_CONFIG_H_
 
+/*
+ * The GNU Autoconf system defines a PACKAGE macro which is the name
+ * of the software package. This name collides with PACKAGE field in
+ * the nRF52 Factory Information Configuration Registers (FICR)
+ * structure.
+ */
+#undef PACKAGE
+
+/**
+ * @def OPENTHREAD_CONFIG_LOG_OUTPUT
+ *
+ * The nrf52840 platform provides an otPlatLog() function.
+ */
+#ifndef OPENTHREAD_CONFIG_LOG_OUTPUT /* allow command line override */
+#define OPENTHREAD_CONFIG_LOG_OUTPUT  OPENTHERAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED
+#endif
+
 /**
  * @def OPENTHREAD_CONFIG_PLATFORM_INFO
  *
@@ -49,7 +66,7 @@
  * The number of message buffers in the buffer pool.
  *
  */
-#define OPENTHREAD_CONFIG_NUM_MESSAGE_BUFFERS                   128
+#define OPENTHREAD_CONFIG_NUM_MESSAGE_BUFFERS                   1024
 
 /**
  * @def OPENTHREAD_CONFIG_MAX_STATECHANGE_HANDLERS
@@ -138,5 +155,13 @@
  *
  */
 #define OPENTHREAD_CONFIG_MBEDTLS_HEAP_SIZE_NO_DTLS             2048
+
+/*
+ * Suppress the ARMCC warning on unreachable statement,
+ * e.g. break after assert(false) or ExitNow() macro.
+ */
+#if defined(__CC_ARM)
+    _Pragma("diag_suppress=111")
+#endif
 
 #endif  // OPENTHREAD_CORE_NRF52840_CONFIG_H_

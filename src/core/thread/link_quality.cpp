@@ -31,8 +31,6 @@
  *   This file implements link quality information processing and storage.
  */
 
-#include <openthread/config.h>
-
 #include "link_quality.hpp"
 
 #include <stdio.h>
@@ -153,6 +151,8 @@ void LinkQualityInfo::Clear(void)
 void LinkQualityInfo::AddRss(int8_t aNoiseFloor, int8_t aRss)
 {
     uint8_t oldLinkQuality = kNoLinkQuality;
+
+    VerifyOrExit(aRss != OT_RADIO_RSSI_INVALID);
 
     mLastRss = aRss;
 

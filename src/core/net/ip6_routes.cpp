@@ -31,8 +31,6 @@
  *   This file implements IPv6 route tables.
  */
 
-#include <openthread/config.h>
-
 #include "ip6_routes.hpp"
 
 #include "common/code_utils.hpp"
@@ -43,8 +41,8 @@
 namespace ot {
 namespace Ip6 {
 
-Routes::Routes(Ip6 &aIp6):
-    Ip6Locator(aIp6),
+Routes::Routes(otInstance &aInstance):
+    InstanceLocator(aInstance),
     mRoutes(NULL)
 {
 }

@@ -34,6 +34,8 @@
 #ifndef NET_NETIF_HPP_
 #define NET_NETIF_HPP_
 
+#include "openthread-core-config.h"
+
 #include "common/locator.hpp"
 #include "common/message.hpp"
 #include "common/tasklet.hpp"
@@ -159,7 +161,7 @@ public:
      * @returns A pointer to the next multicast address.
      *
      */
-    const NetifMulticastAddress *GetNext(void) const { return static_cast<NetifMulticastAddress *>(mNext); }
+    const NetifMulticastAddress *GetNext(void) const { return static_cast<const NetifMulticastAddress *>(mNext); }
 
     /**
      * This method returns the next multicast address subscribed to the interface.
@@ -167,7 +169,9 @@ public:
      * @returns A pointer to the next multicast address.
      *
      */
-    NetifMulticastAddress *GetNext(void) { return static_cast<NetifMulticastAddress *>(mNext); }
+    NetifMulticastAddress *GetNext(void) {
+        return static_cast<NetifMulticastAddress *>(const_cast<otNetifMulticastAddress *>(mNext));
+    }
 };
 
 /**
@@ -248,7 +252,7 @@ private:
  * This class implements an IPv6 network interface.
  *
  */
-class Netif: public Ip6Locator
+class Netif: public InstanceLocator
 {
     friend class Ip6;
 
@@ -256,11 +260,11 @@ public:
     /**
      * This constructor initializes the network interface.
      *
-     * @param[in]  aIp6             A reference to the IPv6 network object.
+     * @param[in]  aInstance        A reference to the OpenThread instance.
      * @param[in]  aInterfaceId     The interface ID for this object.
      *
      */
-    Netif(Ip6 &aIp6, int8_t aInterfaceId);
+    Netif(otInstance &aInstance, int8_t aInterfaceId);
 
     /**
      * This method returns the next network interface in the list.
@@ -362,14 +366,20 @@ public:
     /**
      * This method subscribes the network interface to the link-local and realm-local all routers address.
      *
+     * @retval OT_ERROR_NONE     Successfully subscribed to the link-local and realm-local all routers address
+     * @retval OT_ERROR_ALREADY  The multicast addresses are already subscribed.
+     *
      */
-    void SubscribeAllRoutersMulticast(void) { mAllRoutersSubscribed = true; }
+    otError SubscribeAllRoutersMulticast(void);
 
     /**
      * This method unsubscribes the network interface to the link-local and realm-local all routers address.
      *
+     * @retval OT_ERROR_NONE       Successfully unsubscribed from the link-local and realm-local all routers address
+     * @retval OT_ERROR_NOT_FOUND  The multicast addresses were not found.
+     *
      */
-    void UnsubscribeAllRoutersMulticast(void) { mAllRoutersSubscribed = false; }
+    otError UnsubscribeAllRoutersMulticast(void);
 
     /**
      * This method returns a pointer to the list of multicast addresses.
@@ -395,8 +405,8 @@ public:
      *
      * @param[in]  aAddress  A reference to the multicast address.
      *
-     * @retval OT_ERROR_NONE     Successfully unsubscribed to @p aAddress.
-     * @retval OT_ERROR_ALREADY  The multicast address is already unsubscribed.
+     * @retval OT_ERROR_NONE       Successfully unsubscribed @p aAddress.
+     * @retval OT_ERROR_NOT_FOUND  The multicast address was not found.
      *
      */
     otError UnsubscribeMulticast(const NetifMulticastAddress &aAddress);
@@ -529,7 +539,6 @@ private:
     NetifUnicastAddress *mUnicastAddresses;
     NetifMulticastAddress *mMulticastAddresses;
     int8_t mInterfaceId;
-    bool mAllRoutersSubscribed;
     bool mMulticastPromiscuous;
     Tasklet mStateChangedTask;
     Netif *mNext;
@@ -538,6 +547,12 @@ private:
 
     NetifUnicastAddress mExtUnicastAddresses[OPENTHREAD_CONFIG_MAX_EXT_IP_ADDRS];
     NetifMulticastAddress mExtMulticastAddresses[OPENTHREAD_CONFIG_MAX_EXT_MULTICAST_IP_ADDRS];
+
+    static const otNetifMulticastAddress kRealmLocalAllMplForwardersMulticastAddress;
+    static const otNetifMulticastAddress kLinkLocalAllNodesMulticastAddress;
+    static const otNetifMulticastAddress kRealmLocalAllNodesMulticastAddress;
+    static const otNetifMulticastAddress kLinkLocalAllRoutersMulticastAddress;
+    static const otNetifMulticastAddress kRealmLocalAllRoutersMulticastAddress;
 };
 
 /**

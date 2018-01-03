@@ -31,8 +31,6 @@
  *   This file implements the CLI server on the UART service.
  */
 
-#include <openthread/config.h>
-
 #include "cli_uart.hpp"
 
 #include <stdarg.h>
@@ -43,12 +41,16 @@
 #include <openthread/cli.h>
 #include <openthread/platform/logging.h>
 #include <openthread/platform/uart.h>
-
 #include "cli/cli.hpp"
 #include "common/code_utils.hpp"
 #include "common/encoding.hpp"
 #include "common/new.hpp"
 #include "common/tasklet.hpp"
+#include "common/logging.hpp"
+
+#if  OPENTHREAD_CONFIG_ENABLE_DEBUG_UART
+#include <openthread/platform/debug_uart.h>
+#endif
 
 namespace ot {
 namespace Cli {
@@ -63,6 +65,29 @@ static otDEFINE_ALIGNED_VAR(sCliUartRaw, sizeof(Uart), uint64_t);
 extern "C" void otCliUartInit(otInstance *aInstance)
 {
     Uart::sUartServer = new(&sCliUartRaw) Uart(aInstance);
+}
+
+extern "C" void otCliUartSetUserCommands(const otCliCommand *aUserCommands, uint8_t aLength)
+{
+    Uart::sUartServer->GetInterpreter().SetUserCommands(aUserCommands, aLength);
+}
+
+extern "C" void otCliUartOutputBytes(const uint8_t *aBytes, uint8_t aLength)
+{
+    Uart::sUartServer->GetInterpreter().OutputBytes(aBytes, aLength);
+}
+
+extern "C" void otCliUartOutputFormat(const char *aFmt, ...)
+{
+    va_list aAp;
+    va_start(aAp, aFmt);
+    Uart::sUartServer->OutputFormatV(aFmt, aAp);
+    va_end(aAp);
+}
+
+extern "C" void otCliUartAppendResult(otError aError)
+{
+    Uart::sUartServer->GetInterpreter().AppendResult(aError);
 }
 
 Uart::Uart(otInstance *aInstance):
@@ -149,6 +174,34 @@ otError Uart::ProcessCommand(void)
         mRxBuffer[--mRxLength] = '\0';
     }
 
+#if  OPENTHREAD_CONFIG_LOG_OUTPUT != OPENTHREAD_CONFIG_LOG_OUTPUT_NONE
+    /*
+     * Note this is here for this reason:
+     *
+     * TEXT (command) input ... in a test automation script occurs
+     * rapidly and often without gaps between the command and the
+     * terminal CR
+     *
+     * In contrast as a human is typing there is a delay between the
+     * last character of a command and the terminal CR which executes
+     * a command.
+     *
+     * During that human induced delay a tasklet may be scheduled and
+     * the LOG becomes confusing and it is hard to determine when
+     * something happened.  Which happened first? the command-CR or
+     * the tasklet.
+     *
+     * Yes, while rare it is a race condition that is hard to debug.
+     *
+     * Thus this is here to afirmatively LOG exactly when the CLI
+     * command is being executed.
+     */
+#if OPENTHREAD_ENABLE_MULTIPLE_INSTANCES
+    /* TODO: how exactly do we get the instance here? */
+#else
+    otLogInfoCli(otGetInstance(),  "execute command: %s", mRxBuffer);
+#endif
+#endif
     mInterpreter.ProcessLine(mRxBuffer, mRxLength, *this);
 
     mRxLength = 0;
@@ -214,6 +267,10 @@ void Uart::Send(void)
 
     if (mSendLength > 0)
     {
+#if OPENTHREAD_CONFIG_ENABLE_DEBUG_UART
+        /* duplicate the output to the debug uart */
+        otPlatDebugUart_write_bytes(reinterpret_cast<uint8_t *>(mTxBuffer + mTxHead), mSendLength);
+#endif
         otPlatUartSend(reinterpret_cast<uint8_t *>(mTxBuffer + mTxHead), mSendLength);
     }
 
@@ -235,30 +292,19 @@ void Uart::SendDoneTask(void)
     Send();
 }
 
-#if OPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT
-#ifdef __cplusplus
-extern "C" {
-#endif
-void otPlatLog(otLogLevel aLogLevel, otLogRegion aLogRegion, const char *aFormat, ...)
+extern "C" void otCliPlatLogv(otLogLevel aLogLevel, otLogRegion aLogRegion, const char *aFormat, va_list ap)
 {
     if (NULL == Uart::sUartServer)
     {
         return;
     }
 
-    va_list args;
-    va_start(args, aFormat);
-    Uart::sUartServer->OutputFormatV(aFormat, args);
+    Uart::sUartServer->OutputFormatV(aFormat, ap);
     Uart::sUartServer->OutputFormat("\r\n");
-    va_end(args);
 
     OT_UNUSED_VARIABLE(aLogLevel);
     OT_UNUSED_VARIABLE(aLogRegion);
 }
-#ifdef __cplusplus
-}  // extern "C"
-#endif
-#endif // OPENTHREAD_CONFIG_ENABLE_DEFAULT_LOG_OUTPUT
 
 }  // namespace Cli
 }  // namespace ot

@@ -31,8 +31,6 @@
  *   This file implements the CLI interpreter.
  */
 
-#include <openthread/config.h>
-
 #include "cli.hpp"
 
 #ifdef OTDLL
@@ -42,6 +40,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "utils/wrap_string.h"
+
+#include <openthread/platform/gpio.h>
+#include <openthread/platform/random.h>
 
 #include <openthread/openthread.h>
 #include <openthread/commissioner.h>
@@ -56,6 +57,9 @@
 
 #if OPENTHREAD_ENABLE_BORDER_ROUTER
 #include <openthread/border_router.h>
+#endif
+#if OPENTHREAD_ENABLE_SERVICE
+#include <openthread/server.h>
 #endif
 
 #ifndef OTDLL
@@ -77,6 +81,10 @@
 #include "cli_coap.hpp"
 #endif
 
+#if (OPENTHREAD_CONFIG_LOG_OUTPUT == OPENTHREAD_CONFIG_LOG_OUTPUT_DEBUG_UART) && OPENTHREAD_EXAMPLES_POSIX
+#include <openthread/platform/debug_uart.h>
+#endif
+
 #include "common/encoding.hpp"
 
 using ot::Encoding::BigEndian::HostSwap16;
@@ -85,6 +93,8 @@ using ot::Encoding::BigEndian::HostSwap32;
 namespace ot {
 
 namespace Cli {
+
+uint8_t Interpreter::sTestChoice = 0;
 
 const struct Command Interpreter::sCommands[] =
 {
@@ -125,6 +135,9 @@ const struct Command Interpreter::sCommands[] =
 #ifdef OPENTHREAD_EXAMPLES_POSIX
     { "exit", &Interpreter::ProcessExit },
 #endif
+#if (OPENTHREAD_CONFIG_LOG_OUTPUT == OPENTHREAD_CONFIG_LOG_OUTPUT_DEBUG_UART) && OPENTHREAD_EXAMPLES_POSIX
+    { "logfilename", &Interpreter::ProcessLogFilename },
+#endif
     { "extaddr", &Interpreter::ProcessExtAddress },
     { "extpanid", &Interpreter::ProcessExtPanId },
     { "factoryreset", &Interpreter::ProcessFactoryReset },
@@ -155,8 +168,14 @@ const struct Command Interpreter::sCommands[] =
 #endif
     { "masterkey", &Interpreter::ProcessMasterKey },
     { "mode", &Interpreter::ProcessMode },
-#if OPENTHREAD_ENABLE_BORDER_ROUTER
+#if OPENTHREAD_FTD
+    { "neighbor", &Interpreter::ProcessNeighbor },
+#endif
+#if OPENTHREAD_ENABLE_BORDER_ROUTER || OPENTHREAD_ENABLE_SERVICE
     { "netdataregister", &Interpreter::ProcessNetworkDataRegister },
+#endif
+#if OPENTHREAD_ENABLE_SERVICE
+    { "netdatashow", &Interpreter::ProcessNetworkDataShow },
 #endif
 #if OPENTHREAD_FTD || OPENTHREAD_ENABLE_MTD_NETWORK_DIAGNOSTIC
     { "networkdiagnostic", &Interpreter::ProcessNetworkDiagnostic },
@@ -197,12 +216,17 @@ const struct Command Interpreter::sCommands[] =
     { "routerupgradethreshold", &Interpreter::ProcessRouterUpgradeThreshold },
 #endif
     { "scan", &Interpreter::ProcessScan },
+#if OPENTHREAD_ENABLE_SERVICE
+    { "service", &Interpreter::ProcessService },
+#endif
     { "singleton", &Interpreter::ProcessSingleton },
     { "state", &Interpreter::ProcessState },
     { "thread", &Interpreter::ProcessThread },
     { "txpowermax", &Interpreter::ProcessTxPowerMax },
 #ifndef OTDLL
     { "udp", &Interpreter::ProcessUdp },
+    { "latency", &Interpreter::ProcessLatency},
+    { "throughput", &Interpreter::ProcessThroughput},
 #endif
     { "version", &Interpreter::ProcessVersion },
 };
@@ -218,6 +242,20 @@ void otFreeMemory(const void *)
     // No-op on systems running OpenThread in-proc
 }
 #endif
+
+extern "C" void otPlatGpioSignalEvent(uint32_t aPinIndex)
+{
+    (void)aPinIndex;
+    if (Interpreter::sTestChoice == 1)
+    {
+        Uart::sUartServer->GetInterpreter().GetCliThroughput().platGpioResponse();
+    }
+    else if (Interpreter::sTestChoice == 0)
+    {
+        Uart::sUartServer->GetInterpreter().GetCliLatency().platGpioResponse();
+    }
+
+}
 
 template <class T> class otPtr
 {
@@ -239,6 +277,8 @@ Interpreter::Interpreter(otInstance *aInstance):
 #if OPENTHREAD_ENABLE_APPLICATION_COAP
     mCoap(*this),
 #endif
+    mUserCommands(NULL),
+    mUserCommandsLength(0),
     mServer(NULL),
 #ifdef OTDLL
     mApiInstance(otApiInit()),
@@ -252,6 +292,8 @@ Interpreter::Interpreter(otInstance *aInstance):
     mResolvingInProgress(0),
 #endif
     mUdp(*this),
+    mCliLatency(*this),
+    mCliThroughput(*this),
 #endif
     mInstance(aInstance)
 {
@@ -371,6 +413,11 @@ void Interpreter::ProcessHelp(int argc, char *argv[])
         mServer->OutputFormat("%s\r\n", sCommands[i].mName);
     }
 
+    for (unsigned int i = 0; i < mUserCommandsLength; i++)
+    {
+        mServer->OutputFormat("%s\r\n", mUserCommands[i].mName);
+    }
+
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
 }
@@ -424,6 +471,8 @@ void Interpreter::ProcessBufferInfo(int argc, char *argv[])
     mServer->OutputFormat("arp: %d %d\r\n", bufferInfo.mArpMessages, bufferInfo.mArpBuffers);
     mServer->OutputFormat("coap: %d %d\r\n", bufferInfo.mCoapMessages, bufferInfo.mCoapBuffers);
     mServer->OutputFormat("coap secure: %d %d\r\n", bufferInfo.mCoapSecureMessages, bufferInfo.mCoapSecureBuffers);
+    mServer->OutputFormat("application coap: %d %d\r\n", bufferInfo.mApplicationCoapMessages,
+                          bufferInfo.mApplicationCoapBuffers);
 
     AppendResult(OT_ERROR_NONE);
 }
@@ -452,13 +501,14 @@ void Interpreter::ProcessChild(int argc, char *argv[])
 {
     otError error = OT_ERROR_NONE;
     otChildInfo childInfo;
-    uint8_t maxChildren;
     long value;
-    bool isTable = false;
+    bool isTable;
 
     VerifyOrExit(argc > 0, error = OT_ERROR_PARSE);
 
-    if (strcmp(argv[0], "list") == 0 || (isTable = (strcmp(argv[0], "table") == 0)))
+    isTable = (strcmp(argv[0], "table") == 0);
+
+    if (isTable || strcmp(argv[0], "list") == 0)
     {
         if (isTable)
         {
@@ -466,11 +516,11 @@ void Interpreter::ProcessChild(int argc, char *argv[])
             mServer->OutputFormat("+-----+--------+------------+------------+-------+------+-+-+-+-+------------------+\r\n");
         }
 
-        maxChildren = otThreadGetMaxAllowedChildren(mInstance);
-
-        for (uint8_t i = 0; i < maxChildren ; i++)
+        // For certifcation: here intentionally not limits the upperbound for the index,
+        // giving the chance to exit from below default case as OpenThread THCI expects
+        // the content of "child list" and the result "Done" in seperate lines.
+        for (uint8_t i = 0; ; i++)
         {
-
             switch (otThreadGetChildInfoByIndex(mInstance, i, &childInfo))
             {
             case OT_ERROR_NONE:
@@ -513,8 +563,6 @@ void Interpreter::ProcessChild(int argc, char *argv[])
                 }
             }
         }
-
-        ExitNow();
     }
 
     SuccessOrExit(error = ParseLong(argv[0], value));
@@ -660,6 +708,7 @@ void Interpreter::ProcessCounters(int argc, char *argv[])
             mServer->OutputFormat("    TxOther: %d\r\n", counters->mTxOther);
             mServer->OutputFormat("    TxRetry: %d\r\n", counters->mTxRetry);
             mServer->OutputFormat("    TxErrCca: %d\r\n", counters->mTxErrCca);
+            mServer->OutputFormat("    TxErrBusyChannel: %d\r\n", counters->mTxErrBusyChannel);
             mServer->OutputFormat("RxTotal: %d\r\n", counters->mRxTotal);
             mServer->OutputFormat("    RxUnicast: %d\r\n", counters->mRxUnicast);
             mServer->OutputFormat("    RxBroadcast: %d\r\n", counters->mRxBroadcast);
@@ -668,7 +717,7 @@ void Interpreter::ProcessCounters(int argc, char *argv[])
             mServer->OutputFormat("    RxBeacon: %d\r\n", counters->mRxBeacon);
             mServer->OutputFormat("    RxBeaconRequest: %d\r\n", counters->mRxBeaconRequest);
             mServer->OutputFormat("    RxOther: %d\r\n", counters->mRxOther);
-            mServer->OutputFormat("    RxWhitelistFiltered: %d\r\n", counters->mRxWhitelistFiltered);
+            mServer->OutputFormat("    RxAddressFiltered: %d\r\n", counters->mRxAddressFiltered);
             mServer->OutputFormat("    RxDestAddrFiltered: %d\r\n", counters->mRxDestAddrFiltered);
             mServer->OutputFormat("    RxDuplicated: %d\r\n", counters->mRxDuplicated);
             mServer->OutputFormat("    RxErrNoFrame: %d\r\n", counters->mRxErrNoFrame);
@@ -904,6 +953,27 @@ void Interpreter::ProcessExit(int argc, char *argv[])
     exit(EXIT_SUCCESS);
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
+}
+#endif
+
+#if (OPENTHREAD_CONFIG_LOG_OUTPUT == OPENTHREAD_CONFIG_LOG_OUTPUT_DEBUG_UART) && OPENTHREAD_EXAMPLES_POSIX
+
+void Interpreter::ProcessLogFilename(int argc, char *argv[])
+{
+    otError error = OT_ERROR_NONE;
+
+    if (argc == 1)
+    {
+        error = otPlatDebugUart_logfile(argv[0]);
+        SuccessOrExit(error);
+    }
+    else
+    {
+        error = OT_ERROR_PARSE;
+    }
+
+exit:
+    AppendResult(error);
 }
 #endif
 
@@ -1371,18 +1441,141 @@ exit:
     AppendResult(error);
 }
 
-#if OPENTHREAD_ENABLE_BORDER_ROUTER
-void Interpreter::ProcessNetworkDataRegister(int argc, char *argv[])
+#if OPENTHREAD_FTD
+void Interpreter::ProcessNeighbor(int argc, char *argv[])
 {
     otError error = OT_ERROR_NONE;
-    SuccessOrExit(error = otBorderRouterRegister(mInstance));
+    otNeighborInfo neighborInfo;
+    bool isTable;
+    otNeighborInfoIterator iterator = OT_NEIGHBOR_INFO_ITERATOR_INIT;
+
+    VerifyOrExit(argc > 0, error = OT_ERROR_PARSE);
+
+    isTable = (strcmp(argv[0], "table") == 0);
+
+    if (isTable || strcmp(argv[0], "list") == 0)
+    {
+        if (isTable)
+        {
+            mServer->OutputFormat("| Role | RLOC16 | Age | Avg RSSI | Last RSSI |R|S|D|N| Extended MAC     |\r\n");
+            mServer->OutputFormat("+------+--------+-----+----------+-----------+-+-+-+-+------------------+\r\n");
+        }
+
+        while (otThreadGetNextNeighborInfo(mInstance, &iterator, &neighborInfo) == OT_ERROR_NONE)
+        {
+            if (isTable)
+            {
+                mServer->OutputFormat("| %3c  ", neighborInfo.mIsChild ? 'C' : 'R');
+                mServer->OutputFormat("| 0x%04x ", neighborInfo.mRloc16);
+                mServer->OutputFormat("| %3d ", neighborInfo.mAge);
+                mServer->OutputFormat("| %8d ", neighborInfo.mAverageRssi);
+                mServer->OutputFormat("| %9d ", neighborInfo.mLastRssi);
+                mServer->OutputFormat("|%1d", neighborInfo.mRxOnWhenIdle);
+                mServer->OutputFormat("|%1d", neighborInfo.mSecureDataRequest);
+                mServer->OutputFormat("|%1d", neighborInfo.mFullFunction);
+                mServer->OutputFormat("|%1d", neighborInfo.mFullNetworkData);
+                mServer->OutputFormat("| ");
+
+                for (size_t j = 0; j < sizeof(neighborInfo.mExtAddress); j++)
+                {
+                    mServer->OutputFormat("%02x", neighborInfo.mExtAddress.m8[j]);
+                }
+
+                mServer->OutputFormat(" |\r\n");
+            }
+            else
+            {
+                mServer->OutputFormat("0x%04x ", neighborInfo.mRloc16);
+            }
+        }
+
+        mServer->OutputFormat("\r\n");
+    }
+    else
+    {
+        error = OT_ERROR_PARSE;
+    }
+
+exit:
+    AppendResult(error);
+}
+#endif
+
+#if OPENTHREAD_ENABLE_SERVICE
+void Interpreter::ProcessNetworkDataShow(int argc, char *argv[])
+{
+    otError error = OT_ERROR_NONE;
+    uint8_t data[255];
+    uint8_t len = sizeof(data);
+
+    SuccessOrExit(error = otNetDataGet(mInstance, false, data, &len));
+
+    this->OutputBytes(data, static_cast<uint8_t>(len));
+    mServer->OutputFormat("\r\n");
 
 exit:
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
     AppendResult(error);
 }
-#endif  // OPENTHREAD_ENABLE_BORDER_ROUTER
+
+void Interpreter::ProcessService(int argc, char *argv[])
+{
+    otError error = OT_ERROR_NONE;
+
+    VerifyOrExit(argc > 0, error = OT_ERROR_PARSE);
+
+    if (strcmp(argv[0], "add") == 0)
+    {
+        otServiceConfig cfg;
+        long enterpriseNumber = 0;
+
+        VerifyOrExit(argc > 3, error = OT_ERROR_PARSE);
+
+        SuccessOrExit(error = ParseLong(argv[1], enterpriseNumber));
+
+        cfg.mServiceDataLength = static_cast<uint8_t>(strlen(argv[2]));
+        memcpy(cfg.mServiceData, argv[2], cfg.mServiceDataLength);
+        cfg.mEnterpriseNumber = static_cast<uint32_t>(enterpriseNumber);
+        cfg.mServerConfig.mStable = true;
+        cfg.mServerConfig.mServerDataLength = static_cast<uint8_t>(strlen(argv[3]));
+        memcpy(cfg.mServerConfig.mServerData, argv[3], cfg.mServerConfig.mServerDataLength);
+
+        SuccessOrExit(error = otServerAddService(mInstance, &cfg));
+    }
+    else if (strcmp(argv[0], "remove") == 0)
+    {
+        long enterpriseNumber = 0;
+
+        VerifyOrExit(argc > 2, error = OT_ERROR_PARSE);
+
+        SuccessOrExit(error = ParseLong(argv[1], enterpriseNumber));
+
+        SuccessOrExit(error = otServerRemoveService(mInstance, static_cast<uint32_t>(enterpriseNumber),
+                                                    reinterpret_cast<uint8_t *>(argv[2]), static_cast<uint8_t>(strlen(argv[2]))));
+    }
+
+exit:
+    AppendResult(error);
+}
+#endif
+
+#if OPENTHREAD_ENABLE_BORDER_ROUTER || OPENTHREAD_ENABLE_SERVICE
+void Interpreter::ProcessNetworkDataRegister(int argc, char *argv[])
+{
+    otError error = OT_ERROR_NONE;
+#if OPENTHREAD_ENABLE_BORDER_ROUTER
+    SuccessOrExit(error = otBorderRouterRegister(mInstance));
+#else
+    SuccessOrExit(error = otServerRegister(mInstance));
+#endif
+
+exit:
+    OT_UNUSED_VARIABLE(argc);
+    OT_UNUSED_VARIABLE(argv);
+    AppendResult(error);
+}
+#endif  // OPENTHREAD_ENABLE_BORDER_ROUTER || OPENTHREAD_ENABLE_SERVICE
 
 #if OPENTHREAD_FTD
 void Interpreter::ProcessNetworkIdTimeout(int argc, char *argv[])
@@ -2130,11 +2323,13 @@ void Interpreter::ProcessRouter(int argc, char *argv[])
     otError error = OT_ERROR_NONE;
     otRouterInfo routerInfo;
     long value;
-    bool isTable = false;
+    bool isTable;
 
     VerifyOrExit(argc > 0, error = OT_ERROR_PARSE);
 
-    if (strcmp(argv[0], "list") == 0 || (isTable = (strcmp(argv[0], "table") == 0)))
+    isTable = (strcmp(argv[0], "table") == 0);
+
+    if (isTable || strcmp(argv[0], "list") == 0)
     {
         if (isTable)
         {
@@ -2496,6 +2691,22 @@ void Interpreter::ProcessUdp(int argc, char *argv[])
 {
     otError error;
     error = mUdp.Process(argc, argv);
+    AppendResult(error);
+}
+
+void Interpreter::ProcessLatency(int argc, char *argv[])
+{
+    otError error;
+    Interpreter::sTestChoice = 0;
+    error = mCliLatency.Process(argc, argv);
+    AppendResult(error);
+}
+
+void Interpreter::ProcessThroughput(int argc, char *argv[])
+{
+    otError error;
+    Interpreter::sTestChoice = 1;
+    error = mCliThroughput.Process(argc, argv);
     AppendResult(error);
 }
 #endif
@@ -2883,11 +3094,6 @@ void Interpreter::ProcessMacFilter(int argc, char *argv[])
         }
     }
 
-    if (error != OT_ERROR_NONE)
-    {
-        otThreadErrorToString(error);
-    }
-
     AppendResult(error);
 }
 
@@ -3232,10 +3438,23 @@ void Interpreter::ProcessLine(char *aBuf, uint16_t aBufLength, Server &aServer)
         }
     }
 
-    // Error prompt for unsupported commands
+    // Check user defined commands if built-in command
+    // has not been found
     if (i == sizeof(sCommands) / sizeof(sCommands[0]))
     {
-        AppendResult(OT_ERROR_PARSE);
+        for (i = 0; i < mUserCommandsLength; i++)
+        {
+            if (strcmp(cmd, mUserCommands[i].mName) == 0)
+            {
+                mUserCommands[i].mCommand(argc, argv);
+                break;
+            }
+        }
+
+        if (i == mUserCommandsLength)
+        {
+            AppendResult(OT_ERROR_PARSE);
+        }
     }
 
 exit:
@@ -3280,36 +3499,34 @@ exit:
 void Interpreter::ProcessNetworkDiagnostic(int argc, char *argv[])
 {
     otError error = OT_ERROR_NONE;
-    struct otIp6Address address;
-    uint8_t payload[2 + OT_NETWORK_DIAGNOSTIC_TYPELIST_MAX_ENTRIES];  // TypeList Type(1B), len(1B), type list
-    uint8_t payloadIndex = 0;
-    uint8_t paramIndex = 0;
+    struct  otIp6Address address;
+    uint8_t tlvTypes[OT_NETWORK_DIAGNOSTIC_TYPELIST_MAX_ENTRIES];
+    uint8_t count = 0;
+    uint8_t argvIndex = 0;
 
-    VerifyOrExit(argc > 1 + 1, error = OT_ERROR_PARSE);
+    // Include operation, address and type tlv list.
+    VerifyOrExit(argc > 2, error = OT_ERROR_PARSE);
 
     SuccessOrExit(error = otIp6AddressFromString(argv[1], &address));
 
-    payloadIndex = 2;
-    paramIndex = 2;
+    argvIndex = 2;
 
-    while (paramIndex < argc && payloadIndex < sizeof(payload))
+    while (argvIndex < argc && count < sizeof(tlvTypes))
     {
         long value;
-        SuccessOrExit(error = ParseLong(argv[paramIndex++], value));
-        payload[payloadIndex++] = static_cast<uint8_t>(value);
+        SuccessOrExit(error = ParseLong(argv[argvIndex++], value));
+        tlvTypes[count++] = static_cast<uint8_t>(value);
     }
-
-    payload[0] = OT_NETWORK_DIAGNOSTIC_TYPELIST_TYPE;  // TypeList TLV Type
-    payload[1] = payloadIndex - 2;  // length
 
     if (strcmp(argv[0], "get") == 0)
     {
-        otThreadSendDiagnosticGet(mInstance, &address, payload, payloadIndex);
+        otThreadSendDiagnosticGet(mInstance, &address, tlvTypes, count);
+        // Intentionally exit here for display response.
         return;
     }
     else if (strcmp(argv[0], "reset") == 0)
     {
-        otThreadSendDiagnosticReset(mInstance, &address, payload, payloadIndex);
+        otThreadSendDiagnosticReset(mInstance, &address, tlvTypes, count);
     }
 
 exit:
@@ -3332,7 +3549,7 @@ void Interpreter::HandleDiagnosticGetResponse(Message &aMessage, const Ip6::Mess
     uint16_t bytesPrinted = 0;
     uint16_t length = aMessage.GetLength() - aMessage.GetOffset();
 
-    mServer->OutputFormat("DIAG_GET.rsp: ");
+    mServer->OutputFormat("DIAG_GET.rsp/ans: ");
 
     while (length > 0)
     {
@@ -3348,6 +3565,12 @@ void Interpreter::HandleDiagnosticGetResponse(Message &aMessage, const Ip6::Mess
     mServer->OutputFormat("\r\n");
 }
 #endif
+
+void Interpreter::SetUserCommands(const otCliCommand *aCommands, uint8_t aLength)
+{
+    mUserCommands = aCommands;
+    mUserCommandsLength = aLength;
+}
 
 Interpreter &Interpreter::GetOwner(const Context &aContext)
 {

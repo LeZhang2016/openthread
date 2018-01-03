@@ -31,10 +31,14 @@
  *   This file includes definitions for MLE functionality required by the Thread Router and Leader roles.
  */
 
-#ifndef MLE_ROUTER_HPP_
-#define MLE_ROUTER_HPP_
+#ifndef MLE_ROUTER_FTD_HPP_
+#define MLE_ROUTER_FTD_HPP_
+
+#include "openthread-core-config.h"
 
 #include "utils/wrap_string.h"
+
+#include <openthread/thread_ftd.h>
 
 #include "coap/coap.hpp"
 #include "coap/coap_header.hpp"
@@ -77,10 +81,10 @@ public:
     /**
      * This constructor initializes the object.
      *
-     * @param[in]  aThreadNetif  A reference to the Thread network interface.
+     * @param[in]  aInstance     A reference to the OpenThread instance.
      *
      */
-    explicit MleRouter(ThreadNetif &aThreadNetif);
+    explicit MleRouter(otInstance &aInstance);
 
     /**
      * This method indicates whether or not the Router Role is enabled.
@@ -140,6 +144,14 @@ public:
      *
      */
     uint8_t GetActiveRouterCount(void) const;
+
+    /**
+      * This method returns the number of active neighbor routers.
+      *
+      * @returns The number of active neighbor routers.
+      *
+      */
+    uint8_t GetActiveNeighborRouterCount(void) const;
 
     /**
      * This method returns the time in seconds since the last Router ID Sequence update.
@@ -573,6 +585,9 @@ public:
      * @param[in]   aRouterId    The router ID or RLOC16 for a given router.
      * @param[out]  aRouterInfo  The router information.
      *
+     * @retval OT_ERROR_NONE          Successfully retrieved the router info for given id.
+     * @retval OT_ERROR_NOT_FOUND     No router entry with the given id.
+     *
      */
     otError GetRouterInfo(uint16_t aRouterId, otRouterInfo &aRouterInfo);
 
@@ -662,7 +677,7 @@ public:
      * @retval OT_ERROR_NONE  Steering data was set
      *
      */
-    otError SetSteeringData(otExtAddress *aExtAddress);
+    otError SetSteeringData(const otExtAddress *aExtAddress);
 #endif // OPENTHREAD_CONFIG_ENABLE_STEERING_DATA_SET_OOB
 
     /**
@@ -695,6 +710,25 @@ public:
      *
      */
     otError GetMaxChildTimeout(uint32_t &aTimeout) const;
+
+    /**
+     * This method sets the "child table changed" callback function.
+     *
+     * The provided callback (if non-NULL) will be invoked when a child entry is being added/remove to/from the child
+     * table. Subsequent calls to this method will overwrite the previous callback.
+     *
+     * @param[in] aCallback    A pointer to callback handler function.
+     *
+     */
+    void SetChildTableChangedCallback(otThreadChildTableCallback aCallback) { mChildTableChangedCallback = aCallback; }
+
+    /**
+     * This method gets the "child table changed" callback function.
+     *
+     * @returns  The callback function pointer.
+     *
+     */
+    otThreadChildTableCallback GetChildTableChangedCallback(void) const { return mChildTableChangedCallback; }
 
 private:
     enum
@@ -742,8 +776,8 @@ private:
     otError SendLinkAccept(const Ip6::MessageInfo &aMessageInfo, Neighbor *aNeighbor,
                            const TlvRequestTlv &aTlvRequest, const ChallengeTlv &aChallenge);
     otError SendParentResponse(Child *aChild, const ChallengeTlv &aChallenge, bool aRoutersOnlyRequest);
-    otError SendChildIdResponse(Child *aChild);
-    otError SendChildUpdateRequest(Child *aChild);
+    otError SendChildIdResponse(Child &aChild);
+    otError SendChildUpdateRequest(Child &aChild);
     otError SendChildUpdateResponse(Child *aChild, const Ip6::MessageInfo &aMessageInfo,
                                     const uint8_t *aTlvs, uint8_t aTlvsLength,  const ChallengeTlv *challenge);
     otError SendDataResponse(const Ip6::Address &aDestination, const uint8_t *aTlvs, uint8_t aTlvsLength,
@@ -774,7 +808,7 @@ private:
     Child *FindChild(uint16_t aChildId);
     Child *FindChild(const Mac::ExtAddress &aMacAddr);
 
-    void SetChildStateToValid(Child *aChild);
+    void SetChildStateToValid(Child &aChild);
     bool HasChildren(void);
     void RemoveChildren(void);
     bool HasMinDowngradeNeighborRouters(void);
@@ -791,6 +825,8 @@ private:
     static void HandleStateUpdateTimer(Timer &aTimer);
     void HandleStateUpdateTimer(void);
 
+    void SignalChildUpdated(otThreadChildTableEvent aEvent, Child &aChild);
+
     static MleRouter &GetOwner(const Context &aContext);
 
     TrickleTimer mAdvertiseTimer;
@@ -805,6 +841,8 @@ private:
     uint8_t mMaxChildrenAllowed;
     Child mChildren[kMaxChildren];
 
+    otThreadChildTableCallback mChildTableChangedCallback;
+
     uint8_t mChallengeTimeout;
     uint8_t mChallenge[8];
     uint16_t mNextChildId;
@@ -813,8 +851,9 @@ private:
     uint8_t mRouterDowngradeThreshold;
     uint8_t mLeaderWeight;
     uint32_t mFixedLeaderPartitionId;  ///< only for certification testing
-    bool mRouterRoleEnabled;
-    bool mIsRouterRestoringChildren;
+    bool mRouterRoleEnabled : 1;
+    bool mIsRouterRestoringChildren : 1;
+    bool mAddressSolicitPending : 1;
 
     uint8_t mRouterId;
     uint8_t mPreviousRouterId;
@@ -839,4 +878,4 @@ private:
 
 }  // namespace ot
 
-#endif  // MLE_ROUTER_HPP_
+#endif  // MLE_ROUTER_FTD_HPP_

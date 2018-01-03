@@ -34,9 +34,10 @@
 #ifndef NETWORK_DIAGNOSTIC_HPP_
 #define NETWORK_DIAGNOSTIC_HPP_
 
+#include "openthread-core-config.h"
+
 #include <openthread/types.h>
 
-#include "openthread-core-config.h"
 #include "coap/coap.hpp"
 #include "common/locator.hpp"
 #include "net/udp6.hpp"
@@ -62,14 +63,14 @@ class NetworkDiagnosticTlv;
  * This class implements the Network Diagnostic processing.
  *
  */
-class NetworkDiagnostic: public ThreadNetifLocator
+class NetworkDiagnostic: public InstanceLocator
 {
 public:
     /**
      * This constructor initializes the object.
      *
      */
-    explicit NetworkDiagnostic(ThreadNetif &aThreadNetif);
+    explicit NetworkDiagnostic(otInstance &aInstance);
 
     /**
      * This method registers a callback to provide received raw DIAG_GET.rsp or an DIAG_GET.ans payload.

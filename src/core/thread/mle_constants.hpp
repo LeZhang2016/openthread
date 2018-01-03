@@ -34,6 +34,8 @@
 #ifndef MLE_CONSTANTS_HPP_
 #define MLE_CONSTANTS_HPP_
 
+#include "openthread-core-config.h"
+
 namespace ot {
 namespace Mle {
 
@@ -65,6 +67,7 @@ enum
     kMaxResponseDelay              = 1000,  ///< Maximum delay before responding to a multicast request
     kMaxChildIdRequestTimeout      = 5000,  ///< Maximum delay for receiving a Child ID Request
     kMaxChildUpdateResponseTimeout = 2000,  ///< Maximum delay for receiving a Child Update Response
+    kMaxLinkRequestTimeout         = 2000,  ///< Maximum delay for receiving a Link Accept
     kMinTimeout                    = (((kMaxChildKeepAliveAttempts + 1) * kUnicastRetransmissionDelay) / 1000),  ///< Minimum timeout(s)
 };
 

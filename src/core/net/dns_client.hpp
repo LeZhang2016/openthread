@@ -29,6 +29,8 @@
 #ifndef DNS_CLIENT_HPP_
 #define DNS_CLIENT_HPP_
 
+#include "openthread-core-config.h"
+
 #include <openthread/dns.h>
 #include <openthread/types.h>
 
@@ -157,7 +159,7 @@ public:
      *
      */
     Client(Ip6::Netif &aNetif):
-        mSocket(aNetif.GetIp6().mUdp),
+        mSocket(aNetif.GetIp6().GetUdp()),
         mMessageId(0),
         mRetransmissionTimer(aNetif.GetInstance(), &Client::HandleRetransmissionTimer, this) {
     };

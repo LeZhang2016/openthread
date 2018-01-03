@@ -34,9 +34,10 @@
 #ifndef TOPOLOGY_HPP_
 #define TOPOLOGY_HPP_
 
+#include "openthread-core-config.h"
+
 #include <openthread/platform/random.h>
 
-#include "openthread-core-config.h"
 #include "common/message.hpp"
 #include "mac/mac_frame.hpp"
 #include "net/ip6.hpp"
@@ -189,7 +190,7 @@ public:
     /**
      * This method sets the key sequence value.
      *
-     * @parma[in]  aKeySequence  The key sequence value.
+     * @param[in]  aKeySequence  The key sequence value.
      *
      */
     void SetKeySequence(uint32_t aKeySequence) { mKeySequence = aKeySequence; }
@@ -317,9 +318,9 @@ public:
     const uint8_t *GetChallenge(void) const { return mValidPending.mPending.mChallenge; }
 
     /**
-     * This method returns the size (byets) of the challenge value for MLE Link Request/Response exchanges.
+     * This method returns the size (bytes) of the challenge value for MLE Link Request/Response exchanges.
      *
-     * @returns The size (byets) of the challenge value for MLE Link Request/Response exchanges.
+     * @returns The size (bytes) of the challenge value for MLE Link Request/Response exchanges.
      *
      */
     uint8_t GetChallengeSize(void) const { return sizeof(mValidPending.mPending.mChallenge); }

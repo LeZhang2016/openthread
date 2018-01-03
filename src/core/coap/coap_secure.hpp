@@ -29,6 +29,8 @@
 #ifndef COAP_SECURE_HPP_
 #define COAP_SECURE_HPP_
 
+#include "openthread-core-config.h"
+
 #include "coap/coap.hpp"
 #include "meshcop/dtls.hpp"
 
@@ -43,7 +45,7 @@ class ThreadNetif;
 
 namespace Coap {
 
-class CoapSecure: public Coap
+class CoapSecure: public CoapBase
 {
 public:
     /**
@@ -68,10 +70,10 @@ public:
     /**
      * This constructor initializes the object.
      *
-     * @param[in]  aNetif  A reference to the network interface that the secure CoAP agent is bound to.
+     * @param[in]  aInstance  A reference to the OpenThread instance.
      *
      */
-    CoapSecure(ThreadNetif &aNetif);
+    CoapSecure(otInstance &aInstance);
 
     /**
      * This method starts the secure CoAP agent.
@@ -197,7 +199,7 @@ public:
      * @param[in]  aMessageInfo  A reference to the message info associated with @p aMessage.
      *
      */
-    void Receive(Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
+    virtual void Receive(Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
 
 private:
     virtual otError Send(Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
@@ -213,6 +215,9 @@ private:
 
     static void HandleUdpTransmit(Tasklet &aTasklet);
     void HandleUdpTransmit(void);
+
+    static void HandleRetransmissionTimer(Timer &aTimer);
+    static void HandleResponsesQueueTimer(Timer &aTimer);
 
     static CoapSecure &GetOwner(const Context &aContext);
 

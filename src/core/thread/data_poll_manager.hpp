@@ -34,9 +34,10 @@
 #ifndef DATA_POLL_MANAGER_HPP_
 #define DATA_POLL_MANAGER_HPP_
 
+#include "openthread-core-config.h"
+
 #include <openthread/types.h>
 
-#include "openthread-core-config.h"
 #include "common/code_utils.hpp"
 #include "common/locator.hpp"
 #include "common/timer.hpp"
@@ -58,7 +59,7 @@ namespace ot {
  *
  */
 
-class DataPollManager: public MeshForwarderLocator
+class DataPollManager: public InstanceLocator
 {
 public:
     enum
@@ -70,10 +71,10 @@ public:
     /**
      * This constructor initializes the data poll manager object.
      *
-     * @param[in]  aMeshForwarder  A reference to the Mesh Forwarder.
+     * @param[in]  aInstance   A reference to the OpenThread instance.
      *
      */
-    explicit DataPollManager(MeshForwarder &aMeshForwarder);
+    explicit DataPollManager(otInstance &aInstance);
 
     /**
      * This method instructs the data poll manager to start sending periodic data polls.
@@ -221,10 +222,11 @@ private:
     static DataPollManager &GetOwner(Context &aContext);
     uint32_t GetDefaultPollPeriod(void) const;
 
-    TimerMilli  mTimer;
     uint32_t    mTimerStartTime;
     uint32_t    mExternalPollPeriod;
     uint32_t    mPollPeriod;
+
+    TimerMilli  mTimer;
 
     bool        mEnabled: 1;               //< Indicates whether data polling is enabled/started.
     bool        mAttachMode: 1;            //< Indicates whether in attach mode (to use attach poll period).

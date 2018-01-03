@@ -34,6 +34,8 @@
  *   This file includes definitions for manipulating IPv6 routing tables.
  */
 
+#include "openthread-core-config.h"
+
 #include <openthread/types.h>
 
 #include "common/locator.hpp"
@@ -69,16 +71,16 @@ struct Route
  * This class implements IPv6 route management.
  *
  */
-class Routes: public Ip6Locator
+class Routes: public InstanceLocator
 {
 public:
     /**
      * This constructor initializes the object.
      *
-     * @param[in]  aIp6  A reference to the IPv6 network object.
+     * @param[in]  aInstance  A reference to the OpenThread instance.
      *
      */
-    Routes(Ip6 &aIp6);
+    Routes(otInstance &aInstance);
 
     /**
      * This method adds an IPv6 route.
