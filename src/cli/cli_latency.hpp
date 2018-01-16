@@ -104,7 +104,7 @@ private:
     static void s_HandleGpioTimer(Timer &aTimer);
     void HandleGpioTimer();
 
-    static CliLatency &GetOwner(const Context &aContext);
+    static CliLatency &GetOwner(OwnerLocator &aOwnerLocator);
 
     static void HandleUdpReceive(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo);
     void HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMessageInfo);

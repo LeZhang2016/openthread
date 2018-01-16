@@ -2683,12 +2683,6 @@ void Interpreter::ProcessVersion(int argc, char *argv[])
 }
 
 #ifndef OTDLL
-void Interpreter::ProcessUdp(int argc, char *argv[])
-{
-    otError error;
-    error = mUdp.Process(argc, argv);
-    AppendResult(error);
-}
 
 void Interpreter::ProcessLatency(int argc, char *argv[])
 {

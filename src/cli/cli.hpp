@@ -333,7 +333,6 @@ private:
 #endif
 
 #ifndef OTDLL
-    void ProcessUdp(int argc, char *argv[]);
     void ProcessLatency(int argc, char *argv[]);
     void ProcessThroughput(int argc, char *argv[]);
 #endif

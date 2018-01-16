@@ -404,13 +404,13 @@ otError CliLatency::ProcessGpio(int argc, char *argv[])
 
 }
 
-CliLatency &CliLatency::GetOwner(const Context &aContext)
+CliLatency &CliLatency::GetOwner(OwnerLocator &aOwnerLocator)
 {
 #if OPENTHREAD_ENABLE_MULTIPLE_INSTANCES
-    CliLatency &udp = *static_cast<CliLatency *>(aContext.GetContext());
+    CliLatency &udp = (aOwnerLocator.GetOwner<CliLatency>());
 #else
     CliLatency &udp = Uart::sUartServer->GetInterpreter().mCliLatency;
-    OT_UNUSED_VARIABLE(aContext);
+    OT_UNUSED_VARIABLE(aOwnerLocator);
 #endif
     return udp;
 }

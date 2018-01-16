@@ -398,13 +398,13 @@ otError CliThroughput::ProcessGpio(int argc, char *argv[])
 
 }
 
-CliThroughput &CliThroughput::GetOwner(const Context &aContext)
+CliThroughput &CliThroughput::GetOwner(OwnerLocator &aOwnerLocator)
 {
 #if OPENTHREAD_ENABLE_MULTIPLE_INSTANCES
-    CliThroughput &udp = *static_cast<CliThroughput *>(aContext.GetContext());
+    CliThroughput &udp = (aOwnerLocator.GetOwner<CliThroughput>());
 #else
     CliThroughput &udp = Uart::sUartServer->GetInterpreter().mCliThroughput;
-    OT_UNUSED_VARIABLE(aContext);
+    OT_UNUSED_VARIABLE(aOwnerLocator);
 #endif
     return udp;
 }

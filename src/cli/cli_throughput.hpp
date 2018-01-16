@@ -105,7 +105,7 @@ private:
     static void s_HandleGpioTimer(Timer &aTimer);
     void HandleGpioTimer();
 
-    static CliThroughput &GetOwner(const Context &aContext);
+    static CliThroughput &GetOwner(OwnerLocator &aOwnerLocator);
 
     static void HandleUdpReceive(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo);
     void HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMessageInfo);
