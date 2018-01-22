@@ -45,6 +45,8 @@
 
 #include "cli/cli_server.hpp"
 #include "cli/cli_udp_example.hpp"
+#include "cli/cli_latency.hpp"
+#include "cli/cli_throughput.hpp"
 
 #if OPENTHREAD_ENABLE_APPLICATION_COAP
 #include <coap/coap_header.hpp>
@@ -96,6 +98,8 @@ class Interpreter
 {
     friend class Coap;
     friend class UdpExample;
+    friend class CliLatency;
+    friend class CliThroughput;
 
 public:
 
@@ -173,6 +177,11 @@ public:
      * @param[in]  aLength        @p aUserCommands length.
      */
     void SetUserCommands(const otCliCommand *aCommands, uint8_t aLength);
+
+    CliLatency GetCliLatency() {return mCliLatency; };
+    CliThroughput GetCliThroughput() {return mCliThroughput; };
+
+    static uint8_t sTestChoice;
 
 private:
     enum
@@ -324,6 +333,11 @@ private:
 #endif
 
 #ifndef OTDLL
+    void ProcessLatency(int argc, char *argv[]);
+    void ProcessThroughput(int argc, char *argv[]);
+#endif
+
+#ifndef OTDLL
     static void s_HandleIcmpReceive(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo,
                                     const otIcmp6Header *aIcmpHeader);
     static void s_HandlePingTimer(Timer &aTimer);
@@ -381,6 +395,7 @@ private:
 #endif // OPENTHREAD_ENABLE_APPLICATION_COAP
 
     static const struct Command sCommands[];
+
     const otCliCommand *mUserCommands;
     uint8_t mUserCommandsLength;
 
@@ -422,6 +437,8 @@ private:
 #endif
 
     UdpExample mUdp;
+    CliLatency mCliLatency;
+    CliThroughput mCliThroughput;
 
 #endif
 

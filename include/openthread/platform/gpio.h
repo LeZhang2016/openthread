@@ -28,72 +28,47 @@
 
 /**
  * @file
- *   This file includes the platform-specific initializers.
- *
+ * @brief
+ *   This file includes the platform abstraction for UART communication.
  */
 
-#include <openthread/config.h>
-#include <openthread-core-config.h>
+#ifndef GPIO_H_
+#define GPIO_H_
 
-#include <openthread/platform/logging.h>
+#include <stdint.h>
 
-#include <device/nrf.h>
-#include <drivers/clock/nrf_drv_clock.h>
-#include "platform-nrf5.h"
+#include <openthread/types.h>
 
-#include <openthread/config.h>
-
-void __cxa_pure_virtual(void) { while (1); }
-
-void PlatformInit(int argc, char *argv[])
-{
-    (void)argc;
-    (void)argv;
-
-#if !SOFTDEVICE_PRESENT
-    // Enable I-code cache
-    NRF_NVMC->ICACHECNF = NVMC_ICACHECNF_CACHEEN_Enabled;
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-    nrf_drv_clock_init();
+#define GPIOTE_CHANNEL 0
 
-#if (OPENTHREAD_CONFIG_LOG_OUTPUT == OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED)
-    nrf5LogInit();
+void otGpioInit(void);
+
+void otPlatGpioCfgOutput(uint32_t aPinIndex);
+
+void otPlatGpioCfgInput(uint32_t aPinIndex);
+
+void otPlatGpioWrite(uint32_t aPinIndex, uint32_t aValue);
+
+uint32_t otPlatGpioRead(uint32_t aPinIndex);
+
+void otPlatGpioClear(uint32_t aPinIndex);
+
+void otPlatGpioSet(uint32_t aPinIndex);
+
+void otPlatGpioToggle(uint32_t aPinIndex);
+
+void otPlatGpioEnableInterrupt(uint32_t aPinIndex);
+
+void otPlatGpioDisableInterrupt(uint32_t aPinIndex);
+
+extern void otPlatGpioSignalEvent(uint32_t aPinIndex);
+
+#ifdef __cplusplus
+}  // extern "C"
 #endif
-    nrf5AlarmInit();
-    nrf5RandomInit();
-    nrf5UartInit();
-    nrf5MiscInit();
-    nrf5CryptoInit();
-    nrf5RadioInit();
-    nrf5TempInit();
-}
 
-void PlatformDeinit(void)
-{
-    nrf5TempDeinit();
-    nrf5RadioDeinit();
-    nrf5CryptoDeinit();
-    nrf5MiscDeinit();
-    nrf5UartDeinit();
-    nrf5RandomDeinit();
-    nrf5AlarmDeinit();
-#if (OPENTHREAD_CONFIG_LOG_OUTPUT == OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED)
-    nrf5LogDeinit();
-    // nrf5GpioteInit();
-    nrf5GpioInit();
-#endif
-}
-
-void PlatformProcessDrivers(otInstance *aInstance)
-{
-    nrf5AlarmProcess(aInstance);
-    nrf5RadioProcess(aInstance);
-    nrf5UartProcess();
-    // nrf5GpioProcess(aInstance);
-}
-
-__WEAK void PlatformEventSignalPending(void)
-{
-    // Intentionally empty
-}
+#endif  // UART_H_
