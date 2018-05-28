@@ -48,6 +48,7 @@ configure_OPTIONS                                 = \
     --enable-diag                                   \
     --with-examples=nrf52840                        \
     --enable-linker-map                             \
+    --enable-mac-filter                             \
     MBEDTLS_CPPFLAGS="$(NRF52840_MBEDTLS_CPPFLAGS)" \
     $(NULL)
 
