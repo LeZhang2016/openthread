@@ -110,9 +110,12 @@ public:
 private:
     enum
     {
-        kRxBufferSize  = OPENTHREAD_CONFIG_CLI_UART_RX_BUFFER_SIZE,
-        kTxBufferSize  = OPENTHREAD_CONFIG_CLI_UART_TX_BUFFER_SIZE,
-        kMaxLineLength = OPENTHREAD_CONFIG_CLI_MAX_LINE_LENGTH,
+//         kRxBufferSize = OPENTHREAD_CONFIG_CLI_UART_RX_BUFFER_SIZE,
+//         kTxBufferSize = OPENTHREAD_CONFIG_CLI_UART_TX_BUFFER_SIZE,
+//         kMaxLineLength = OPENTHREAD_CONFIG_CLI_MAX_LINE_LENGTH,
+        kRxBufferSize = 1024,
+        kTxBufferSize = 4096,
+        kMaxLineLength = 512,
     };
 
     otError ProcessCommand(void);
