@@ -82,7 +82,7 @@ CONFIG_FILE_PATH = $(AbsTopSourceDir)/examples/platforms/nrf52840/
 COMMONCFLAGS                   := \
     -fdata-sections               \
     -ffunction-sections           \
-    -Os                           \
+    -O0                           \
     -g                            \
     -D$(CONFIG_FILE)              \
     -I$(CONFIG_FILE_PATH)         \
