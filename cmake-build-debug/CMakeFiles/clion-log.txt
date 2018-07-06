@@ -1,0 +1,4 @@
+/home/lezhan/tool/clion-2017.2.1/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/lezhan/program/latency/openthread
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/lezhan/program/latency/openthread/cmake-build-debug

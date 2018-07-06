@@ -488,7 +488,7 @@ uint16_t Message::Read(uint16_t aOffset, uint16_t aLength, void *aBuf) const
     if (aOffset >= GetLength())
     {
         ExitNow();
-    }
+}
 
     if (aOffset + aLength >= GetLength())
     {
