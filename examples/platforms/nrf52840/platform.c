@@ -36,6 +36,7 @@
 #include <openthread/config.h>
 
 #include <openthread/platform/logging.h>
+#include <openthread/platform/logging-uart.h>
 
 #include "platform-nrf5.h"
 #include <drivers/clock/nrf_drv_clock.h>
@@ -81,6 +82,7 @@ void PlatformInit(int argc, char *argv[])
     nrf5AlarmInit();
     nrf5RandomInit();
     nrf5UartInit();
+    nrf5LoggingUartInit();
 #ifndef SPIS_TRANSPORT_DISABLE
     nrf5SpiSlaveInit();
 #endif
@@ -100,6 +102,7 @@ void PlatformDeinit(void)
     nrf5SpiSlaveDeinit();
 #endif
     nrf5UartDeinit();
+    nrf5LoggingUartDeinit();
     nrf5RandomDeinit();
     nrf5AlarmDeinit();
 #if (OPENTHREAD_CONFIG_LOG_OUTPUT == OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED) || \
@@ -120,6 +123,7 @@ void PlatformProcessDrivers(otInstance *aInstance)
     nrf5AlarmProcess(aInstance);
     nrf5RadioProcess(aInstance);
     nrf5UartProcess();
+    nrf5LoggingUartProcess();
     nrf5TempProcess();
 #ifndef SPIS_TRANSPORT_DISABLE
     nrf5SpiSlaveProcess();

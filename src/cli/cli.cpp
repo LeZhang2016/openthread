@@ -79,6 +79,7 @@
 
 #include "cli_dataset.hpp"
 #include "cli_uart.hpp"
+#include "cli_log.hpp"
 
 #if OPENTHREAD_ENABLE_APPLICATION_COAP
 #include "cli_coap.hpp"
@@ -3699,7 +3700,8 @@ Interpreter &Interpreter::GetOwner(OwnerLocator &aOwnerLocator)
 #if OPENTHREAD_ENABLE_MULTIPLE_INSTANCES
     Interpreter &interpreter = (aOwnerLocator.GetOwner<Interpreter>());
 #else
-    Interpreter &interpreter = Uart::sUartServer->GetInterpreter();
+     Interpreter &interpreter = Uart::sUartServer->GetInterpreter();
+//    Interpreter &interpreter = Log::sLogServer->GetInterpreter();
     OT_UNUSED_VARIABLE(aOwnerLocator);
 #endif
     return interpreter;

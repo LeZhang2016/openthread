@@ -49,7 +49,7 @@
 #include <openthread/platform/alarm-milli.h>
 #include <openthread/platform/diag.h>
 #include <openthread/platform/misc.h>
-#include <openthread/platform/uart.h>
+#include <openthread/platform/logging.h>
 
 #include "platform-nrf5.h"
 
@@ -59,7 +59,7 @@
 #include "libraries/usb/app_usbd_serial_num.h"
 #include "libraries/usb/class/cdc/acm/app_usbd_cdc_acm.h"
 
-#if (USB_CDC_AS_SERIAL_TRANSPORT == 1)
+// #if (USB_CDC_AS_SERIAL_TRANSPORT == 1)
 
 static void cdcAcmUserEventHandler(app_usbd_class_inst_t const *aInstance, app_usbd_cdc_acm_user_event_t aEvent);
 
@@ -69,6 +69,16 @@ static void cdcAcmUserEventHandler(app_usbd_class_inst_t const *aInstance, app_u
 #define CDC_ACM_DATA_INTERFACE 1
 #define CDC_ACM_DATA_EPIN NRF_DRV_USBD_EPIN1
 #define CDC_ACM_DATA_EPOUT NRF_DRV_USBD_EPOUT1
+
+OT_TOOL_WEAK void otPlatLoggingUartSendDone(void)
+{
+}
+
+OT_TOOL_WEAK void otPlatLoggingUartReceived(const uint8_t *aBuf, uint16_t aBufLength)
+{
+    (void)aBuf;
+    (void)aBufLength;
+}
 
 APP_USBD_CDC_ACM_GLOBAL_DEF(sAppCdcAcm,
                             cdcAcmUserEventHandler,
@@ -220,7 +230,7 @@ static void processReceive(void)
     {
         if (sUsbState.mReceivedDataSize != 0)
         {
-            otPlatUartReceived((const uint8_t *)sRxBuffer, sUsbState.mReceivedDataSize);
+            otPlatLoggingUartReceived((const uint8_t *)sRxBuffer, sUsbState.mReceivedDataSize);
             sUsbState.mReceivedDataSize = 0;
         }
 
@@ -249,11 +259,11 @@ static void processTransmit(void)
         sUsbState.mTransferDone       = false;
         sUsbState.mTransferInProgress = false;
 
-        otPlatUartSendDone();
+        otPlatLoggingUartSendDone();
     }
 }
 
-void nrf5UartInit(void)
+void nrf5LoggingUartInit(void)
 {
     static const app_usbd_config_t usbdConfig = {.ev_state_proc = usbdUserEventHandler};
 
@@ -272,7 +282,7 @@ void nrf5UartInit(void)
     assert(ret == NRF_SUCCESS);
 }
 
-void nrf5UartDeinit(void)
+void nrf5LoggingUartDeinit(void)
 {
     if (nrf_drv_usbd_is_started())
     {
@@ -291,7 +301,7 @@ void nrf5UartDeinit(void)
     app_usbd_uninit();
 }
 
-void nrf5UartProcess(void)
+void nrf5LoggingUartProcess(void)
 {
     while (app_usbd_event_queue_process())
     {
@@ -302,21 +312,21 @@ void nrf5UartProcess(void)
     processTransmit();
 }
 
-otError otPlatUartEnable(void)
+otError otPlatLoggingUartEnable(void)
 {
     sUsbState.mUartEnabled = true;
 
     return OT_ERROR_NONE;
 }
 
-otError otPlatUartDisable(void)
+otError otPlatLoggingUartDisable(void)
 {
     sUsbState.mUartEnabled = false;
 
     return OT_ERROR_NONE;
 }
 
-otError otPlatUartSend(const uint8_t *aBuf, uint16_t aBufLength)
+otError otPlatLoggingUartSend(const uint8_t *aBuf, uint16_t aBufLength)
 {
     otError error = OT_ERROR_NONE;
 
@@ -340,4 +350,4 @@ exit:
     return error;
 }
 
-#endif // USB_CDC_AS_SERIAL_TRANSPORT == 1
+// #endif // USB_CDC_AS_SERIAL_TRANSPORT == 1

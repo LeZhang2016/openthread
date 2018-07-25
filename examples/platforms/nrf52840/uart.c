@@ -50,7 +50,7 @@
 #include <hal/nrf_gpio.h>
 #include <hal/nrf_uart.h>
 
-#if (USB_CDC_AS_SERIAL_TRANSPORT == 0)
+// #if (USB_CDC_AS_SERIAL_TRANSPORT == 0)
 
 bool sUartEnabled = false;
 
@@ -314,7 +314,7 @@ void UARTE0_UART0_IRQHandler(void)
     }
 }
 
-#endif // USB_CDC_AS_SERIAL_TRANSPORT == 0
+// #endif // USB_CDC_AS_SERIAL_TRANSPORT == 0
 
 /**
  * The UART driver weak functions definition.

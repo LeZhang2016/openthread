@@ -28,10 +28,10 @@
 
 /**
  * @file
- *   This file implements the CLI server on the UART service.
+ *   This file implements the CLI server on the Log service.
  */
 
-#include "cli_uart.hpp"
+#include "cli_log.hpp"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -40,6 +40,7 @@
 
 #include <openthread/cli.h>
 #include <openthread/platform/logging.h>
+#include <openthread/platform/logging-uart.h>
 #include <openthread/platform/uart.h>
 #include "cli/cli.hpp"
 #include "common/code_utils.hpp"
@@ -58,41 +59,41 @@ namespace Cli {
 static const char sCommandPrompt[] = {'>', ' '};
 static const char sEraseString[]   = {'\b', ' ', '\b'};
 static const char CRNL[]           = {'\r', '\n'};
-Uart *            Uart::sUartServer;
+Log *            Log::sLogServer;
 
-static otDEFINE_ALIGNED_VAR(sCliUartRaw, sizeof(Uart), uint64_t);
+static otDEFINE_ALIGNED_VAR(sCliLogRaw, sizeof(Log), uint64_t);
 
-extern "C" void otCliUartInit(otInstance *aInstance)
+extern "C" void otCliLogInit(otInstance *aInstance)
 {
     Instance *instance = static_cast<Instance *>(aInstance);
 
-    Uart::sUartServer = new (&sCliUartRaw) Uart(instance);
+    Log::sLogServer = new (&sCliLogRaw) Log(instance);
 }
 
-extern "C" void otCliUartSetUserCommands(const otCliCommand *aUserCommands, uint8_t aLength)
+extern "C" void otCliLogSetUserCommands(const otCliCommand *aUserCommands, uint8_t aLength)
 {
-    Uart::sUartServer->GetInterpreter().SetUserCommands(aUserCommands, aLength);
+    Log::sLogServer->GetInterpreter().SetUserCommands(aUserCommands, aLength);
 }
 
-extern "C" void otCliUartOutputBytes(const uint8_t *aBytes, uint8_t aLength)
+extern "C" void otCliLogOutputBytes(const uint8_t *aBytes, uint8_t aLength)
 {
-    Uart::sUartServer->GetInterpreter().OutputBytes(aBytes, aLength);
+    Log::sLogServer->GetInterpreter().OutputBytes(aBytes, aLength);
 }
 
-extern "C" void otCliUartOutputFormat(const char *aFmt, ...)
+extern "C" void otCliLogOutputFormat(const char *aFmt, ...)
 {
     va_list aAp;
     va_start(aAp, aFmt);
-    Uart::sUartServer->OutputFormatV(aFmt, aAp);
+    Log::sLogServer->OutputFormatV(aFmt, aAp);
     va_end(aAp);
 }
 
-extern "C" void otCliUartAppendResult(otError aError)
+extern "C" void otCliLogAppendResult(otError aError)
 {
-    Uart::sUartServer->GetInterpreter().AppendResult(aError);
+    Log::sLogServer->GetInterpreter().AppendResult(aError);
 }
 
-Uart::Uart(Instance *aInstance)
+Log::Log(Instance *aInstance)
     : mInterpreter(aInstance)
 {
     mRxLength   = 0;
@@ -100,15 +101,15 @@ Uart::Uart(Instance *aInstance)
     mTxLength   = 0;
     mSendLength = 0;
 
-    otPlatUartEnable();
+    otPlatLoggingUartEnable();
 }
 
-extern "C" void otPlatUartReceived(const uint8_t *aBuf, uint16_t aBufLength)
+extern "C" void otPlatLoggingUartReceived(const uint8_t *aBuf, uint16_t aBufLength)
 {
-    Uart::sUartServer->ReceiveTask(aBuf, aBufLength);
+    Log::sLogServer->ReceiveTask(aBuf, aBufLength);
 }
 
-void Uart::ReceiveTask(const uint8_t *aBuf, uint16_t aBufLength)
+void Log::ReceiveTask(const uint8_t *aBuf, uint16_t aBufLength)
 {
     const uint8_t *end;
 
@@ -161,7 +162,7 @@ void Uart::ReceiveTask(const uint8_t *aBuf, uint16_t aBufLength)
     }
 }
 
-otError Uart::ProcessCommand(void)
+otError Log::ProcessCommand(void)
 {
     otError error = OT_ERROR_NONE;
 
@@ -210,7 +211,7 @@ otError Uart::ProcessCommand(void)
     return error;
 }
 
-int Uart::Output(const char *aBuf, uint16_t aBufLength)
+int Log::Output(const char *aBuf, uint16_t aBufLength)
 {
     uint16_t remaining = kTxBufferSize - mTxLength;
     uint16_t tail;
@@ -232,7 +233,7 @@ int Uart::Output(const char *aBuf, uint16_t aBufLength)
     return aBufLength;
 }
 
-int Uart::OutputFormat(const char *fmt, ...)
+int Log::OutputFormat(const char *fmt, ...)
 {
     char    buf[kMaxLineLength];
     va_list ap;
@@ -244,7 +245,7 @@ int Uart::OutputFormat(const char *fmt, ...)
     return Output(buf, static_cast<uint16_t>(strlen(buf)));
 }
 
-int Uart::OutputFormatV(const char *aFmt, va_list aAp)
+int Log::OutputFormatV(const char *aFmt, va_list aAp)
 {
     char buf[kMaxLineLength];
 
@@ -253,7 +254,7 @@ int Uart::OutputFormatV(const char *aFmt, va_list aAp)
     return Output(buf, static_cast<uint16_t>(strlen(buf)));
 }
 
-void Uart::Send(void)
+void Log::Send(void)
 {
     VerifyOrExit(mSendLength == 0);
 
@@ -270,21 +271,21 @@ void Uart::Send(void)
     {
 #if OPENTHREAD_CONFIG_ENABLE_DEBUG_UART
         /* duplicate the output to the debug uart */
-        otPlatDebugUart_write_bytes(reinterpret_cast<uint8_t *>(mTxBuffer + mTxHead), mSendLength);
+        otPlatDebugLog_write_bytes(reinterpret_cast<uint8_t *>(mTxBuffer + mTxHead), mSendLength);
 #endif
-        otPlatUartSend(reinterpret_cast<uint8_t *>(mTxBuffer + mTxHead), mSendLength);
+        otPlatLoggingUartSend(reinterpret_cast<uint8_t *>(mTxBuffer + mTxHead), mSendLength);
     }
 
 exit:
     return;
 }
 
-extern "C" void otPlatUartSendDone(void)
+extern "C" void otPlatLoggingUartSendDone(void)
 {
-    Uart::sUartServer->SendDoneTask();
+    Log::sLogServer->SendDoneTask();
 }
 
-void Uart::SendDoneTask(void)
+void Log::SendDoneTask(void)
 {
     mTxHead = (mTxHead + mSendLength) % kTxBufferSize;
     mTxLength -= mSendLength;
@@ -293,19 +294,19 @@ void Uart::SendDoneTask(void)
     Send();
 }
 
-//extern "C" void otCliPlatLogv(otLogLevel aLogLevel, otLogRegion aLogRegion, const char *aFormat, va_list aArgs)
-//{
-//    if (NULL == Uart::sUartServer)
-//    {
-//        return;
-//    }
-//
-//    Uart::sUartServer->OutputFormatV(aFormat, aArgs);
-//    Uart::sUartServer->OutputFormat("\r\n");
-//
-//    OT_UNUSED_VARIABLE(aLogLevel);
-//    OT_UNUSED_VARIABLE(aLogRegion);
-//}
+ extern "C" void otCliPlatLogv(otLogLevel aLogLevel, otLogRegion aLogRegion, const char *aFormat, va_list aArgs)
+ {
+     if (NULL == Log::sLogServer)
+     {
+         return;
+     }
+
+     Log::sLogServer->OutputFormatV(aFormat, aArgs);
+     Log::sLogServer->OutputFormat("\r\n");
+
+     OT_UNUSED_VARIABLE(aLogLevel);
+     OT_UNUSED_VARIABLE(aLogRegion);
+ }
 
 } // namespace Cli
 } // namespace ot

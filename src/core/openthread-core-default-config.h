@@ -596,7 +596,7 @@
 /** Log output goes to the "application" provided otPlatLog() in NCP and CLI code */
 #define OPENTHREAD_CONFIG_LOG_OUTPUT_APP 2
 /** Log output is handled by a platform defined function */
-#define OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED 3
+#define OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED 2
 /** Log output for NCP goes to Spinel `STREAM_LOG` property (for CLI platform defined function is expected) */
 #define OPENTHREAD_CONFIG_LOG_OUTPUT_NCP_SPINEL 4
 
@@ -607,7 +607,7 @@
  *
  */
 #ifndef OPENTHREAD_CONFIG_LOG_LEVEL
-#define OPENTHREAD_CONFIG_LOG_LEVEL OT_LOG_LEVEL_CRIT
+#define OPENTHREAD_CONFIG_LOG_LEVEL OT_LOG_LEVEL_INFO
 #endif
 
 /**

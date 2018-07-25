@@ -83,6 +83,7 @@ pseudo_reset:
     assert(sInstance);
 
     otCliUartInit(sInstance);
+    otCliLogInit(sInstance);
 
 #if OPENTHREAD_ENABLE_DIAG
     otDiagInit(sInstance);

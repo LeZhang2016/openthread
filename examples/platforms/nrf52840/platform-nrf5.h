@@ -54,6 +54,18 @@ void nrf5UartInit(void);
 void nrf5UartDeinit(void);
 
 /**
+ * Initialization of UART driver.
+ *
+ */
+void nrf5LoggingUartInit(void);
+
+/**
+ * Deinitialization of UART driver.
+ *
+ */
+void nrf5LoggingUartDeinit(void);
+
+/**
  * Initialization of GPIO task and event driver.
  *
  */
@@ -76,6 +88,12 @@ void nrf5GpioProcess(otInstance *aInstance);
  *
  */
 void nrf5UartProcess(void);
+
+/**
+ * This function performs UART driver processing.
+ *
+ */
+void nrf5LoggingUartProcess(void);
 
 /**
  * Initialization of Alarm driver.

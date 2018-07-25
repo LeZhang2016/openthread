@@ -142,6 +142,7 @@ SOURCES_COMMON =                      \
     cli_console.cpp                   \
     cli_dataset.cpp                   \
     cli_uart.cpp                      \
+    cli_log.cpp                       \
     cli_udp_example.cpp               \
     cli_latency.cpp                   \
     cli_throughput.cpp                \
@@ -162,6 +163,7 @@ noinst_HEADERS                      = \
     cli_dataset.hpp                   \
     cli_server.hpp                    \
     cli_uart.hpp                      \
+    cli_log.hpp                       \
     cli_udp_example.hpp               \
     cli_latency.hpp                   \
     cli_throughput.hpp                \
