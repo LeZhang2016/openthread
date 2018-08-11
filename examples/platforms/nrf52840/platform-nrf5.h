@@ -54,10 +54,46 @@ void nrf5UartInit(void);
 void nrf5UartDeinit(void);
 
 /**
+ * Initialization of UART driver.
+ *
+ */
+void nrf5LoggingUartInit(void);
+
+/**
+ * Deinitialization of UART driver.
+ *
+ */
+void nrf5LoggingUartDeinit(void);
+
+/**
+ * Initialization of GPIO task and event driver.
+ *
+ */
+void nrf5GpioteInit(void);
+
+/**
+ * Deinitialization of GPIO task and event driver.
+ *
+ */
+void nrf5GpioteDeinit(void);
+
+
+void nrf5GpioInit(void);
+
+void nrf5GpioProcess(otInstance *aInstance);
+
+
+/**
  * This function performs UART driver processing.
  *
  */
 void nrf5UartProcess(void);
+
+/**
+ * This function performs UART driver processing.
+ *
+ */
+void nrf5LoggingUartProcess(void);
 
 /**
  * Initialization of Alarm driver.
@@ -147,6 +183,12 @@ void nrf5RadioInit(void);
  *
  */
 void nrf5RadioDeinit(void);
+
+/**
+ * Pseudo reset Radio driver.
+ *
+ */
+void nrf5RadioPseudoReset(void);
 
 /**
  * Function for processing Radio.

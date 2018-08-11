@@ -103,6 +103,7 @@ void otCliConsoleInputLine(char *aBuf, uint16_t aBufLength);
  *
  */
 void otCliUartInit(otInstance *aInstance);
+void otCliLogInit(otInstance *aInstance);
 
 /**
  * Set a user command table.

@@ -51,6 +51,7 @@ configure_OPTIONS                                 = \
     --enable-radio-only                             \
     --enable-linker-map                             \
     --with-examples=nrf52840                        \
+    --enable-mac-filter                             \
     MBEDTLS_CPPFLAGS="$(NRF52840_MBEDTLS_CPPFLAGS)" \
     $(NULL)
 
@@ -88,7 +89,7 @@ CONFIG_FILE_PATH = $(AbsTopSourceDir)/examples/platforms/nrf52840/
 COMMONCFLAGS                   := \
     -fdata-sections               \
     -ffunction-sections           \
-    -Os                           \
+    -O0                           \
     -g                            \
     -D$(CONFIG_FILE)              \
     -I$(CONFIG_FILE_PATH)         \
@@ -96,13 +97,9 @@ COMMONCFLAGS                   := \
 
 include $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/common-switches.mk
 
-ifneq ($(CERT_LOG),1)
-COMMONCFLAGS += -DOPENTHREAD_CONFIG_LOG_OUTPUT=OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED
-endif
+COMMONCFLAGS += -DOPENTHREAD_CONFIG_LOG_OUTPUT=OPENTHREAD_CONFIG_LOG_OUTPUT_APP
 
-ifeq ($(USB),1)
 COMMONCFLAGS += -DUSB_CDC_AS_SERIAL_TRANSPORT=1
-endif
 
 ifeq ($(DISABLE_CC310), 1)
 NRF52840_MBEDTLS_CPPFLAGS += -DDISABLE_CC310=1

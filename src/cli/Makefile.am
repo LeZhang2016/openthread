@@ -148,6 +148,7 @@ SOURCES_COMMON =                      \
     cli_console.cpp                   \
     cli_dataset.cpp                   \
     cli_uart.cpp                      \
+    cli_log.cpp                       \
     cli_udp_example.cpp               \
     $(NULL)
 
@@ -167,6 +168,7 @@ noinst_HEADERS                      = \
     cli_dataset.hpp                   \
     cli_server.hpp                    \
     cli_uart.hpp                      \
+    cli_log.hpp                       \
     cli_udp_example.hpp               \
     x509_cert_key.hpp                 \
     $(NULL)

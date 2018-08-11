@@ -36,16 +36,13 @@
 #include <openthread/config.h>
 
 #include <openthread/platform/logging.h>
+#include <openthread/platform/logging-uart.h>
 
-#include "openthread-system.h"
-#include "platform-fem.h"
 #include "platform-nrf5.h"
 #include <drivers/clock/nrf_drv_clock.h>
 #include <nrf.h>
 
 #include <openthread/config.h>
-
-extern bool gPlatformPseudoResetWasRequested;
 
 void __cxa_pure_virtual(void)
 {
@@ -53,11 +50,19 @@ void __cxa_pure_virtual(void)
         ;
 }
 
-void otSysInit(int argc, char *argv[])
+void PlatformInit(int argc, char *argv[])
 {
+    extern bool gPlatformPseudoResetWasRequested;
+
     if (gPlatformPseudoResetWasRequested)
     {
-        otSysDeinit();
+        nrf5RadioPseudoReset();
+        nrf5AlarmDeinit();
+        nrf5AlarmInit();
+
+        gPlatformPseudoResetWasRequested = false;
+
+        return;
     }
 
     (void)argc;
@@ -76,54 +81,44 @@ void otSysInit(int argc, char *argv[])
 #endif
     nrf5AlarmInit();
     nrf5RandomInit();
-    if (!gPlatformPseudoResetWasRequested)
-    {
-        nrf5UartInit();
-        nrf5LoggingUartInit();
-        nrf5CryptoInit();
-    }
+    nrf5UartInit();
+    nrf5LoggingUartInit();
 #ifndef SPIS_TRANSPORT_DISABLE
     nrf5SpiSlaveInit();
 #endif
     nrf5MiscInit();
+    nrf5CryptoInit();
     nrf5RadioInit();
     nrf5TempInit();
-
-#if PLATFORM_FEM_ENABLE_DEFAULT_CONFIG
-    PlatformFemSetConfigParams(&PLATFORM_FEM_DEFAULT_CONFIG);
-#endif
-
-    gPlatformPseudoResetWasRequested = false;
 }
 
-void otSysDeinit(void)
+void PlatformDeinit(void)
 {
     nrf5TempDeinit();
     nrf5RadioDeinit();
+    nrf5CryptoDeinit();
     nrf5MiscDeinit();
 #ifndef SPIS_TRANSPORT_DISABLE
     nrf5SpiSlaveDeinit();
 #endif
-    if (!gPlatformPseudoResetWasRequested)
-    {
-        nrf5CryptoDeinit();
-        nrf5UartDeinit();
-        nrf5LoggingUartDeinit();
-    }
+    nrf5UartDeinit();
+    nrf5LoggingUartDeinit();
     nrf5RandomDeinit();
     nrf5AlarmDeinit();
 #if (OPENTHREAD_CONFIG_LOG_OUTPUT == OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED) || \
     (OPENTHREAD_CONFIG_LOG_OUTPUT == OPENTHREAD_CONFIG_LOG_OUTPUT_NCP_SPINEL)
     nrf5LogDeinit();
+    nrf5GpioInit();
 #endif
 }
 
-bool otSysPseudoResetWasRequested(void)
+bool PlatformPseudoResetWasRequested(void)
 {
+    extern bool gPlatformPseudoResetWasRequested;
     return gPlatformPseudoResetWasRequested;
 }
 
-void otSysProcessDrivers(otInstance *aInstance)
+void PlatformProcessDrivers(otInstance *aInstance)
 {
     nrf5AlarmProcess(aInstance);
     nrf5RadioProcess(aInstance);
@@ -135,7 +130,7 @@ void otSysProcessDrivers(otInstance *aInstance)
 #endif
 }
 
-__WEAK void otSysEventSignalPending(void)
+__WEAK void PlatformEventSignalPending(void)
 {
     // Intentionally empty
 }
