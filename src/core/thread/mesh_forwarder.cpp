@@ -1675,36 +1675,36 @@ const char *MeshForwarder::MessagePriorityToString(const Message &aMessage)
     return priorityText;
 }
 
-#if OPENTHREAD_CONFIG_LOG_SRC_DST_IP_ADDRESSES
-void MeshForwarder::LogIp6SourceDestAddresses(Ip6::Header &aIp6Header,
-                                              uint16_t     aSourcePort,
-                                              uint16_t     aDestPort,
-                                              otLogLevel   aLogLevel)
-{
-    if (aSourcePort != 0)
-    {
-        otLogMac(GetInstance(), aLogLevel, "\tsrc:[%s]:%d", aIp6Header.GetSource().ToString().AsCString(), aSourcePort);
-    }
-    else
-    {
-        otLogMac(GetInstance(), aLogLevel, "\tsrc:[%s]", aIp6Header.GetSource().ToString().AsCString());
-    }
+// #if OPENTHREAD_CONFIG_LOG_SRC_DST_IP_ADDRESSES
+// void MeshForwarder::LogIp6SourceDestAddresses(Ip6::Header &aIp6Header,
+//                                               uint16_t     aSourcePort,
+//                                               uint16_t     aDestPort,
+//                                               otLogLevel   aLogLevel)
+// {
+//     if (aSourcePort != 0)
+//     {
+//         otLogInfoMac(GetInstance(), aLogLevel, "\tsrc:[%s]:%d", aIp6Header.GetSource().ToString().AsCString(), aSourcePort);
+//     }
+//     else
+//     {
+//         otLogInfoMac(GetInstance(), aLogLevel, "\tsrc:[%s]", aIp6Header.GetSource().ToString().AsCString());
+//     }
 
-    if (aDestPort != 0)
-    {
-        otLogMac(GetInstance(), aLogLevel, "\tdst:[%s]:%d", aIp6Header.GetDestination().ToString().AsCString(),
-                 aDestPort);
-    }
-    else
-    {
-        otLogMac(GetInstance(), aLogLevel, "\tdst:[%s]", aIp6Header.GetDestination().ToString().AsCString());
-    }
-}
-#else
+//     if (aDestPort != 0)
+//     {
+//         otLogInfoMac(GetInstance(), aLogLevel, "\tdst:[%s]:%d", aIp6Header.GetDestination().ToString().AsCString(),
+//                  aDestPort);
+//     }
+//     else
+//     {
+//         otLogInfoMac(GetInstance(), aLogLevel, "\tdst:[%s]", aIp6Header.GetDestination().ToString().AsCString());
+//     }
+// }
+// #else
 void MeshForwarder::LogIp6SourceDestAddresses(Ip6::Header &, uint16_t, uint16_t, otLogLevel)
 {
 }
-#endif
+// #endif
 
 void MeshForwarder::LogIp6Message(MessageAction       aAction,
                                   const Message &     aMessage,
@@ -1712,31 +1712,38 @@ void MeshForwarder::LogIp6Message(MessageAction       aAction,
                                   otError             aError,
                                   otLogLevel          aLogLevel)
 {
-    Ip6::Header ip6Header;
-    uint16_t    checksum;
-    uint16_t    sourcePort;
-    uint16_t    destPort;
-    bool        shouldLogRss;
+    // Ip6::Header ip6Header;
+    // uint16_t    checksum;
+    // uint16_t    sourcePort;
+    // uint16_t    destPort;
+    // bool        shouldLogRss;
 
-    SuccessOrExit(ParseIp6UdpTcpHeader(aMessage, ip6Header, checksum, sourcePort, destPort));
+    OT_UNUSED_VARIABLE(aAction);
+    OT_UNUSED_VARIABLE(aMessage);
+    OT_UNUSED_VARIABLE(aMacAddress);
+    OT_UNUSED_VARIABLE(aError);
+    OT_UNUSED_VARIABLE(aLogLevel);
 
-    shouldLogRss = (aAction == kMessageReceive) || (aAction == kMessageReassemblyDrop);
 
-    otLogMac(GetInstance(), aLogLevel, "%s IPv6 %s msg, len:%d, chksum:%04x%s%s, sec:%s%s%s, prio:%s%s%s",
-             MessageActionToString(aAction, aError), Ip6::Ip6::IpProtoToString(ip6Header.GetNextHeader()),
-             aMessage.GetLength(), checksum,
-             (aMacAddress == NULL) ? "" : ((aAction == kMessageReceive) ? ", from:" : ", to:"),
-             (aMacAddress == NULL) ? "" : aMacAddress->ToString().AsCString(),
-             aMessage.IsLinkSecurityEnabled() ? "yes" : "no", (aError == OT_ERROR_NONE) ? "" : ", error:",
-             (aError == OT_ERROR_NONE) ? "" : otThreadErrorToString(aError), MessagePriorityToString(aMessage),
-             shouldLogRss ? ", rss:" : "", shouldLogRss ? aMessage.GetRssAverager().ToString().AsCString() : "");
+    // SuccessOrExit(ParseIp6UdpTcpHeader(aMessage, ip6Header, checksum, sourcePort, destPort));
 
-    if (aAction != kMessagePrepareIndirect)
-    {
-        LogIp6SourceDestAddresses(ip6Header, sourcePort, destPort, aLogLevel);
-    }
+    // shouldLogRss = (aAction == kMessageReceive) || (aAction == kMessageReassemblyDrop);
 
-exit:
+    // otLogInfoMac(GetInstance(), aLogLevel, "%s IPv6 %s msg, len:%d, chksum:%04x%s%s, sec:%s%s%s, prio:%s%s%s",
+    //          MessageActionToString(aAction, aError), Ip6::Ip6::IpProtoToString(ip6Header.GetNextHeader()),
+    //          aMessage.GetLength(), checksum,
+    //          (aMacAddress == NULL) ? "" : ((aAction == kMessageReceive) ? ", from:" : ", to:"),
+    //          (aMacAddress == NULL) ? "" : aMacAddress->ToString().AsCString(),
+    //          aMessage.IsLinkSecurityEnabled() ? "yes" : "no", (aError == OT_ERROR_NONE) ? "" : ", error:",
+    //          (aError == OT_ERROR_NONE) ? "" : otThreadErrorToString(aError), MessagePriorityToString(aMessage),
+    //          shouldLogRss ? ", rss:" : "", shouldLogRss ? aMessage.GetRssAverager().ToString().AsCString() : "");
+
+    // if (aAction != kMessagePrepareIndirect)
+    // {
+    //     LogIp6SourceDestAddresses(ip6Header, sourcePort, destPort, aLogLevel);
+    // }
+
+// exit:
     return;
 }
 
