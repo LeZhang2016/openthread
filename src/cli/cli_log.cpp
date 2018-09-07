@@ -301,6 +301,7 @@ void Log::SendDoneTask(void)
          return;
      }
 
+     Log::sLogServer->OutputFormat("[%010ld]", otPlatAlarmMilliGetNow());
      Log::sLogServer->OutputFormatV(aFormat, aArgs);
      Log::sLogServer->OutputFormat("\r\n");
 
