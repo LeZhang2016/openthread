@@ -1986,6 +1986,7 @@ otError Mle::SendChildIdRequest(void)
     destination.SetIid(mParentCandidate.GetExtAddress());
     SuccessOrExit(error = SendMessage(*message, destination));
     LogMleMessage("Send Child ID Request", destination);
+    otLogNoteMle(GetInstance(), "##### Send Child ID Request");
     ;
 
     if (!IsRxOnWhenIdle())
@@ -3292,6 +3293,7 @@ otError Mle::HandleChildIdResponse(const Message &aMessage, const Ip6::MessageIn
 
     LogMleMessage("Receive Child ID Response", aMessageInfo.GetPeerAddr(), sourceAddress.GetRloc16());
 
+    otLogNoteMle(GetInstance(), "***** received Child ID Response");
     VerifyOrExit(mAttachState == kAttachStateChildIdRequest);
 
     // Leader Data
