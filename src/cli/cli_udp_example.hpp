@@ -81,11 +81,17 @@ private:
     otError ProcessOpen(int argc, char *argv[]);
     otError ProcessSend(int argc, char *argv[]);
 
+    otError GetPayload(void);
+
     static void HandleUdpReceive(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo);
     void        HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMessageInfo);
 
     static const Command sCommands[];
     Interpreter &        mInterpreter;
+
+    char mPayload[1000];
+
+    long mLength;
 
     otUdpSocket mSocket;
 };

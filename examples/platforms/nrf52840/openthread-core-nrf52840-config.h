@@ -172,7 +172,7 @@
  * Define as 1 to enable the time synchronization service feature.
  *
  */
-#define OPENTHREAD_CONFIG_ENABLE_TIME_SYNC                      0
+#define OPENTHREAD_CONFIG_ENABLE_TIME_SYNC                      1
 
 /**
  * @def OPENTHREAD_CONFIG_HEADER_IE_SUPPORT

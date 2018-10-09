@@ -35,7 +35,7 @@
 
 #include <openthread/message.h>
 #include <openthread/udp.h>
-
+#include <openthread/network_time.h>
 #include "cli/cli.hpp"
 #include "common/encoding.hpp"
 
@@ -133,6 +133,34 @@ otError UdpExample::ProcessOpen(int argc, char *argv[])
     return otUdpOpen(mInterpreter.mInstance, &mSocket, HandleUdpReceive, this);
 }
 
+otError UdpExample::GetPayload(void)
+{
+    uint64_t timestamp = 0;
+
+    otNetworkTimeGet(mInterpreter.mInstance, timestamp);
+
+    memset(mPayload, 0, sizeof(mPayload));
+
+    mPayload[0] = timestamp >> 56;
+    mPayload[1] = timestamp >> 48;
+    mPayload[2] = timestamp >> 40;
+    mPayload[3] = timestamp >> 32;
+    mPayload[4] = timestamp >> 24;
+    mPayload[5] = timestamp >> 16;
+    mPayload[6] = timestamp >> 8;
+    mPayload[7] = timestamp;
+
+    for (uint16_t i = 8; i < mLength; i++)
+    {
+        mPayload[i] = 'T';
+    }
+
+    mPayload[mLength] = '\0';
+
+    return OT_ERROR_NONE;
+
+}
+
 otError UdpExample::ProcessSend(int argc, char *argv[])
 {
     otError       error;
@@ -143,7 +171,7 @@ otError UdpExample::ProcessSend(int argc, char *argv[])
     memset(&messageInfo, 0, sizeof(messageInfo));
 
     VerifyOrExit(argc == 1 || argc == 3, error = OT_ERROR_INVALID_ARGS);
-
+    // if send command with 3 parameters
     if (argc == 3)
     {
         long value;
@@ -157,11 +185,18 @@ otError UdpExample::ProcessSend(int argc, char *argv[])
         messageInfo.mPeerPort    = static_cast<uint16_t>(value);
         messageInfo.mInterfaceId = OT_NETIF_INTERFACE_ID_THREAD;
     }
-
+    // create a message
     message = otUdpNewMessage(mInterpreter.mInstance, true);
     VerifyOrExit(message != NULL, error = OT_ERROR_NO_BUFS);
 
-    error = otMessageAppend(message, argv[curArg], static_cast<uint16_t>(strlen(argv[curArg])));
+    // fill the message with data
+
+    error = Interpreter::ParseLong(argv[curArg], mLength);
+
+    SuccessOrExit(GetPayload());
+
+    // error = otMessageAppend(message, argv[curArg], static_cast<uint16_t>(strlen(argv[curArg])));
+    error = otMessageAppend(message, mPayload, static_cast<uint16_t>(strlen(mPayload)));
     SuccessOrExit(error);
 
     error = otUdpSend(&mSocket, message, &messageInfo);
@@ -208,6 +243,11 @@ void UdpExample::HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMes
 {
     uint8_t buf[1500];
     int     length;
+    uint64_t receiveTimestamp = 0;
+    uint64_t sendTimestamp = 0;
+    uint16_t latency = 0;
+
+    otNetworkTimeGet(mInterpreter.mInstance, receiveTimestamp);
 
     mInterpreter.mServer->OutputFormat("%d bytes from ", otMessageGetLength(aMessage) - otMessageGetOffset(aMessage));
     mInterpreter.mServer->OutputFormat(
@@ -219,6 +259,15 @@ void UdpExample::HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMes
 
     length      = otMessageRead(aMessage, otMessageGetOffset(aMessage), buf, sizeof(buf) - 1);
     buf[length] = '\0';
+
+    for (size_t i = 0; i < 8; i++)
+    {
+        sendTimestamp |= buf[i] << (7-i)*8;
+    }
+
+    latency = receiveTimestamp - sendTimestamp;
+
+    mInterpreter.mServer->OutputFormat("----------%d\r\n", &latency);
 
     mInterpreter.mServer->OutputFormat("%s\r\n", buf);
 }
