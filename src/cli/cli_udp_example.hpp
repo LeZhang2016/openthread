@@ -80,6 +80,7 @@ private:
     otError ProcessConnect(int argc, char *argv[]);
     otError ProcessOpen(int argc, char *argv[]);
     otError ProcessSend(int argc, char *argv[]);
+    otError ProcessResult(int argc, char *argv[]);
 
     otError GetPayload(void);
 
@@ -92,6 +93,8 @@ private:
     char mPayload[1000];
 
     long mLength;
+
+    uint16_t mLatency;
 
     otUdpSocket mSocket;
 };

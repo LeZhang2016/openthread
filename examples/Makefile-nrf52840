@@ -49,6 +49,7 @@ configure_OPTIONS                                 = \
     --enable-mtd                                    \
     --enable-ncp                                    \
     --enable-radio-only                             \
+    --enable-mac-filter                             \
     --enable-linker-map                             \
     --with-examples=nrf52840                        \
     MBEDTLS_CPPFLAGS="$(NRF52840_MBEDTLS_CPPFLAGS)" \

@@ -46,7 +46,8 @@ namespace Cli {
 
 const struct UdpExample::Command UdpExample::sCommands[] = {
     {"help", &UdpExample::ProcessHelp},       {"bind", &UdpExample::ProcessBind}, {"close", &UdpExample::ProcessClose},
-    {"connect", &UdpExample::ProcessConnect}, {"open", &UdpExample::ProcessOpen}, {"send", &UdpExample::ProcessSend}};
+    {"connect", &UdpExample::ProcessConnect}, {"open", &UdpExample::ProcessOpen}, {"send", &UdpExample::ProcessSend},
+    {"result", &UdpExample::ProcessResult}};
 
 UdpExample::UdpExample(Interpreter &aInterpreter)
     : mInterpreter(aInterpreter)
@@ -60,6 +61,16 @@ otError UdpExample::ProcessHelp(int argc, char *argv[])
     {
         mInterpreter.mServer->OutputFormat("%s\r\n", sCommands[i].mName);
     }
+
+    OT_UNUSED_VARIABLE(argc);
+    OT_UNUSED_VARIABLE(argv);
+
+    return OT_ERROR_NONE;
+}
+
+otError UdpExample::ProcessResult(int argc, char *argv[])
+{
+    mInterpreter.mServer->OutputFormat("%d\r\n", mLatency);
 
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
@@ -137,18 +148,13 @@ otError UdpExample::GetPayload(void)
 {
     uint64_t timestamp = 0;
 
+    mInterpreter.mServer->OutputFormat("1.+++++++++++++++++++++++++++++");
     otNetworkTimeGet(mInterpreter.mInstance, timestamp);
 
     memset(mPayload, 0, sizeof(mPayload));
 
-    mPayload[0] = timestamp >> 56;
-    mPayload[1] = timestamp >> 48;
-    mPayload[2] = timestamp >> 40;
-    mPayload[3] = timestamp >> 32;
-    mPayload[4] = timestamp >> 24;
-    mPayload[5] = timestamp >> 16;
-    mPayload[6] = timestamp >> 8;
-    mPayload[7] = timestamp;
+    memcpy(mPayload, &timestamp, sizeof(timestamp));
+    mInterpreter.mServer->OutputFormat("%d,%d,%d,%d,%d,%d,%d,%d\r\n", mPayload[0], mPayload[1],mPayload[2],mPayload[3],mPayload[4],mPayload[5],mPayload[6],mPayload[7]);
 
     for (uint16_t i = 8; i < mLength; i++)
     {
@@ -157,6 +163,8 @@ otError UdpExample::GetPayload(void)
 
     mPayload[mLength] = '\0';
 
+    mInterpreter.mServer->OutputFormat("%d\r\n", timestamp);
+    mInterpreter.mServer->OutputFormat("2.+++++++++++++++++++++++++++++");
     return OT_ERROR_NONE;
 
 }
@@ -195,8 +203,9 @@ otError UdpExample::ProcessSend(int argc, char *argv[])
 
     SuccessOrExit(GetPayload());
 
+    mInterpreter.mServer->OutputFormat("%s\r\n", mPayload);
     // error = otMessageAppend(message, argv[curArg], static_cast<uint16_t>(strlen(argv[curArg])));
-    error = otMessageAppend(message, mPayload, static_cast<uint16_t>(strlen(mPayload)));
+    error = otMessageAppend(message, mPayload, static_cast<uint16_t>(mLength));
     SuccessOrExit(error);
 
     error = otUdpSend(&mSocket, message, &messageInfo);
@@ -245,7 +254,6 @@ void UdpExample::HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMes
     int     length;
     uint64_t receiveTimestamp = 0;
     uint64_t sendTimestamp = 0;
-    uint16_t latency = 0;
 
     otNetworkTimeGet(mInterpreter.mInstance, receiveTimestamp);
 
@@ -260,16 +268,20 @@ void UdpExample::HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMes
     length      = otMessageRead(aMessage, otMessageGetOffset(aMessage), buf, sizeof(buf) - 1);
     buf[length] = '\0';
 
-    for (size_t i = 0; i < 8; i++)
-    {
-        sendTimestamp |= buf[i] << (7-i)*8;
-    }
+    // for (size_t i = mLength-8; i < mLength; i++)
+    // {
+    //     sendTimestamp |= (buf[i] << (mLength-i)*8);
+    // }
+    memcpy(&sendTimestamp, buf, sizeof(sendTimestamp));
 
-    latency = receiveTimestamp - sendTimestamp;
+    mLatency = receiveTimestamp - sendTimestamp;
 
-    mInterpreter.mServer->OutputFormat("----------%d\r\n", &latency);
+    mInterpreter.mServer->OutputFormat("----------%d\r\n", mLatency);
+    mInterpreter.mServer->OutputFormat("+++++++++++%d\r\n", receiveTimestamp);
+    mInterpreter.mServer->OutputFormat("@@@@@@@@@@@%d\r\n", sendTimestamp);
 
     mInterpreter.mServer->OutputFormat("%s\r\n", buf);
+    mInterpreter.mServer->OutputFormat("Done\r\n");
 }
 
 } // namespace Cli
