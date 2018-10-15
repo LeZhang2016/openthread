@@ -35,14 +35,23 @@
 
 #include <openthread/message.h>
 #include <openthread/udp.h>
+#include <openthread/platform/alarm-milli.h>
+
+#include "openthread/platform/gpio.h"
 
 #include "cli/cli.hpp"
+#include "cli_uart.hpp"
 #include "common/encoding.hpp"
+
+#define MONITOR_PIN 3
+#define CLEAR_PIN_INTERVAL 2000
 
 using ot::Encoding::BigEndian::HostSwap16;
 
 namespace ot {
 namespace Cli {
+
+uint32_t UdpExample::sRxGpioTimestamp = 0;
 
 const struct UdpExample::Command UdpExample::sCommands[] = {
     {"help", &UdpExample::ProcessHelp},       {"bind", &UdpExample::ProcessBind}, {"close", &UdpExample::ProcessClose},
@@ -50,8 +59,11 @@ const struct UdpExample::Command UdpExample::sCommands[] = {
 
 UdpExample::UdpExample(Interpreter &aInterpreter)
     : mInterpreter(aInterpreter)
+    , mGpioTimer(*aInterpreter.mInstance, &UdpExample::HandleGpioTimer, this)
 {
     memset(&mSocket, 0, sizeof(mSocket));
+    otPlatGpioWrite(MONITOR_PIN, 0);
+    otPlatGpioEnableInterrupt(MONITOR_PIN, &UdpExample::platGpioResponse, this);
 }
 
 otError UdpExample::ProcessHelp(int argc, char *argv[])
@@ -164,6 +176,11 @@ otError UdpExample::ProcessSend(int argc, char *argv[])
     error = otMessageAppend(message, argv[curArg], static_cast<uint16_t>(strlen(argv[curArg])));
     SuccessOrExit(error);
 
+    //set gpio pin3 to 1
+    otPlatGpioWrite(MONITOR_PIN, 1);
+
+    mGpioTimer.Start(CLEAR_PIN_INTERVAL);
+
     error = otUdpSend(&mSocket, message, &messageInfo);
 
 exit:
@@ -221,6 +238,24 @@ void UdpExample::HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMes
     buf[length] = '\0';
 
     mInterpreter.mServer->OutputFormat("%s\r\n", buf);
+}
+
+void UdpExample::HandleGpioTimer(Timer &aTimer)
+{
+    Uart::sUartServer->GetInterpreter().mUdp.HandleGpioTimer();
+    OT_UNUSED_VARIABLE(aTimer);
+}
+
+void UdpExample::HandleGpioTimer()
+{
+    otPlatGpioWrite(MONITOR_PIN, 0);
+    sRxGpioTimestamp = 0;
+}
+
+void UdpExample::platGpioResponse(void *aContext)
+{
+    sRxGpioTimestamp = TimerMicro::GetNow();
+    OT_UNUSED_VARIABLE(aContext);
 }
 
 } // namespace Cli

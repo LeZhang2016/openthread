@@ -35,7 +35,7 @@
 #define CLI_UDP_EXAMPLE_HPP_
 
 #include "openthread-core-config.h"
-
+#include "common/timer.hpp"
 #include <openthread/udp.h>
 
 namespace ot {
@@ -67,6 +67,11 @@ public:
      */
     otError Process(int argc, char *argv[]);
 
+    static void HandleGpioTimer(Timer &aTimer);
+
+    static void platGpioResponse(void *aContext);
+
+    void HandleGpioTimer();
 private:
     struct Command
     {
@@ -84,10 +89,12 @@ private:
     static void HandleUdpReceive(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo);
     void        HandleUdpReceive(otMessage *aMessage, const otMessageInfo *aMessageInfo);
 
+    static uint32_t sRxGpioTimestamp;
     static const Command sCommands[];
     Interpreter &        mInterpreter;
 
     otUdpSocket mSocket;
+    TimerMicro mGpioTimer;
 };
 
 } // namespace Cli
