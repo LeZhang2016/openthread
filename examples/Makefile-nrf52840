@@ -50,6 +50,11 @@ configure_OPTIONS                                 = \
     --enable-ncp                                    \
     --enable-radio-only                             \
     --enable-linker-map                             \
+    --enable-child-supervision                      \
+    --enable-mac-filter                             \
+    --enable-channel-monitor                        \
+    --enable-channel-manager                        \
+    --enable-jam-detection                          \
     --with-examples=nrf52840                        \
     MBEDTLS_CPPFLAGS="$(NRF52840_MBEDTLS_CPPFLAGS)" \
     $(NULL)
@@ -96,9 +101,8 @@ COMMONCFLAGS                   := \
 
 include $(dir $(abspath $(lastword $(MAKEFILE_LIST))))/common-switches.mk
 
-ifneq ($(CERT_LOG),1)
+
 COMMONCFLAGS += -DOPENTHREAD_CONFIG_LOG_OUTPUT=OPENTHREAD_CONFIG_LOG_OUTPUT_PLATFORM_DEFINED
-endif
 
 ifeq ($(USB),1)
 COMMONCFLAGS += -DUSB_CDC_AS_SERIAL_TRANSPORT=1
